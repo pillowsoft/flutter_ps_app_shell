@@ -1,0 +1,8 @@
+{
+  "name": "instant-auth-shim",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@instantdb/admin": "^0.14.0" },
+  "devDependencies": { "typescript": "^5.5.4" },
+  "scripts": { "dev": "wrangler dev", "deploy": "wrangler deploy" }
+}

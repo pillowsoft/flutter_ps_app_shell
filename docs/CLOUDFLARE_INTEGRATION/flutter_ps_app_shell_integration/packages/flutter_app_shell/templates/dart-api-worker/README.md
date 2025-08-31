@@ -1,0 +1,1 @@
+Copy this folder to your repo's `workers/dart-api-worker/` and run `wrangler deploy` after setting secrets.

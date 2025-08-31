@@ -1,0 +1,24 @@
+name = "dart-api-worker"
+main = "build/worker.js"
+compatibility_date = "2025-01-15"
+
+[vars]
+SESSION_JWT_ISSUER = "your-app"
+SESSION_JWT_AUDIENCE = "your-app-clients"
+R2_PUBLIC_BASE = "https://<accountid>.r2.cloudflarestorage.com/<bucket>"
+CF_ACCOUNT_ID = "<your-account-id>"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "app-media"
+
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiterDO"
+
+[durable_objects]
+bindings = [{ name = "RATE_LIMITER", class_name = "RateLimiterDO" }]
+
+[[kv_namespaces]]
+binding = "KV"
+id = "<kv-id>"

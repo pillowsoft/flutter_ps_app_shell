@@ -1,0 +1,9 @@
+name = "instant-auth-shim"
+main = "src/index.ts"
+compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+INSTANT_APP_ID = "your-instant-app-id"
+SESSION_JWT_ISSUER = "your-app"
+SESSION_JWT_AUDIENCE = "your-app-clients"

@@ -1,0 +1,31 @@
+# Include or merge into your root justfile
+WORKER_DART_DIR := "workers/dart-api-worker"
+WORKER_TS_DIR   := "workers/ts-auth-shim"
+
+setup:
+	cd {{WORKER_TS_DIR}} && npm i || true
+	wrangler login
+
+secrets:
+	cd {{WORKER_TS_DIR}} && wrangler secret put SESSION_JWT_SECRET
+	cd {{WORKER_TS_DIR}} && wrangler secret put INSTANT_APP_ID
+	cd {{WORKER_DART_DIR}} && wrangler secret put SESSION_JWT_SECRET
+	cd {{WORKER_DART_DIR}} && wrangler secret put R2_ACCOUNT_ID
+	cd {{WORKER_DART_DIR}} && wrangler secret put R2_ACCESS_KEY_ID
+	cd {{WORKER_DART_DIR}} && wrangler secret put R2_SECRET_ACCESS_KEY
+	cd {{WORKER_DART_DIR}} && wrangler secret put R2_BUCKET
+	cd {{WORKER_DART_DIR}} && wrangler secret put CF_API_TOKEN
+
+dev-dart:
+	cd {{WORKER_DART_DIR}} && dart compile js -O4 -o build/worker.js lib/main.dart
+	cd {{WORKER_DART_DIR}} && wrangler dev
+
+deploy-dart:
+	cd {{WORKER_DART_DIR}} && dart compile js -O4 -o build/worker.js lib/main.dart
+	cd {{WORKER_DART_DIR}} && wrangler deploy
+
+dev-shim:
+	cd {{WORKER_TS_DIR}} && wrangler dev
+
+deploy-shim:
+	cd {{WORKER_TS_DIR}} && wrangler deploy

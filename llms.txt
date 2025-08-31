@@ -1,0 +1,32 @@
+# Flutter App Shell
+
+> A comprehensive Flutter application framework for rapid development with adaptive UI, service architecture, state management, and cloud synchronization capabilities. Zero-configuration setup with 30+ built-in services, complete UI system switching (Material/Cupertino/ForUI), offline-first architecture with cloud sync, and reactive state management using Signals.
+
+Key Features:
+- 🚀 **5-minute app creation** - Single function call creates fully-featured app
+- 🎨 **Complete UI system switching** - Entire app adapts between Material, Cupertino, and ForUI design systems
+- 🔧 **30+ built-in services** - Authentication, database, networking, file storage, preferences, and more
+- 📱 **Responsive navigation** - Automatic adaptation: bottom tabs → navigation rail → sidebar
+- ☁️ **Offline-first architecture** - Local database with automatic cloud sync via Supabase
+- 🔄 **Reactive state management** - Signals-based reactivity with granular UI updates
+- 🛠️ **Service inspector** - Real-time debugging and monitoring of all services
+
+## Getting Started
+- [Getting Started Guide](docs/getting-started.md) - Step-by-step tutorial to build your first app in 5-10 minutes with working code examples
+
+## Architecture & Core Concepts
+- [Architecture Overview](docs/architecture.md) - Service-oriented architecture, dependency injection, adaptive UI factory pattern, and reactive state management
+- [Services Documentation](docs/services/README.md) - Complete guide to 30+ built-in services including database, authentication, networking, and file storage
+- [Framework Specification](docs/flutter_app_shell_spec.md) - Comprehensive technical specification covering all framework components and design decisions
+
+## UI & Design Systems
+- [Adaptive UI Systems](docs/ui-systems/README.md) - Complete guide to Material, Cupertino, and ForUI with factory pattern implementation and visual examples
+
+## Implementation Guides
+- [Common Patterns](docs/examples/patterns.md) - Real-world code examples for authentication flows, data management, UI composition, navigation, and performance optimization
+- [Best Practices](docs/reference/best-practices.md) - Guidelines for maintainable, performant code with common pitfalls to avoid and recommended patterns
+- [Migration Guide](docs/migration-guide.md) - Comprehensive guide for migrating existing Flutter apps with incremental adoption strategies
+
+## Optional
+- [Database Service](docs/services/database.md) - NoSQL document database with Isar backend, reactive queries, cloud sync, and conflict resolution
+

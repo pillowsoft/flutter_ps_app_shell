@@ -1,0 +1,1 @@
+Copy this folder to your repo's `workers/ts-auth-shim/` and run `wrangler deploy` after setting secrets.

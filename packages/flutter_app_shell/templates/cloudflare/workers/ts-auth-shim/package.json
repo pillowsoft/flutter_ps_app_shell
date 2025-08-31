@@ -1,0 +1,17 @@
+{
+  "name": "instant-auth-shim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@instantdb/admin": "^0.14.0"
+  },
+  "scripts": {
+    "build": "echo 'Cloudflare will bundle TS'",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  }
+}
