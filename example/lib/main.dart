@@ -20,6 +20,7 @@ import 'features/plugin_demo/plugin_demo_screen.dart';
 import 'features/button_demo/button_demo_screen.dart';
 import 'features/large_title_demo/large_title_demo_screen.dart';
 import 'features/popup_inkwell_demo/popup_inkwell_demo_screen.dart';
+import 'features/dialog_demo/dialog_demo_screen.dart';
 import 'features/auth_demo/auth_demo_screen.dart';
 import 'features/cloudflare_demo/cloudflare_demo_screen.dart';
 import 'features/navigation_demo/navigation_demo_screen.dart';
@@ -295,6 +296,12 @@ void main() {
             path: '/popup-inkwell',
             icon: Icons.touch_app,
             builder: (context, state) => const PopupInkwellDemoScreen(),
+          ),
+          AppRoute(
+            title: 'Dialogs',
+            path: '/dialogs',
+            icon: Icons.chat_bubble_outline,
+            builder: (context, state) => const DialogDemoScreen(),
           ),
           AppRoute(
             title: 'Plugins',

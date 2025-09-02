@@ -79,6 +79,7 @@ import 'package:flutter/material.dart'
 import 'package:flutter/foundation.dart';
 import 'adaptive_widget_factory.dart';
 import '../../core/app_route.dart';
+import 'components/adaptive_dialog_models.dart';
 
 /// Cupertino (iOS) implementation of the adaptive widget factory
 class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
@@ -1679,6 +1680,315 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
       textScaleFactor: textScaleFactor,
       maxLines: maxLines,
       semanticsLabel: semanticsLabel,
+    );
+  }
+
+  // Enhanced Dialog Methods
+
+  @override
+  Future<T?> showFormDialog<T>({
+    required BuildContext context,
+    required Widget title,
+    required Widget content,
+    List<Widget>? actions,
+    double? width,
+    double? maxHeight,
+    EdgeInsets? contentPadding,
+    bool barrierDismissible = true,
+    bool useRootNavigator = true,
+    bool scrollable = true,
+  }) {
+    final isMobile = DialogResponsiveness.isMobile(context);
+
+    if (isMobile) {
+      // Use full-screen modal on iPhone
+      return Navigator.of(context, rootNavigator: useRootNavigator).push<T>(
+        CupertinoPageRoute(
+          fullscreenDialog: true,
+          builder: (routeContext) => CupertinoPageScaffold(
+            navigationBar: CupertinoNavigationBar(
+              middle: title,
+              leading: barrierDismissible
+                  ? CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: const Text('Cancel'),
+                      onPressed: () => Navigator.of(routeContext).pop(),
+                    )
+                  : null,
+              trailing: actions != null && actions.isNotEmpty
+                  ? CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: const Text('Done'),
+                      onPressed: () {
+                        // Trigger the first action if available
+                        if (actions.isNotEmpty && actions.first is CupertinoButton) {
+                          (actions.first as CupertinoButton).onPressed?.call();
+                        }
+                      },
+                    )
+                  : null,
+            ),
+            child: SafeArea(
+              child: scrollable
+                  ? SingleChildScrollView(
+                      padding: contentPadding ?? const EdgeInsets.all(16),
+                      child: content,
+                    )
+                  : Padding(
+                      padding: contentPadding ?? const EdgeInsets.all(16),
+                      child: content,
+                    ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Custom dialog for iPad/macOS
+      final dialogWidth = DialogResponsiveness.getDialogWidth(context, requested: width);
+      final dialogMaxHeight = DialogResponsiveness.getDialogMaxHeight(context, requested: maxHeight);
+
+      return showCupertinoDialog<T>(
+        context: context,
+        barrierDismissible: barrierDismissible,
+        builder: (dialogContext) => Center(
+          child: Container(
+            width: dialogWidth,
+            constraints: BoxConstraints(
+              maxWidth: width ?? 800,
+              minWidth: 280,
+              maxHeight: dialogMaxHeight,
+            ),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemBackground.resolveFrom(dialogContext),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: CupertinoColors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Scaffold(
+                backgroundColor: Colors.transparent,
+                body: Column(
+                  children: [
+                    // Custom navigation bar
+                    Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemBackground.resolveFrom(dialogContext),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: CupertinoColors.separator.resolveFrom(dialogContext),
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+                      child: NavigationToolbar(
+                        middle: DefaultTextStyle(
+                          style: CupertinoTheme.of(dialogContext).textTheme.navTitleTextStyle,
+                          child: title,
+                        ),
+                        trailing: barrierDismissible
+                            ? CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                child: const Icon(CupertinoIcons.xmark_circle_fill),
+                                onPressed: () => Navigator.of(dialogContext).pop(),
+                              )
+                            : null,
+                      ),
+                    ),
+                    // Content
+                    Expanded(
+                      child: scrollable
+                          ? SingleChildScrollView(
+                              padding: contentPadding ?? const EdgeInsets.all(20),
+                              child: content,
+                            )
+                          : Padding(
+                              padding: contentPadding ?? const EdgeInsets.all(20),
+                              child: content,
+                            ),
+                    ),
+                    // Actions
+                    if (actions != null) ...[
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              color: CupertinoColors.separator.resolveFrom(dialogContext),
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: actions,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<T?> showPageModal<T>({
+    required BuildContext context,
+    required String title,
+    required Widget Function(BuildContext) builder,
+    List<Widget>? actions,
+    Widget? leading,
+    bool fullscreenOnMobile = true,
+    double? desktopWidth,
+    double? desktopMaxWidth = 900,
+    bool showCloseButton = true,
+  }) {
+    final isMobile = DialogResponsiveness.isMobile(context);
+
+    if (isMobile && fullscreenOnMobile) {
+      // Full screen on mobile
+      return Navigator.of(context, rootNavigator: true).push<T>(
+        CupertinoPageRoute(
+          fullscreenDialog: true,
+          builder: (routeContext) => CupertinoPageScaffold(
+            navigationBar: CupertinoNavigationBar(
+              middle: Text(title),
+              leading: leading ??
+                  (showCloseButton
+                      ? CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          child: const Text('Close'),
+                          onPressed: () => Navigator.of(routeContext).pop(),
+                        )
+                      : null),
+              trailing: actions != null && actions.isNotEmpty
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: actions,
+                    )
+                  : null,
+            ),
+            child: SafeArea(
+              child: builder(routeContext),
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Dialog on desktop/tablet
+      return showFormDialog<T>(
+        context: context,
+        title: Text(title),
+        content: builder(context),
+        actions: actions,
+        width: desktopWidth ?? desktopMaxWidth,
+      );
+    }
+  }
+
+  @override
+  Future<T?> showActionSheet<T>({
+    required BuildContext context,
+    required List<AdaptiveActionSheetItem<T>> actions,
+    Widget? title,
+    Widget? message,
+    bool showCancelButton = true,
+    String? cancelButtonText,
+  }) {
+    return showCupertinoModalPopup<T>(
+      context: context,
+      builder: (sheetContext) => CupertinoActionSheet(
+        title: title,
+        message: message,
+        actions: actions.map((action) {
+          return CupertinoActionSheetAction(
+            onPressed: action.enabled
+                ? () => Navigator.of(sheetContext).pop(action.value)
+                : null,
+            isDestructiveAction: action.isDestructive,
+            isDefaultAction: action.isDefault,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (action.icon != null) ...[
+                  Icon(
+                    action.icon,
+                    size: 20,
+                    color: action.isDestructive
+                        ? CupertinoColors.destructiveRed
+                        : action.isDefault
+                            ? CupertinoTheme.of(sheetContext).primaryColor
+                            : null,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(action.label),
+              ],
+            ),
+          );
+        }).toList(),
+        cancelButton: showCancelButton
+            ? CupertinoActionSheetAction(
+                onPressed: () => Navigator.of(sheetContext).pop(),
+                child: Text(cancelButtonText ?? 'Cancel'),
+              )
+            : null,
+      ),
+    );
+  }
+
+  @override
+  Future<bool?> showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String message,
+    String? confirmText,
+    String? cancelText,
+    bool isDestructive = false,
+    IconData? icon,
+  }) {
+    return showCupertinoDialog<bool>(
+      context: context,
+      builder: (dialogContext) => CupertinoAlertDialog(
+        title: Column(
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 48,
+                color: isDestructive ? CupertinoColors.destructiveRed : null,
+              ),
+              const SizedBox(height: 8),
+            ],
+            Text(title),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(cancelText ?? 'Cancel'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            isDestructiveAction: isDestructive,
+            isDefaultAction: !isDestructive,
+            child: Text(confirmText ?? 'Confirm'),
+          ),
+        ],
+      ),
     );
   }
 }

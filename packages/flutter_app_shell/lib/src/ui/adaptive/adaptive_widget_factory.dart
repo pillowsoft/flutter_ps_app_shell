@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/app_route.dart';
+import 'components/adaptive_dialog_models.dart';
 
 /// Navigation item model for bottom navigation
 class AdaptiveNavItem {
@@ -563,5 +564,58 @@ abstract class AdaptiveWidgetFactory {
     Color? splashColor,
     Color? highlightColor,
     bool enableFeedback = true,
+  });
+
+  // Enhanced Dialog Methods
+
+  /// Shows a form dialog with custom width and layout support
+  /// Used for complex forms with multiple inputs, switches, etc.
+  Future<T?> showFormDialog<T>({
+    required BuildContext context,
+    required Widget title,
+    required Widget content,
+    List<Widget>? actions,
+    double? width,
+    double? maxHeight,
+    EdgeInsets? contentPadding,
+    bool barrierDismissible = true,
+    bool useRootNavigator = true,
+    bool scrollable = true,
+  });
+
+  /// Shows a page-style modal that adapts to screen size
+  /// Full-screen on mobile, centered dialog on desktop
+  Future<T?> showPageModal<T>({
+    required BuildContext context,
+    required String title,
+    required Widget Function(BuildContext) builder,
+    List<Widget>? actions,
+    Widget? leading,
+    bool fullscreenOnMobile = true,
+    double? desktopWidth,
+    double? desktopMaxWidth = 900,
+    bool showCloseButton = true,
+  });
+
+  /// Shows an action sheet with multiple options
+  /// Bottom sheet on mobile, context menu on desktop
+  Future<T?> showActionSheet<T>({
+    required BuildContext context,
+    required List<AdaptiveActionSheetItem<T>> actions,
+    Widget? title,
+    Widget? message,
+    bool showCancelButton = true,
+    String? cancelButtonText,
+  });
+
+  /// Shows a confirmation dialog with platform-appropriate styling
+  Future<bool?> showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String message,
+    String? confirmText,
+    String? cancelText,
+    bool isDestructive = false,
+    IconData? icon,
   });
 }

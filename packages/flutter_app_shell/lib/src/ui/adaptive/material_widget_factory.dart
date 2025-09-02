@@ -62,6 +62,7 @@ import 'package:flutter/material.dart'
         Locale,
         TextOverflow;
 import 'adaptive_widget_factory.dart';
+import 'components/adaptive_dialog_models.dart';
 import '../../core/app_route.dart';
 
 /// Material Design implementation of the adaptive widget factory
@@ -1402,6 +1403,246 @@ class MaterialWidgetFactory extends AdaptiveWidgetFactory {
       textScaleFactor: textScaleFactor,
       maxLines: maxLines,
       semanticsLabel: semanticsLabel,
+    );
+  }
+
+  // Enhanced Dialog Methods
+
+  @override
+  Future<T?> showFormDialog<T>({
+    required BuildContext context,
+    required Widget title,
+    required Widget content,
+    List<Widget>? actions,
+    double? width,
+    double? maxHeight,
+    EdgeInsets? contentPadding,
+    bool barrierDismissible = true,
+    bool useRootNavigator = true,
+    bool scrollable = true,
+  }) {
+    return material.showDialog<T>(
+      context: context,
+      barrierDismissible: barrierDismissible,
+      useRootNavigator: useRootNavigator,
+      builder: (BuildContext dialogContext) {
+        final screenSize = MediaQuery.of(dialogContext).size;
+        final dialogWidth = DialogResponsiveness.getDialogWidth(dialogContext, requested: width);
+        final dialogMaxHeight = DialogResponsiveness.getDialogMaxHeight(dialogContext, requested: maxHeight);
+
+        return material.Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28), // Material 3 large rounding
+          ),
+          clipBehavior: material.Clip.antiAlias,
+          child: material.Container(
+            width: dialogWidth,
+            constraints: material.BoxConstraints(
+              maxWidth: width ?? 800,
+              minWidth: 280,
+              maxHeight: dialogMaxHeight,
+            ),
+            child: material.Scaffold(
+              backgroundColor: material.Colors.transparent,
+              appBar: material.AppBar(
+                title: title,
+                automaticallyImplyLeading: false,
+                backgroundColor: material.Colors.transparent,
+                elevation: 0,
+                actions: [
+                  if (barrierDismissible)
+                    material.IconButton(
+                      icon: const Icon(material.Icons.close),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                    ),
+                ],
+              ),
+              body: scrollable
+                  ? SingleChildScrollView(
+                      padding: contentPadding ?? const EdgeInsets.all(24),
+                      child: content,
+                    )
+                  : material.Padding(
+                      padding: contentPadding ?? const EdgeInsets.all(24),
+                      child: content,
+                    ),
+              bottomNavigationBar: actions != null
+                  ? material.Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: material.Row(
+                        mainAxisAlignment: material.MainAxisAlignment.end,
+                        children: actions,
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Future<T?> showPageModal<T>({
+    required BuildContext context,
+    required String title,
+    required Widget Function(BuildContext) builder,
+    List<Widget>? actions,
+    Widget? leading,
+    bool fullscreenOnMobile = true,
+    double? desktopWidth,
+    double? desktopMaxWidth = 900,
+    bool showCloseButton = true,
+  }) {
+    final isMobile = DialogResponsiveness.isMobile(context);
+
+    if (isMobile && fullscreenOnMobile) {
+      // Full screen on mobile
+      return Navigator.of(context, rootNavigator: true).push<T>(
+        material.MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (routeContext) => material.Scaffold(
+            appBar: material.AppBar(
+              title: material.Text(title),
+              leading: leading ?? (showCloseButton ? const material.CloseButton() : null),
+            ),
+            body: builder(routeContext),
+            bottomNavigationBar: actions != null
+                ? material.BottomAppBar(
+                    child: material.Row(
+                      mainAxisAlignment: material.MainAxisAlignment.end,
+                      children: actions,
+                    ),
+                  )
+                : null,
+          ),
+        ),
+      );
+    } else {
+      // Dialog on desktop/tablet
+      return showFormDialog<T>(
+        context: context,
+        title: material.Text(title),
+        content: builder(context),
+        actions: actions,
+        width: desktopWidth ?? desktopMaxWidth,
+      );
+    }
+  }
+
+  @override
+  Future<T?> showActionSheet<T>({
+    required BuildContext context,
+    required List<AdaptiveActionSheetItem<T>> actions,
+    Widget? title,
+    Widget? message,
+    bool showCancelButton = true,
+    String? cancelButtonText,
+  }) {
+    return material.showModalBottomSheet<T>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: material.Radius.circular(20)),
+      ),
+      builder: (sheetContext) => material.SafeArea(
+        child: Column(
+          mainAxisSize: material.MainAxisSize.min,
+          children: [
+            if (title != null || message != null)
+              material.Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    if (title != null)
+                      material.DefaultTextStyle(
+                        style: Theme.of(sheetContext).textTheme.titleMedium!,
+                        child: title,
+                      ),
+                    if (message != null) ...[
+                      const material.SizedBox(height: 8),
+                      material.DefaultTextStyle(
+                        style: Theme.of(sheetContext).textTheme.bodyMedium!,
+                        child: message,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            if (title != null || message != null)
+              const material.Divider(height: 1),
+            ...actions.map((action) {
+              final color = action.isDestructive
+                  ? material.Colors.red
+                  : action.isDefault
+                      ? Theme.of(sheetContext).primaryColor
+                      : null;
+
+              return material.ListTile(
+                enabled: action.enabled,
+                leading: action.icon != null ? Icon(action.icon, color: color) : null,
+                title: material.Text(
+                  action.label,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: action.isDefault ? FontWeight.bold : null,
+                  ),
+                ),
+                onTap: action.enabled
+                    ? () => Navigator.of(sheetContext).pop(action.value)
+                    : null,
+              );
+            }),
+            if (showCancelButton) ...[
+              const material.Divider(height: 1),
+              material.ListTile(
+                title: material.Text(cancelButtonText ?? 'Cancel'),
+                onTap: () => Navigator.of(sheetContext).pop(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<bool?> showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String message,
+    String? confirmText,
+    String? cancelText,
+    bool isDestructive = false,
+    IconData? icon,
+  }) {
+    return material.showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => material.AlertDialog(
+        icon: icon != null
+            ? Icon(
+                icon,
+                size: 48,
+                color: isDestructive ? material.Colors.red : null,
+              )
+            : null,
+        title: material.Text(title),
+        content: material.Text(message),
+        actions: [
+          material.TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: material.Text(cancelText ?? 'Cancel'),
+          ),
+          material.TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: isDestructive
+                ? material.TextButton.styleFrom(
+                    foregroundColor: material.Colors.red,
+                  )
+                : null,
+            child: material.Text(confirmText ?? 'Confirm'),
+          ),
+        ],
+      ),
     );
   }
 }
