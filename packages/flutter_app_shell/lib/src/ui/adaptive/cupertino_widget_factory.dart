@@ -75,7 +75,9 @@ import 'package:flutter/material.dart'
         TextAlign,
         TextDirection,
         Locale,
-        TextOverflow;
+        TextOverflow,
+        Colors,
+        Navigator;
 import 'package:flutter/foundation.dart';
 import 'adaptive_widget_factory.dart';
 import '../../core/app_route.dart';
@@ -1916,7 +1918,7 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
           return CupertinoActionSheetAction(
             onPressed: action.enabled
                 ? () => Navigator.of(sheetContext).pop(action.value)
-                : null,
+                : () {}, // Provide no-op function for disabled actions
             isDestructiveAction: action.isDestructive,
             isDefaultAction: action.isDefault,
             child: Row(

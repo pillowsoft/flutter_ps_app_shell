@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material
     show showDatePicker, showTimePicker, showDateRangePicker;
 import 'adaptive_widget_factory.dart';
+import 'components/adaptive_dialog_models.dart';
 import '../../core/app_route.dart';
 
 /// ForUI implementation of the adaptive widget factory
@@ -2211,6 +2212,435 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
       textScaleFactor: textScaleFactor,
       maxLines: maxLines,
       semanticsLabel: semanticsLabel,
+    );
+  }
+
+  @override
+  Future<T?> showFormDialog<T>({
+    required BuildContext context,
+    required Widget title,
+    required Widget content,
+    List<Widget>? actions,
+    double? width,
+    double? maxHeight,
+    EdgeInsets? contentPadding,
+    bool barrierDismissible = true,
+    bool useRootNavigator = true,
+    bool scrollable = true,
+  }) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+    
+    Widget dialogContent = content;
+    if (scrollable) {
+      dialogContent = SingleChildScrollView(
+        child: content,
+      );
+    }
+
+    if (maxHeight != null) {
+      dialogContent = ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: dialogContent,
+      );
+    }
+
+    return showAdaptiveDialog<T>(
+      context: context,
+      barrierDismissible: barrierDismissible,
+      barrierColor: _primaryColor.withValues(alpha: 0.5),
+      useRootNavigator: useRootNavigator,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(_borderRadius),
+            side: const BorderSide(color: _borderColor, width: 1),
+          ),
+          child: Container(
+            width: isSmallScreen 
+                ? screenSize.width * 0.9 
+                : (width ?? DialogResponsiveness.getDialogWidth(context)),
+            constraints: BoxConstraints(
+              maxWidth: isSmallScreen ? screenSize.width * 0.9 : (width ?? 700),
+              maxHeight: maxHeight ?? screenSize.height * 0.85,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: _borderColor, width: 1),
+                    ),
+                  ),
+                  child: DefaultTextStyle(
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: _primaryColor,
+                    ),
+                    child: title,
+                  ),
+                ),
+                // Content
+                Flexible(
+                  child: Padding(
+                    padding: contentPadding ?? const EdgeInsets.all(20),
+                    child: dialogContent,
+                  ),
+                ),
+                // Actions
+                if (actions != null && actions.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: _borderColor, width: 1),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: actions.map((action) {
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: action,
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Future<T?> showPageModal<T>({
+    required BuildContext context,
+    required String title,
+    required Widget Function(BuildContext) builder,
+    List<Widget>? actions,
+    Widget? leading,
+    bool fullscreenOnMobile = true,
+    double? desktopWidth,
+    double? desktopMaxWidth = 900,
+    bool showCloseButton = true,
+  }) {
+    final isMobile = DialogResponsiveness.isMobile(context);
+    
+    if (isMobile && fullscreenOnMobile) {
+      // Full-screen modal for mobile
+      return Navigator.of(context, rootNavigator: true).push<T>(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (context) => Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              title: Text(title),
+              backgroundColor: Colors.white,
+              foregroundColor: _primaryColor,
+              elevation: 0,
+              shape: const Border(
+                bottom: BorderSide(color: _borderColor, width: 1),
+              ),
+              leading: leading ?? (showCloseButton
+                  ? IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    )
+                  : null),
+              actions: actions,
+            ),
+            body: builder(context),
+          ),
+        ),
+      );
+    } else {
+      // Dialog for desktop/tablet
+      return showAdaptiveDialog<T>(
+        context: context,
+        barrierDismissible: true,
+        barrierColor: _primaryColor.withValues(alpha: 0.5),
+        builder: (dialogContext) => Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(_borderRadius),
+            side: const BorderSide(color: _borderColor, width: 1),
+          ),
+          child: Container(
+            width: desktopWidth ?? 800,
+            constraints: BoxConstraints(
+              maxWidth: desktopMaxWidth ?? 900,
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: _borderColor, width: 1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      if (leading != null) ...[
+                        leading,
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: _primaryColor,
+                          ),
+                        ),
+                      ),
+                      if (actions != null)
+                        ...actions
+                      else if (showCloseButton)
+                        IconButton(
+                          icon: const Icon(Icons.close, color: _mutedForeground),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                        ),
+                    ],
+                  ),
+                ),
+                // Content
+                Flexible(
+                  child: builder(dialogContext),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<T?> showActionSheet<T>({
+    required BuildContext context,
+    required List<AdaptiveActionSheetItem<T>> actions,
+    Widget? title,
+    Widget? message,
+    bool showCancelButton = true,
+    String? cancelButtonText,
+  }) {
+    return showModalBottomSheet<T>(
+      context: context,
+      builder: (sheetContext) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+          border: Border(
+            top: BorderSide(color: _borderColor, width: 1),
+            left: BorderSide(color: _borderColor, width: 1),
+            right: BorderSide(color: _borderColor, width: 1),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (title != null || message != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      if (title != null)
+                        DefaultTextStyle(
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: _mutedForeground,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                          child: title,
+                        ),
+                      if (message != null) ...[
+                        const SizedBox(height: 8),
+                        DefaultTextStyle(
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: _mutedForeground,
+                          ),
+                          textAlign: TextAlign.center,
+                          child: message,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const Divider(color: _borderColor, height: 1),
+              ],
+              ...actions.map((action) {
+                final isDestructive = action.isDestructive;
+                final isDefault = action.isDefault;
+                
+                return InkWell(
+                  onTap: action.enabled
+                      ? () => Navigator.of(sheetContext).pop(action.value)
+                      : null,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    child: Row(
+                      children: [
+                        if (action.icon != null) ...[
+                          Icon(
+                            action.icon,
+                            size: 20,
+                            color: isDestructive
+                                ? Colors.red
+                                : (action.enabled ? _primaryColor : _mutedForeground),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        Expanded(
+                          child: Text(
+                            action.label,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isDestructive
+                                  ? Colors.red
+                                  : (action.enabled ? _primaryColor : _mutedForeground),
+                              fontWeight: isDefault ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+              if (showCancelButton) ...[
+                const Divider(color: _borderColor, height: 1),
+                InkWell(
+                  onTap: () => Navigator.of(sheetContext).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: Text(
+                        cancelButtonText ?? 'Cancel',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: _primaryColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<bool?> showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String message,
+    String? confirmText,
+    String? cancelText,
+    bool isDestructive = false,
+    IconData? icon,
+  }) {
+    return showAdaptiveDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: _primaryColor.withValues(alpha: 0.5),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_borderRadius),
+          side: const BorderSide(color: _borderColor, width: 1),
+        ),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with icon and title
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    if (icon != null) ...[
+                      Icon(
+                        icon,
+                        size: 48,
+                        color: isDestructive ? Colors.red : _primaryColor,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: _primaryColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: _mutedForeground,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              // Actions
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: _borderColor, width: 1),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    outlinedButton(
+                      label: cancelText ?? 'Cancel',
+                      onPressed: () => Navigator.of(dialogContext).pop(false),
+                    ),
+                    const SizedBox(width: 8),
+                    button(
+                      label: confirmText ?? 'Confirm',
+                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                      style: isDestructive
+                          ? ButtonStyle(
+                              backgroundColor: WidgetStateProperty.all(Colors.red),
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
