@@ -53,8 +53,11 @@ class DialogResponsiveness {
       // Mobile: 90% of screen width
       return screenWidth * 0.9;
     } else if (screenWidth < 1200) {
-      // Tablet: requested width or 70% of screen, max 600px
-      return requested ?? min(600, screenWidth * 0.7);
+      // Tablet: use requested width if provided, otherwise 70% of screen
+      if (requested != null) {
+        return min(requested, screenWidth * 0.9); // Allow requested width but cap at 90% screen
+      }
+      return min(700, screenWidth * 0.7);
     } else {
       // Desktop: requested width or default 700px
       return requested ?? 700;

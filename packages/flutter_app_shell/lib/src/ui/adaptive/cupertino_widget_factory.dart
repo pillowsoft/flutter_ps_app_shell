@@ -1754,9 +1754,8 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
         barrierDismissible: barrierDismissible,
         builder: (dialogContext) => Center(
           child: Container(
-            width: dialogWidth,
             constraints: BoxConstraints(
-              maxWidth: width ?? 800,
+              maxWidth: width ?? dialogWidth,
               minWidth: 280,
               maxHeight: dialogMaxHeight,
             ),
