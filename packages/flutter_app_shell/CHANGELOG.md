@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0 - 2024-12-10
+
+### Bug Fixes
+- **Fixed Cupertino SnackBar**: Replaced ScaffoldMessenger dependency with custom iOS-style overlay notification system
+  - Implements authentic iOS notifications that slide from top with blur effect
+  - Adds swipe-to-dismiss gesture support
+  - Maintains API compatibility with ScaffoldFeatureController interface
+  - No breaking changes for existing code
+
+### New Features
+- **Dedicated SnackBar Demo**: Added comprehensive demo screen showcasing platform-adaptive snackbar notifications
+- **iOS-Style Notifications**: Custom overlay-based implementation for Cupertino mode providing authentic iOS experience
+
+### Documentation
+- Added comprehensive snackbar documentation at `docs/ui-systems/snackbars.md`
+- Updated example app to demonstrate all snackbar features across UI systems
+
 ## 0.2.0 - 2024-08-28
 
 ### Enhanced Logging System

@@ -271,28 +271,21 @@ class _ErrorHandlingDemoScreenState extends State<ErrorHandlingDemoScreen>
   }
 
   void _showErrorSnackBar(Object error, ErrorDemo demo) {
+    final ui = getAdaptiveFactory(context);
     final message = _getErrorMessage(error);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(demo.icon, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: demo.color,
-        duration: const Duration(seconds: 4),
-        behavior: SnackBarBehavior.floating,
-        action: _canRetry(error)
-            ? SnackBarAction(
-                label: 'Retry',
-                textColor: Colors.white,
-                onPressed: () => _retry(demo),
-              )
-            : null,
-      ),
+    ui.showSnackBar(
+      context,
+      message,
+      backgroundColor: demo.color,
+      duration: const Duration(seconds: 4),
+      action: _canRetry(error)
+          ? SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () => _retry(demo),
+            )
+          : null,
     );
   }
 

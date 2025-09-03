@@ -103,10 +103,9 @@ class _AdaptiveDemoScreenState extends State<AdaptiveDemoScreen> {
                         ui.textButton(
                           label: 'Text Button',
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Text button pressed!'),
-                              ),
+                            ui.showSnackBar(
+                              context,
+                              'Text button pressed!',
                             );
                           },
                         ),

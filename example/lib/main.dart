@@ -21,6 +21,7 @@ import 'features/button_demo/button_demo_screen.dart';
 import 'features/large_title_demo/large_title_demo_screen.dart';
 import 'features/popup_inkwell_demo/popup_inkwell_demo_screen.dart';
 import 'features/dialog_demo/dialog_demo_screen.dart';
+import 'features/snackbar_demo/snackbar_demo_screen.dart';
 import 'features/auth_demo/auth_demo_screen.dart';
 import 'features/cloudflare_demo/cloudflare_demo_screen.dart';
 import 'features/navigation_demo/navigation_demo_screen.dart';
@@ -171,6 +172,12 @@ void main() {
             path: '/adaptive',
             icon: Icons.palette,
             builder: (context, state) => const AdaptiveDemoScreen(),
+          ),
+          AppRoute(
+            title: 'SnackBars',
+            path: '/snackbars',
+            icon: Icons.notifications_active,
+            builder: (context, state) => const SnackBarDemoScreen(),
           ),
           AppRoute(
             title: 'Services',
