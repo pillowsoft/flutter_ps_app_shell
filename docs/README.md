@@ -26,6 +26,8 @@ Welcome to the comprehensive documentation for Flutter App Shell - a powerful fr
 - [Cupertino (iOS)](ui-systems/cupertino.md) - iOS-style components and behavior
 - [ForUI](ui-systems/forui.md) - Modern minimal design system
 - [Component Library](ui-systems/components.md) - Complete component reference
+- [Dialogs](ui-systems/dialogs.md) - Platform-adaptive dialog system
+- [SnackBars](ui-systems/snackbars.md) - Platform-adaptive notifications
 
 ### Services Documentation
 - [Services Overview](services/README.md) - All available services

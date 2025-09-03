@@ -1,4 +1,7 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/material.dart' as material show showDateRangePicker;
 import 'package:flutter/material.dart'
     show
@@ -1369,19 +1372,14 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
     SnackBarAction? action,
     Color? backgroundColor,
   }) {
-    // iOS doesn't typically use snackbars, but we'll provide Material implementation
-    final snackBar = SnackBar(
-      content: Text(message),
+    // Use iOS-style notification overlay for Cupertino
+    return _CupertinoNotificationController._show(
+      context: context,
+      message: message,
       duration: duration,
       action: action,
-      backgroundColor: backgroundColor ?? CupertinoColors.darkBackgroundGray,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      backgroundColor: backgroundColor,
     );
-
-    return ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   // Navigation and Layout Helpers
@@ -1989,6 +1987,283 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
             child: Text(confirmText ?? 'Confirm'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// iOS-style notification controller wrapper that acts like ScaffoldFeatureController
+class _CupertinoNotificationController {
+  final OverlayEntry _overlayEntry;
+  final Completer<SnackBarClosedReason> _completer = Completer<SnackBarClosedReason>();
+  bool _isDisposed = false;
+  late final _controller = _CupertinoSnackBarController(this);
+
+  _CupertinoNotificationController._({required OverlayEntry overlayEntry})
+      : _overlayEntry = overlayEntry;
+
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason> _show({
+    required BuildContext context,
+    required String message,
+    required Duration duration,
+    SnackBarAction? action,
+    Color? backgroundColor,
+  }) {
+    late OverlayEntry overlayEntry;
+    late _CupertinoNotificationController wrapper;
+    
+    overlayEntry = OverlayEntry(
+      builder: (context) => _CupertinoNotificationWidget(
+        message: message,
+        duration: duration,
+        action: action,
+        backgroundColor: backgroundColor,
+        onDismissed: (reason) {
+          if (!wrapper._isDisposed) {
+            wrapper._hide();
+            if (!wrapper._completer.isCompleted) {
+              wrapper._completer.complete(reason);
+            }
+          }
+        },
+      ),
+    );
+    
+    wrapper = _CupertinoNotificationController._(overlayEntry: overlayEntry);
+    
+    // Insert the overlay
+    Overlay.of(context).insert(overlayEntry);
+    
+    return wrapper._controller;
+  }
+
+  void _hide() {
+    if (!_isDisposed) {
+      _isDisposed = true;
+      _overlayEntry.remove();
+      if (!_completer.isCompleted) {
+        _completer.complete(SnackBarClosedReason.hide);
+      }
+    }
+  }
+  
+  void _setState(void Function() fn) {
+    // Since we're using an overlay, we need to mark it as dirty
+    if (!_isDisposed) {
+      _overlayEntry.markNeedsBuild();
+      fn();
+    }
+  }
+}
+
+/// The actual ScaffoldFeatureController implementation
+class _CupertinoSnackBarController implements ScaffoldFeatureController<SnackBar, SnackBarClosedReason> {
+  final _CupertinoNotificationController _wrapper;
+  
+  _CupertinoSnackBarController(this._wrapper);
+  
+  @override
+  void Function() get close => _wrapper._hide;
+  
+  @override
+  Future<SnackBarClosedReason> get closed => _wrapper._completer.future;
+
+  @override
+  bool get isDisposed => _wrapper._isDisposed;
+
+  @override
+  Ticker createTicker(TickerCallback onTick) => Ticker(onTick);
+  
+  // ScaffoldFeatureController has setState as a property, not a method
+  @override
+  void Function(void Function()) get setState => _wrapper._setState;
+}
+
+/// iOS-style notification widget
+class _CupertinoNotificationWidget extends StatefulWidget {
+  final String message;
+  final Duration duration;
+  final SnackBarAction? action;
+  final Color? backgroundColor;
+  final Function(SnackBarClosedReason) onDismissed;
+
+  const _CupertinoNotificationWidget({
+    required this.message,
+    required this.duration,
+    required this.onDismissed,
+    this.action,
+    this.backgroundColor,
+  });
+
+  @override
+  State<_CupertinoNotificationWidget> createState() => _CupertinoNotificationWidgetState();
+}
+
+class _CupertinoNotificationWidgetState extends State<_CupertinoNotificationWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  Timer? _dismissTimer;
+  double _dragOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: this,
+    );
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    ));
+    
+    _animationController.forward();
+    
+    // Auto-dismiss after duration
+    _dismissTimer = Timer(widget.duration, () {
+      if (mounted) {
+        _dismiss(SnackBarClosedReason.timeout);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _dismissTimer?.cancel();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _dismiss(SnackBarClosedReason reason) {
+    if (!mounted) return;
+    
+    _animationController.reverse().then((_) {
+      if (mounted) {
+        widget.onDismissed(reason);
+      }
+    });
+  }
+
+  void _handleVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _dragOffset = (_dragOffset + details.delta.dy).clamp(-50, 0);
+    });
+  }
+
+  void _handleVerticalDragEnd(DragEndDetails details) {
+    if (_dragOffset < -20 || details.velocity.pixelsPerSecond.dy < -100) {
+      _dismiss(SnackBarClosedReason.swipe);
+    } else {
+      setState(() {
+        _dragOffset = 0;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final topPadding = mediaQuery.padding.top;
+    
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Transform.translate(
+            offset: Offset(0, _dragOffset),
+            child: GestureDetector(
+              onVerticalDragUpdate: _handleVerticalDragUpdate,
+              onVerticalDragEnd: _handleVerticalDragEnd,
+              onTap: () {
+                if (widget.action != null) {
+                  widget.action!.onPressed();
+                  _dismiss(SnackBarClosedReason.action);
+                }
+              },
+              child: Container(
+                margin: EdgeInsets.only(
+                  top: topPadding + 8,
+                  left: 8,
+                  right: 8,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(13),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: widget.backgroundColor ?? 
+                            CupertinoColors.systemBackground.resolveFrom(context).withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(13),
+                        boxShadow: [
+                          BoxShadow(
+                            color: CupertinoColors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.message,
+                              style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (widget.action != null) ...[
+                            const SizedBox(width: 8),
+                            CupertinoButton(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              onPressed: () {
+                                widget.action!.onPressed();
+                                _dismiss(SnackBarClosedReason.action);
+                              },
+                              child: Text(
+                                widget.action!.label,
+                                style: TextStyle(
+                                  color: CupertinoColors.activeBlue,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
