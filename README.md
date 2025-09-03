@@ -10,6 +10,15 @@
 > 
 > **USE AT YOUR OWN RISK** - This code is provided for educational purposes and inspiration only. It is NOT suitable for production applications. Consider this a reference implementation or starting point for your own framework.
 
+## 📢 Recent Updates
+
+### Dialog System Improvements (Latest)
+- ✅ **Fixed Cupertino dialog width constraints** - Form dialogs now properly respect the `width` parameter on iPad/macOS
+- ✅ **Comprehensive dialog support** - Added `showFormDialog`, `showPageModal`, `showActionSheet`, and `showConfirmationDialog` methods
+- ✅ **Platform-specific behavior** - Cupertino uses full-screen on iPhone, proper width dialogs on iPad/desktop
+- ✅ **Responsive width calculation** - Tablets can now display dialogs at requested width (e.g., 700px)
+- See [Dialog Documentation](docs/ui-systems/dialogs.md) for complete usage guide
+
 A comprehensive Flutter application framework for rapid development with adaptive UI, service architecture, state management, and cloud synchronization capabilities.
 
 ## 🚀 Features

@@ -242,10 +242,10 @@ final confirmed = await ui.showConfirmationDialog(
 ### Cupertino (iOS/macOS)
 - **Form Dialog**: 
   - iPhone: CupertinoPageRoute (full-screen)
-  - iPad/Mac: Custom dialog with iOS styling
+  - iPad/Mac: Custom dialog with proper width support (respects width parameter)
 - **Page Modal**: CupertinoPageScaffold with navigation bar
 - **Action Sheet**: CupertinoActionSheet
-- **Confirmation**: CupertinoAlertDialog
+- **Confirmation**: CupertinoAlertDialog (narrow width for simple alerts)
 
 ### ForUI (Custom Design System)
 - **Form Dialog**: Flat design with 4px border radius
@@ -266,9 +266,11 @@ The dialog system automatically adapts based on screen size:
 
 | Screen Size | Form Dialog Width | Page Modal |
 |------------|-------------------|------------|
-| Mobile | 90% of screen | Full-screen |
-| Tablet | 70% or requested | Dialog |
-| Desktop | Requested or 700px | Dialog |
+| Mobile (<600px) | 90% of screen | Full-screen |
+| Tablet (600-1200px) | Requested width (up to 90% screen) or 70% default | Dialog |
+| Desktop (>1200px) | Requested width or 700px default | Dialog |
+
+> **✅ Fixed:** Cupertino dialogs now properly respect the `width` parameter. Form dialogs can display at full requested width (e.g., 700px) on iPad and desktop, while simple confirmation dialogs continue using narrow `CupertinoAlertDialog` for native iOS appearance.
 
 ### Helper Class
 
@@ -291,6 +293,40 @@ class DialogResponsiveness {
 ```
 
 ## Examples
+
+### Using Proper Dialog Width (Cupertino Fix Applied)
+
+```dart
+// For forms and complex content that needs width
+final result = await ui.showFormDialog<bool>(
+  context: context,
+  title: Text('Settings'),
+  width: 700,  // ✅ This now works properly on iPad/macOS
+  content: Column(
+    children: [
+      ui.listTile(
+        title: Text('Enable Feature'),
+        trailing: ui.switch_(value: enabled, onChanged: (v) => setState(() => enabled = v)),
+      ),
+      ui.textField(label: 'Name', controller: nameController),
+      // ... more form fields
+    ],
+  ),
+  actions: [
+    ui.textButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+    ui.button(label: 'Save', onPressed: () => Navigator.pop(context, true)),
+  ],
+);
+
+// For simple confirmations (uses narrow native dialog)
+final confirmed = await ui.showConfirmationDialog(
+  context: context,
+  title: 'Delete Item?',
+  message: 'This cannot be undone.',
+  confirmText: 'Delete',
+  isDestructive: true,
+);
+```
 
 ### Complex Form with Validation
 
@@ -613,9 +649,12 @@ if (errorMessage != null) {
 - Ensure you're using the correct context (not the app's root context)
 - Check if `useRootNavigator` is set correctly
 
-### Width Not Applying
-- Width only applies on desktop/tablet screens
-- Mobile always uses responsive width (90% of screen)
+### Width Not Applying (FIXED)
+- ✅ **Fixed in latest version**: Cupertino dialogs now properly respect width parameter
+- Width applies on desktop/tablet screens (iPad, macOS, web desktop)
+- Mobile (<600px) always uses full-screen for better UX
+- Use `showFormDialog` with `width` parameter for forms needing more space (e.g., 700px)
+- Simple alerts use `showConfirmationDialog` which maintains narrow native width
 
 ### Scrolling Issues
 - Set `scrollable: true` for long content
