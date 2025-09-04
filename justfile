@@ -208,33 +208,39 @@ version:
 
 # Bump patch version (e.g., 0.3.0 -> 0.3.1)
 release-patch: _release-pre-check
-    @echo "Bumping patch version..."
-    @current_version=$(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2); \
-    major=$(echo $$current_version | cut -d. -f1); \
-    minor=$(echo $$current_version | cut -d. -f2); \
-    patch=$(echo $$current_version | cut -d. -f3); \
-    new_patch=$$((patch + 1)); \
-    new_version="$$major.$$minor.$$new_patch"; \
-    just _do-release $$new_version
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Bumping patch version..."
+    current_version=$(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2)
+    major=$(echo $current_version | cut -d. -f1)
+    minor=$(echo $current_version | cut -d. -f2)
+    patch=$(echo $current_version | cut -d. -f3)
+    new_patch=$((patch + 1))
+    new_version="$major.$minor.$new_patch"
+    just _do-release $new_version
 
 # Bump minor version (e.g., 0.3.0 -> 0.4.0)
 release-minor: _release-pre-check
-    @echo "Bumping minor version..."
-    @current_version=$(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2); \
-    major=$(echo $$current_version | cut -d. -f1); \
-    minor=$(echo $$current_version | cut -d. -f2); \
-    new_minor=$$((minor + 1)); \
-    new_version="$$major.$$new_minor.0"; \
-    just _do-release $$new_version
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Bumping minor version..."
+    current_version=$(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2)
+    major=$(echo $current_version | cut -d. -f1)
+    minor=$(echo $current_version | cut -d. -f2)
+    new_minor=$((minor + 1))
+    new_version="$major.$new_minor.0"
+    just _do-release $new_version
 
 # Bump major version (e.g., 0.3.0 -> 1.0.0)
 release-major: _release-pre-check
-    @echo "Bumping major version..."
-    @current_version=$(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2); \
-    major=$(echo $$current_version | cut -d. -f1); \
-    new_major=$$((major + 1)); \
-    new_version="$$new_major.0.0"; \
-    just _do-release $$new_version
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Bumping major version..."
+    current_version=$(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2)
+    major=$(echo $current_version | cut -d. -f1)
+    new_major=$((major + 1))
+    new_version="$new_major.0.0"
+    just _do-release $new_version
 
 # Create a release with a custom version
 release-custom VERSION: _release-pre-check
