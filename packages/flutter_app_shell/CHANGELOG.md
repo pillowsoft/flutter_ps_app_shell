@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0 - 2025-09-04
+
+### Added
+- **Release Management**: Comprehensive release workflow with semantic versioning commands (`release-patch`, `release-minor`, `release-major`)
+- **Automated Changelog**: Auto-generation of CHANGELOG templates for new releases
+- **Version Tagging**: Git tag creation and management for stable version references
+
+### Changed
+- **Justfile Improvements**: Enhanced with release automation, version tracking, and tag management commands
+
+### Fixed
+- **Shell Syntax**: Corrected bash variable expansion in justfile release commands for cross-platform compatibility
+
+
 ## 0.3.0 - 2024-12-10
 
 ### Bug Fixes
