@@ -1434,12 +1434,16 @@ class MaterialWidgetFactory extends AdaptiveWidgetFactory {
       useRootNavigator: useRootNavigator,
       builder: (BuildContext dialogContext) {
         final screenSize = MediaQuery.of(dialogContext).size;
-        final dialogWidth = DialogResponsiveness.getDialogWidth(dialogContext, requested: width);
-        final dialogMaxHeight = DialogResponsiveness.getDialogMaxHeight(dialogContext, requested: maxHeight);
+        final dialogWidth = DialogResponsiveness.getDialogWidth(dialogContext,
+            requested: width);
+        final dialogMaxHeight = DialogResponsiveness.getDialogMaxHeight(
+            dialogContext,
+            requested: maxHeight);
 
         return material.Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28), // Material 3 large rounding
+            borderRadius:
+                BorderRadius.circular(28), // Material 3 large rounding
           ),
           clipBehavior: material.Clip.antiAlias,
           child: material.Container(
@@ -1511,7 +1515,8 @@ class MaterialWidgetFactory extends AdaptiveWidgetFactory {
           builder: (routeContext) => material.Scaffold(
             appBar: material.AppBar(
               title: material.Text(title),
-              leading: leading ?? (showCloseButton ? const material.CloseButton() : null),
+              leading: leading ??
+                  (showCloseButton ? const material.CloseButton() : null),
             ),
             body: builder(routeContext),
             bottomNavigationBar: actions != null
@@ -1586,7 +1591,9 @@ class MaterialWidgetFactory extends AdaptiveWidgetFactory {
 
               return material.ListTile(
                 enabled: action.enabled,
-                leading: action.icon != null ? Icon(action.icon, color: color) : null,
+                leading: action.icon != null
+                    ? Icon(action.icon, color: color)
+                    : null,
                 title: material.Text(
                   action.label,
                   style: TextStyle(

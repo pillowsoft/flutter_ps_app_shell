@@ -2230,7 +2230,7 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
   }) {
     final screenSize = MediaQuery.of(context).size;
     final isSmallScreen = screenSize.width < 600;
-    
+
     Widget dialogContent = content;
     if (scrollable) {
       dialogContent = SingleChildScrollView(
@@ -2258,8 +2258,8 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
             side: const BorderSide(color: _borderColor, width: 1),
           ),
           child: Container(
-            width: isSmallScreen 
-                ? screenSize.width * 0.9 
+            width: isSmallScreen
+                ? screenSize.width * 0.9
                 : (width ?? DialogResponsiveness.getDialogWidth(context)),
             constraints: BoxConstraints(
               maxWidth: isSmallScreen ? screenSize.width * 0.9 : (width ?? 700),
@@ -2334,7 +2334,7 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
     bool showCloseButton = true,
   }) {
     final isMobile = DialogResponsiveness.isMobile(context);
-    
+
     if (isMobile && fullscreenOnMobile) {
       // Full-screen modal for mobile
       return Navigator.of(context, rootNavigator: true).push<T>(
@@ -2350,12 +2350,13 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
               shape: const Border(
                 bottom: BorderSide(color: _borderColor, width: 1),
               ),
-              leading: leading ?? (showCloseButton
-                  ? IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    )
-                  : null),
+              leading: leading ??
+                  (showCloseButton
+                      ? IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(context).pop(),
+                        )
+                      : null),
               actions: actions,
             ),
             body: builder(context),
@@ -2385,7 +2386,8 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
               children: [
                 // Title bar
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: const BoxDecoration(
                     border: Border(
                       bottom: BorderSide(color: _borderColor, width: 1),
@@ -2411,7 +2413,8 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
                         ...actions
                       else if (showCloseButton)
                         IconButton(
-                          icon: const Icon(Icons.close, color: _mutedForeground),
+                          icon:
+                              const Icon(Icons.close, color: _mutedForeground),
                           onPressed: () => Navigator.of(dialogContext).pop(),
                         ),
                     ],
@@ -2488,13 +2491,14 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
               ...actions.map((action) {
                 final isDestructive = action.isDestructive;
                 final isDefault = action.isDefault;
-                
+
                 return InkWell(
                   onTap: action.enabled
                       ? () => Navigator.of(sheetContext).pop(action.value)
                       : null,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 20),
                     child: Row(
                       children: [
                         if (action.icon != null) ...[
@@ -2503,7 +2507,9 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
                             size: 20,
                             color: isDestructive
                                 ? Colors.red
-                                : (action.enabled ? _primaryColor : _mutedForeground),
+                                : (action.enabled
+                                    ? _primaryColor
+                                    : _mutedForeground),
                           ),
                           const SizedBox(width: 12),
                         ],
@@ -2514,8 +2520,12 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
                               fontSize: 16,
                               color: isDestructive
                                   ? Colors.red
-                                  : (action.enabled ? _primaryColor : _mutedForeground),
-                              fontWeight: isDefault ? FontWeight.w600 : FontWeight.normal,
+                                  : (action.enabled
+                                      ? _primaryColor
+                                      : _mutedForeground),
+                              fontWeight: isDefault
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
                           ),
                         ),
@@ -2630,7 +2640,8 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
                       onPressed: () => Navigator.of(dialogContext).pop(true),
                       style: isDestructive
                           ? ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all(Colors.red),
+                              backgroundColor:
+                                  WidgetStateProperty.all(Colors.red),
                             )
                           : null,
                     ),

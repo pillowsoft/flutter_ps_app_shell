@@ -1721,7 +1721,8 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
                       child: const Text('Done'),
                       onPressed: () {
                         // Trigger the first action if available
-                        if (actions.isNotEmpty && actions.first is CupertinoButton) {
+                        if (actions.isNotEmpty &&
+                            actions.first is CupertinoButton) {
                           (actions.first as CupertinoButton).onPressed?.call();
                         }
                       },
@@ -1744,8 +1745,10 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
       );
     } else {
       // Custom dialog for iPad/macOS
-      final dialogWidth = DialogResponsiveness.getDialogWidth(context, requested: width);
-      final dialogMaxHeight = DialogResponsiveness.getDialogMaxHeight(context, requested: maxHeight);
+      final dialogWidth =
+          DialogResponsiveness.getDialogWidth(context, requested: width);
+      final dialogMaxHeight = DialogResponsiveness.getDialogMaxHeight(context,
+          requested: maxHeight);
 
       return showCupertinoDialog<T>(
         context: context,
@@ -1758,7 +1761,8 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
               maxHeight: dialogMaxHeight,
             ),
             decoration: BoxDecoration(
-              color: CupertinoColors.systemBackground.resolveFrom(dialogContext),
+              color:
+                  CupertinoColors.systemBackground.resolveFrom(dialogContext),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -1778,24 +1782,30 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
                     Container(
                       height: 44,
                       decoration: BoxDecoration(
-                        color: CupertinoColors.systemBackground.resolveFrom(dialogContext),
+                        color: CupertinoColors.systemBackground
+                            .resolveFrom(dialogContext),
                         border: Border(
                           bottom: BorderSide(
-                            color: CupertinoColors.separator.resolveFrom(dialogContext),
+                            color: CupertinoColors.separator
+                                .resolveFrom(dialogContext),
                             width: 0.5,
                           ),
                         ),
                       ),
                       child: NavigationToolbar(
                         middle: DefaultTextStyle(
-                          style: CupertinoTheme.of(dialogContext).textTheme.navTitleTextStyle,
+                          style: CupertinoTheme.of(dialogContext)
+                              .textTheme
+                              .navTitleTextStyle,
                           child: title,
                         ),
                         trailing: barrierDismissible
                             ? CupertinoButton(
                                 padding: EdgeInsets.zero,
-                                child: const Icon(CupertinoIcons.xmark_circle_fill),
-                                onPressed: () => Navigator.of(dialogContext).pop(),
+                                child: const Icon(
+                                    CupertinoIcons.xmark_circle_fill),
+                                onPressed: () =>
+                                    Navigator.of(dialogContext).pop(),
                               )
                             : null,
                       ),
@@ -1804,11 +1814,13 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
                     Expanded(
                       child: scrollable
                           ? SingleChildScrollView(
-                              padding: contentPadding ?? const EdgeInsets.all(20),
+                              padding:
+                                  contentPadding ?? const EdgeInsets.all(20),
                               child: content,
                             )
                           : Padding(
-                              padding: contentPadding ?? const EdgeInsets.all(20),
+                              padding:
+                                  contentPadding ?? const EdgeInsets.all(20),
                               child: content,
                             ),
                     ),
@@ -1818,7 +1830,8 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
                         decoration: BoxDecoration(
                           border: Border(
                             top: BorderSide(
-                              color: CupertinoColors.separator.resolveFrom(dialogContext),
+                              color: CupertinoColors.separator
+                                  .resolveFrom(dialogContext),
                               width: 0.5,
                             ),
                           ),
@@ -1995,7 +2008,8 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
 /// iOS-style notification controller wrapper that acts like ScaffoldFeatureController
 class _CupertinoNotificationController {
   final OverlayEntry _overlayEntry;
-  final Completer<SnackBarClosedReason> _completer = Completer<SnackBarClosedReason>();
+  final Completer<SnackBarClosedReason> _completer =
+      Completer<SnackBarClosedReason>();
   bool _isDisposed = false;
   late final _controller = _CupertinoSnackBarController(this);
 
@@ -2011,7 +2025,7 @@ class _CupertinoNotificationController {
   }) {
     late OverlayEntry overlayEntry;
     late _CupertinoNotificationController wrapper;
-    
+
     overlayEntry = OverlayEntry(
       builder: (context) => _CupertinoNotificationWidget(
         message: message,
@@ -2028,12 +2042,12 @@ class _CupertinoNotificationController {
         },
       ),
     );
-    
+
     wrapper = _CupertinoNotificationController._(overlayEntry: overlayEntry);
-    
+
     // Insert the overlay
     Overlay.of(context).insert(overlayEntry);
-    
+
     return wrapper._controller;
   }
 
@@ -2046,7 +2060,7 @@ class _CupertinoNotificationController {
       }
     }
   }
-  
+
   void _setState(void Function() fn) {
     // Since we're using an overlay, we need to mark it as dirty
     if (!_isDisposed) {
@@ -2057,14 +2071,15 @@ class _CupertinoNotificationController {
 }
 
 /// The actual ScaffoldFeatureController implementation
-class _CupertinoSnackBarController implements ScaffoldFeatureController<SnackBar, SnackBarClosedReason> {
+class _CupertinoSnackBarController
+    implements ScaffoldFeatureController<SnackBar, SnackBarClosedReason> {
   final _CupertinoNotificationController _wrapper;
-  
+
   _CupertinoSnackBarController(this._wrapper);
-  
+
   @override
   void Function() get close => _wrapper._hide;
-  
+
   @override
   Future<SnackBarClosedReason> get closed => _wrapper._completer.future;
 
@@ -2073,7 +2088,7 @@ class _CupertinoSnackBarController implements ScaffoldFeatureController<SnackBar
 
   @override
   Ticker createTicker(TickerCallback onTick) => Ticker(onTick);
-  
+
   // ScaffoldFeatureController has setState as a property, not a method
   @override
   void Function(void Function()) get setState => _wrapper._setState;
@@ -2096,10 +2111,12 @@ class _CupertinoNotificationWidget extends StatefulWidget {
   });
 
   @override
-  State<_CupertinoNotificationWidget> createState() => _CupertinoNotificationWidgetState();
+  State<_CupertinoNotificationWidget> createState() =>
+      _CupertinoNotificationWidgetState();
 }
 
-class _CupertinoNotificationWidgetState extends State<_CupertinoNotificationWidget>
+class _CupertinoNotificationWidgetState
+    extends State<_CupertinoNotificationWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
@@ -2110,12 +2127,12 @@ class _CupertinoNotificationWidgetState extends State<_CupertinoNotificationWidg
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 350),
       vsync: this,
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, -1),
       end: Offset.zero,
@@ -2123,7 +2140,7 @@ class _CupertinoNotificationWidgetState extends State<_CupertinoNotificationWidg
       parent: _animationController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0,
       end: 1,
@@ -2131,9 +2148,9 @@ class _CupertinoNotificationWidgetState extends State<_CupertinoNotificationWidg
       parent: _animationController,
       curve: Curves.easeIn,
     ));
-    
+
     _animationController.forward();
-    
+
     // Auto-dismiss after duration
     _dismissTimer = Timer(widget.duration, () {
       if (mounted) {
@@ -2151,7 +2168,7 @@ class _CupertinoNotificationWidgetState extends State<_CupertinoNotificationWidg
 
   void _dismiss(SnackBarClosedReason reason) {
     if (!mounted) return;
-    
+
     _animationController.reverse().then((_) {
       if (mounted) {
         widget.onDismissed(reason);
@@ -2179,7 +2196,7 @@ class _CupertinoNotificationWidgetState extends State<_CupertinoNotificationWidg
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final topPadding = mediaQuery.padding.top;
-    
+
     return Positioned(
       top: 0,
       left: 0,
@@ -2215,8 +2232,10 @@ class _CupertinoNotificationWidgetState extends State<_CupertinoNotificationWidg
                         vertical: 14,
                       ),
                       decoration: BoxDecoration(
-                        color: widget.backgroundColor ?? 
-                            CupertinoColors.systemBackground.resolveFrom(context).withValues(alpha: 0.95),
+                        color: widget.backgroundColor ??
+                            CupertinoColors.systemBackground
+                                .resolveFrom(context)
+                                .withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(13),
                         boxShadow: [
                           BoxShadow(
@@ -2231,16 +2250,20 @@ class _CupertinoNotificationWidgetState extends State<_CupertinoNotificationWidg
                           Expanded(
                             child: Text(
                               widget.message,
-                              style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: CupertinoTheme.of(context)
+                                  .textTheme
+                                  .textStyle
+                                  .copyWith(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                           ),
                           if (widget.action != null) ...[
                             const SizedBox(width: 8),
                             CupertinoButton(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
                               onPressed: () {
                                 widget.action!.onPressed();
                                 _dismiss(SnackBarClosedReason.action);

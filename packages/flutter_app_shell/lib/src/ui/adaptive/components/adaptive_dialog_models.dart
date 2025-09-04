@@ -55,7 +55,8 @@ class DialogResponsiveness {
     } else if (screenWidth < 1200) {
       // Tablet: use requested width if provided, otherwise 70% of screen
       if (requested != null) {
-        return min(requested, screenWidth * 0.9); // Allow requested width but cap at 90% screen
+        return min(requested,
+            screenWidth * 0.9); // Allow requested width but cap at 90% screen
       }
       return min(700, screenWidth * 0.7);
     } else {

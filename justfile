@@ -196,6 +196,95 @@ info:
     cd example && flutter pub deps --no-dev
 
 # =====================================
+# Release Management
+# =====================================
+
+# Show current version
+version:
+    @echo "Current version: $(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2)"
+    @echo ""
+    @echo "Recent tags:"
+    @git tag --list --sort=-version:refname | head -10
+
+# Bump patch version (e.g., 0.3.0 -> 0.3.1)
+release-patch: _release-pre-check
+    @echo "Bumping patch version..."
+    @current_version=$(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2); \
+    major=$(echo $$current_version | cut -d. -f1); \
+    minor=$(echo $$current_version | cut -d. -f2); \
+    patch=$(echo $$current_version | cut -d. -f3); \
+    new_patch=$$((patch + 1)); \
+    new_version="$$major.$$minor.$$new_patch"; \
+    just _do-release $$new_version
+
+# Bump minor version (e.g., 0.3.0 -> 0.4.0)
+release-minor: _release-pre-check
+    @echo "Bumping minor version..."
+    @current_version=$(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2); \
+    major=$(echo $$current_version | cut -d. -f1); \
+    minor=$(echo $$current_version | cut -d. -f2); \
+    new_minor=$$((minor + 1)); \
+    new_version="$$major.$$new_minor.0"; \
+    just _do-release $$new_version
+
+# Bump major version (e.g., 0.3.0 -> 1.0.0)
+release-major: _release-pre-check
+    @echo "Bumping major version..."
+    @current_version=$(grep '^version:' packages/flutter_app_shell/pubspec.yaml | cut -d' ' -f2); \
+    major=$(echo $$current_version | cut -d. -f1); \
+    new_major=$$((major + 1)); \
+    new_version="$$new_major.0.0"; \
+    just _do-release $$new_version
+
+# Create a release with a custom version
+release-custom VERSION: _release-pre-check
+    @echo "Setting custom version: {{VERSION}}"
+    @just _do-release {{VERSION}}
+
+# Private recipe: Check prerequisites before release
+_release-pre-check:
+    @echo "Checking release prerequisites..."
+    @git diff --quiet || (echo "❌ Working directory has uncommitted changes!" && exit 1)
+    @git diff --cached --quiet || (echo "❌ Index has staged changes!" && exit 1)
+    @echo "✅ Working directory is clean"
+
+# Private recipe: Execute the release
+_do-release VERSION:
+    @echo "📦 Creating release v{{VERSION}}"
+    @echo ""
+    
+    # Update version in pubspec.yaml
+    @sed -i.bak 's/^version: .*/version: {{VERSION}}/' packages/flutter_app_shell/pubspec.yaml && rm packages/flutter_app_shell/pubspec.yaml.bak
+    @echo "✅ Updated pubspec.yaml to version {{VERSION}}"
+    
+    # Update CHANGELOG.md
+    @echo "" && echo "📝 Please update CHANGELOG.md with release notes for v{{VERSION}}"
+    @echo "Press Enter to open CHANGELOG.md in your editor (or Ctrl+C to cancel)..."
+    @read _
+    @${EDITOR:-nano} packages/flutter_app_shell/CHANGELOG.md
+    
+    # Commit changes
+    @git add packages/flutter_app_shell/pubspec.yaml packages/flutter_app_shell/CHANGELOG.md
+    @git commit -m "chore: release v{{VERSION}}" || true
+    
+    # Create and push tag
+    @git tag -a "v{{VERSION}}" -m "Release v{{VERSION}}"
+    @echo "✅ Created tag v{{VERSION}}"
+    
+    @echo ""
+    @echo "🎉 Release v{{VERSION}} prepared successfully!"
+    @echo ""
+    @echo "To push the release to GitHub, run:"
+    @echo "  git push origin main"
+    @echo "  git push origin v{{VERSION}}"
+    @echo ""
+    @echo "Other projects can now depend on this version using:"
+    @echo "  flutter_app_shell:"
+    @echo "    git:"
+    @echo "      url: https://github.com/yourusername/flutter_ps_app_shell"
+    @echo "      ref: v{{VERSION}}"
+
+# =====================================
 # Cloudflare Workers Integration
 # =====================================
 
