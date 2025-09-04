@@ -93,7 +93,7 @@ class AppShell extends StatelessWidget {
           'uiSystem=${settingsStore.uiSystem.value}');
 
       final scaffoldContent = ui.scaffold(
-        appBar: _buildAppBar(context, isWideScreen, useMobileDrawer),
+        appBar: _buildAppBar(context, isWideScreen, useMobileDrawer, useBottomNav: useBottomNav),
         drawer: drawer,
         bottomNavBar: bottomNavBar,
         body: Row(
@@ -139,7 +139,7 @@ class AppShell extends StatelessWidget {
   }
 
   Widget _buildAppBar(
-      BuildContext context, bool isWideScreen, bool useMobileDrawer) {
+      BuildContext context, bool isWideScreen, bool useMobileDrawer, {bool? useBottomNav}) {
     final settingsStore = GetIt.I<AppShellSettingsStore>();
     final ui = getAdaptiveFactory(context);
     final actions = <Widget>[
@@ -153,7 +153,7 @@ class AppShell extends StatelessWidget {
 
     final screenWidth = MediaQuery.of(context).size.width;
     AppShellLogger.i(
-        'AppShell._buildAppBar: screenWidth=$screenWidth, isWideScreen=$isWideScreen, useMobileDrawer=$useMobileDrawer, hideDrawer=$hideDrawer');
+        'AppShell._buildAppBar: screenWidth=$screenWidth, isWideScreen=$isWideScreen, useMobileDrawer=$useMobileDrawer, useBottomNav=$useBottomNav, hideDrawer=$hideDrawer');
 
     if (useMobileDrawer && !hideDrawer) {
       final router = GoRouter.of(context);
@@ -219,6 +219,68 @@ class AppShell extends StatelessWidget {
         // Material/ForUI handle drawer automatically
         AppShellLogger.i(
             'AppShell._buildAppBar: Using framework drawer button (${ui.runtimeType})');
+        leading = null;
+        automaticallyImplyLeading = true;
+      }
+    } else if (useBottomNav == true && !hideDrawer) {
+      // Back button logic for bottom navigation mode (≤5 visible routes)
+      final router = GoRouter.of(context);
+      final canPop = router.canPop();
+      final routerState = GoRouterState.of(context);
+      final currentPath = routerState.uri.path;
+
+      // Alternative check: see if we're on a nested route (contains more than 1 path segments)
+      final pathSegments =
+          currentPath.split('/').where((s) => s.isNotEmpty).toList();
+      final isNestedRoute = pathSegments.length > 1;
+
+      AppShellLogger.i(
+          'AppShell._buildAppBar: Bottom navigation mode - canPop=$canPop, currentPath="$currentPath", pathSegments=$pathSegments, isNestedRoute=$isNestedRoute');
+
+      // Use canPop() as primary check, but fall back to path-based detection for ShellRoute issues
+      final shouldShowBackButton = canPop || isNestedRoute;
+
+      if (shouldShowBackButton) {
+        // Navigation history exists or we're on a nested route - show back button
+        AppShellLogger.i(
+            'AppShell._buildAppBar: Bottom nav using back button (canPop=$canPop, isNestedRoute=$isNestedRoute)');
+
+        // For Cupertino, we need to explicitly create a back button when using ShellRoute
+        // because automaticallyImplyLeading doesn't work reliably in this context
+        if (ui.runtimeType.toString() == 'CupertinoWidgetFactory') {
+          leading = ui.iconButton(
+            icon: const Icon(Icons.arrow_back_ios),
+            onPressed: () {
+              if (GoRouter.of(context).canPop()) {
+                GoRouter.of(context).pop();
+              } else {
+                // Fallback: navigate back to parent route
+                final pathSegments =
+                    currentPath.split('/').where((s) => s.isNotEmpty).toList();
+                if (pathSegments.length > 1) {
+                  pathSegments.removeLast();
+                  final parentPath = '/${pathSegments.join('/')}';
+                  AppShellLogger.i(
+                      'AppShell._buildAppBar: Bottom nav fallback navigation to parent: $parentPath');
+                  GoRouter.of(context).go(parentPath);
+                }
+              }
+            },
+          );
+          automaticallyImplyLeading = false;
+          AppShellLogger.i(
+              'AppShell._buildAppBar: Bottom nav using explicit Cupertino back button');
+        } else {
+          // Material and ForUI can use automatic back button
+          leading = null;
+          automaticallyImplyLeading = true;
+          AppShellLogger.i(
+              'AppShell._buildAppBar: Bottom nav using automatic ${ui.runtimeType} back button');
+        }
+      } else {
+        // No navigation history and not on nested route - no back button needed
+        AppShellLogger.i(
+            'AppShell._buildAppBar: Bottom nav on root route (no back button needed)');
         leading = null;
         automaticallyImplyLeading = true;
       }
