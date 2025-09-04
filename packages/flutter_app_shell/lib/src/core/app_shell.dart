@@ -41,9 +41,10 @@ class AppShell extends StatelessWidget {
       final isVeryWideScreen = MediaQuery.of(context).size.width > 1200;
       final sidebarCollapsed = settingsStore.sidebarCollapsed.value;
 
-      // Determine navigation style based on screen size and route count
-      final useBottomNav = !isWideScreen && routes.length <= 5;
-      final useMobileDrawer = !isWideScreen && routes.length > 5;
+      // Determine navigation style based on screen size and visible route count
+      final visibleRoutes = routes.where((route) => route.showInNavigation).toList();
+      final useBottomNav = !isWideScreen && visibleRoutes.length <= 5;
+      final useMobileDrawer = !isWideScreen && visibleRoutes.length > 5;
       final useRail = isWideScreen && !isVeryWideScreen;
       final useSidebar = isVeryWideScreen;
 
@@ -104,7 +105,7 @@ class AppShell extends StatelessWidget {
           ],
         ),
         bottomNavBar: useBottomNav && !hideDrawer
-            ? _buildBottomNavigation(context, ui)
+            ? _buildBottomNavigation(context, ui, visibleRoutes)
             : null,
       );
 
@@ -324,12 +325,10 @@ class AppShell extends StatelessWidget {
   }
 
   Widget _buildBottomNavigation(
-      BuildContext context, AdaptiveWidgetFactory ui) {
+      BuildContext context, AdaptiveWidgetFactory ui, List<AppRoute> visibleRoutes) {
     final currentPath = GoRouterState.of(context).uri.path;
 
-    // Only use visible routes for index calculation to match bottom nav filtering
-    final visibleRoutes =
-        routes.where((route) => route.showInNavigation).toList();
+    // Use pre-calculated visible routes to avoid duplicate filtering
     final currentIndex =
         visibleRoutes.indexWhere((route) => route.path == currentPath);
 

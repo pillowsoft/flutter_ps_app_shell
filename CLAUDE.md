@@ -222,6 +222,8 @@ The framework aims to provide:
 - Service-oriented architecture with GetIt dependency injection  
 - NavigationService, LoggingService, AppShellSettingsStore
 - Responsive navigation (bottom tabs → rail → sidebar)
+- **Fixed Navigation Threshold Logic**: Correctly counts only visible routes (≤5 for bottom tabs)
+- **Enhanced Hidden Routes**: Routes accessible via code but not shown in navigation
 - Signals-based reactive state management
 
 ### Phase 2: Adaptive UI System ✅ COMPLETED  
@@ -550,6 +552,88 @@ switch (uiSystem) {
     return MaterialPage(key: state.pageKey, child: child);
 }
 ```
+
+## Navigation Threshold Logic & Hidden Routes
+
+The Flutter App Shell includes sophisticated navigation threshold logic and hidden routes functionality that was recently enhanced to fix critical bugs and improve usability.
+
+### ✅ Fixed Navigation Threshold Logic
+
+**Problem**: Apps were showing drawer navigation instead of bottom tabs because the logic was counting ALL routes (including hidden ones) instead of only visible routes.
+
+**Solution**: Updated logic in `app_shell.dart:45-49` to correctly count only visible routes:
+
+```dart
+// ✅ CORRECT: Only counts routes that appear in navigation
+final visibleRoutes = routes.where((route) => route.showInNavigation).toList();
+final useBottomNav = !isWideScreen && visibleRoutes.length <= 5;
+final useMobileDrawer = !isWideScreen && visibleRoutes.length > 5;
+```
+
+**Before (buggy)**:
+```dart
+// ❌ INCORRECT: Counted all routes including hidden ones  
+final useBottomNav = !isWideScreen && routes.length <= 5;
+```
+
+### ✅ Enhanced Hidden Routes Support
+
+Hidden routes allow you to create workflow screens, camera interfaces, checkout flows, and other screens that should be accessible via code but not appear in navigation:
+
+```dart
+AppRoute(
+  title: 'Camera',
+  path: '/camera',
+  icon: Icons.camera,
+  builder: (context, state) => const CameraScreen(),
+  showInNavigation: false, // Hidden from navigation UI
+),
+
+// Still accessible via code:
+onPressed: () => context.push('/camera'),
+```
+
+**Use Cases**:
+- Camera/photo capture screens
+- Checkout and payment flows  
+- Onboarding and wizard steps
+- Modal workflows
+- Detail screens that shouldn't appear as main navigation
+
+### ✅ AppShellAction Navigation Improvements
+
+Enhanced `AppShellAction` with three navigation patterns:
+
+```dart
+// 1. Declarative route navigation (simplest)
+AppShellAction.route(
+  icon: Icons.settings,
+  tooltip: 'Settings',
+  route: '/settings',
+)
+
+// 2. Context-aware navigation (flexible)
+AppShellAction.navigate(
+  icon: Icons.person,
+  tooltip: 'Profile', 
+  onNavigate: (context) => context.go('/profile'),
+)
+
+// 3. Traditional callback (backward compatible)
+AppShellAction.callback(
+  icon: Icons.notifications,
+  tooltip: 'Notifications',
+  onPressed: () => showNotifications(),
+)
+```
+
+### ✅ Responsive Navigation Demo
+
+Created comprehensive demo screen at `/responsive-navigation` showing:
+- Real-time navigation type analysis
+- Screen width and breakpoint detection
+- Interactive hidden routes demo
+- Navigation threshold logic explanation
 
 ## Large Title Features
 

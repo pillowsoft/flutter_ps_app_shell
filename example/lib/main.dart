@@ -28,6 +28,7 @@ import 'features/navigation_demo/navigation_demo_screen.dart';
 import 'features/navigation_demo/detail_screen.dart';
 import 'features/navigation_demo/nested_screen.dart';
 import 'features/action_demo/action_navigation_demo_screen.dart';
+import 'features/responsive_nav_demo/responsive_navigation_demo_screen.dart';
 
 /// UI System selector widget for the app bar
 class UISystemSelector extends StatelessWidget {
@@ -328,6 +329,14 @@ void main() {
             path: '/action-navigation',
             icon: Icons.touch_app,
             builder: (context, state) => const ActionNavigationDemoScreen(),
+          ),
+          // Hidden route example - accessible via code but not shown in navigation
+          AppRoute(
+            title: 'Responsive Navigation',
+            path: '/responsive-navigation',
+            icon: Icons.phone_android,
+            builder: (context, state) => const ResponsiveNavigationDemoScreen(),
+            showInNavigation: false, // This demonstrates hidden routes!
           ),
         ],
         actions: [

@@ -147,6 +147,10 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                   text: 'Replace with Home (No Back Button)',
                   onPressed: () => context.replace('/'),
                 ),
+                ui.filledButton(
+                  text: 'Hidden Route Demo',
+                  onPressed: () => context.push('/responsive-navigation'),
+                ),
               ],
             ),
           ),

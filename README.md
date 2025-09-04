@@ -12,12 +12,18 @@
 
 ## 📢 Recent Updates
 
-### Dialog System Improvements (Latest)
+### Navigation System Improvements (Latest)
+- ✅ **Fixed bottom navigation threshold logic** - Apps now correctly show bottom tabs when ≤5 visible routes (was counting hidden routes)
+- ✅ **Enhanced hidden routes support** - Routes accessible via code but not shown in navigation using `showInNavigation: false`
+- ✅ **Improved AppShellAction navigation** - Context-aware navigation with declarative routes and backward compatibility
+- ✅ **Comprehensive navigation demo** - Interactive screen showing responsive behavior and hidden routes
+- ✅ **Better drawer detection** - Mobile apps with >5 visible routes automatically use drawer navigation
+
+### Dialog System Improvements
 - ✅ **Fixed Cupertino dialog width constraints** - Form dialogs now properly respect the `width` parameter on iPad/macOS
 - ✅ **Comprehensive dialog support** - Added `showFormDialog`, `showPageModal`, `showActionSheet`, and `showConfirmationDialog` methods
 - ✅ **Platform-specific behavior** - Cupertino uses full-screen on iPhone, proper width dialogs on iPad/desktop
 - ✅ **Responsive width calculation** - Tablets can now display dialogs at requested width (e.g., 700px)
-- See [Dialog Documentation](docs/ui-systems/dialogs.md) for complete usage guide
 
 A comprehensive Flutter application framework for rapid development with adaptive UI, service architecture, state management, and cloud synchronization capabilities.
 
@@ -37,9 +43,10 @@ A comprehensive Flutter application framework for rapid development with adaptiv
 - **Service-Oriented Architecture** - Modular services with dependency injection via GetIt
 - **Reactive State Management** - Built on Signals for efficient, granular updates
 - **Responsive Navigation** - Adaptive layout system with platform-aware transitions:
-  - Mobile (<600px): Bottom tabs (≤5 routes) or drawer (>5 routes)
+  - Mobile (<600px): Bottom tabs (≤5 visible routes) or drawer (>5 visible routes)
   - Tablet (600-1200px): Navigation rail with collapsible labels
   - Desktop (>1200px): Full sidebar with expand/collapse
+  - **Hidden Routes**: Routes accessible via code but not shown in navigation (`showInNavigation: false`)
   - **Platform Transitions**: iOS sliding in Cupertino, Material transitions in Material/ForUI
   - **Smart Back Button Detection**: Reliable back button appearance on nested routes
   - **Authentic iOS Feel**: Proper sliding animations and back button behavior
@@ -145,6 +152,14 @@ void main() {
           path: '/',
           icon: Icons.home,
           builder: (context, state) => const HomeScreen(),
+        ),
+        // Hidden route example - accessible via context.push('/camera') but not shown in navigation
+        AppRoute(
+          title: 'Camera',
+          path: '/camera',
+          icon: Icons.camera,
+          builder: (context, state) => const CameraScreen(),
+          showInNavigation: false, // Hide from navigation UI
         ),
       ],
     );
