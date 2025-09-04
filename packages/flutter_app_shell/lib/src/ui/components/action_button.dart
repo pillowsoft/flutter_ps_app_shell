@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/app_shell_action.dart';
+import '../../utils/logger.dart';
 
 class ActionButton extends StatelessWidget {
   final AppShellAction action;
@@ -23,13 +25,54 @@ class ActionButton extends StatelessWidget {
     return Tooltip(
       message: action.tooltip,
       child: IconButton(
-        onPressed: action.onPressed,
+        onPressed: () => _handlePress(context),
         icon: Icon(
           action.icon,
           size: 20,
         ),
       ),
     );
+  }
+
+  void _handlePress(BuildContext context) {
+    try {
+      // Priority: route > onNavigate > onPressed
+      if (action.route != null) {
+        _handleRouteNavigation(context, action.route!);
+      } else if (action.onNavigate != null) {
+        AppShellLogger.i('ActionButton: Executing context-aware navigation for ${action.tooltip}');
+        action.onNavigate!(context);
+      } else if (action.onPressed != null) {
+        AppShellLogger.i('ActionButton: Executing callback for ${action.tooltip}');
+        action.onPressed!();
+      } else {
+        AppShellLogger.w('ActionButton: No action defined for ${action.tooltip}');
+      }
+    } catch (e, stackTrace) {
+      AppShellLogger.e('ActionButton: Error handling press for ${action.tooltip}', e, stackTrace);
+      // Don't rethrow - just log and continue
+    }
+  }
+
+  void _handleRouteNavigation(BuildContext context, String route) {
+    try {
+      final router = GoRouter.of(context);
+      if (action.useReplace) {
+        AppShellLogger.i('ActionButton: Replacing route to $route');
+        router.replace(route);
+      } else {
+        AppShellLogger.i('ActionButton: Navigating to route $route');
+        router.go(route);
+      }
+    } catch (e, stackTrace) {
+      AppShellLogger.e('ActionButton: Error navigating to route $route', e, stackTrace);
+      // Fallback: try using Navigator if GoRouter fails
+      try {
+        Navigator.of(context).pushNamed(route);
+      } catch (fallbackError) {
+        AppShellLogger.e('ActionButton: Fallback navigation also failed for $route', fallbackError);
+      }
+    }
   }
 }
 
@@ -66,15 +109,52 @@ class _ToggleActionButtonState extends State<ToggleActionButton> {
     return Tooltip(
       message: currentTooltip,
       child: IconButton(
-        onPressed: () {
-          setState(() {
-            isToggled = !isToggled;
-          });
-          widget.action.onToggle?.call(isToggled);
-          widget.action.onPressed();
-        },
+        onPressed: () => _handleTogglePress(context),
         icon: Icon(currentIcon),
       ),
     );
+  }
+
+  void _handleTogglePress(BuildContext context) {
+    try {
+      setState(() {
+        isToggled = !isToggled;
+      });
+      widget.action.onToggle?.call(isToggled);
+      
+      // Handle navigation or callback
+      if (widget.action.route != null) {
+        _handleRouteNavigation(context, widget.action.route!);
+      } else if (widget.action.onNavigate != null) {
+        AppShellLogger.i('ToggleActionButton: Executing context-aware navigation for ${widget.action.tooltip}');
+        widget.action.onNavigate!(context);
+      } else if (widget.action.onPressed != null) {
+        AppShellLogger.i('ToggleActionButton: Executing callback for ${widget.action.tooltip}');
+        widget.action.onPressed!();
+      }
+    } catch (e, stackTrace) {
+      AppShellLogger.e('ToggleActionButton: Error handling toggle press for ${widget.action.tooltip}', e, stackTrace);
+    }
+  }
+
+  void _handleRouteNavigation(BuildContext context, String route) {
+    try {
+      final router = GoRouter.of(context);
+      if (widget.action.useReplace) {
+        AppShellLogger.i('ToggleActionButton: Replacing route to $route');
+        router.replace(route);
+      } else {
+        AppShellLogger.i('ToggleActionButton: Navigating to route $route');
+        router.go(route);
+      }
+    } catch (e, stackTrace) {
+      AppShellLogger.e('ToggleActionButton: Error navigating to route $route', e, stackTrace);
+      // Fallback: try using Navigator if GoRouter fails
+      try {
+        Navigator.of(context).pushNamed(route);
+      } catch (fallbackError) {
+        AppShellLogger.e('ToggleActionButton: Fallback navigation also failed for $route', fallbackError);
+      }
+    }
   }
 }

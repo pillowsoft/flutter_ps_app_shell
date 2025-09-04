@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.6.0 - 2025-09-04
+
+### Added
+- **🚀 AppShellAction Navigation Context Enhancement**: Complete solution for clean navigation without service locators
+  - **Declarative Route Navigation**: `AppShellAction.route()` for simple route-based navigation
+  - **Context-Aware Navigation**: `AppShellAction.navigate()` with full BuildContext access
+  - **Factory Constructors**: Clean, purpose-built constructors for different navigation patterns
+- **Navigation Features**:
+  - Automatic error handling with GoRouter fallback
+  - Support for both `go` and `replace` navigation modes
+  - Priority-based action handling (route > onNavigate > onPressed)
+  - Enhanced logging for debugging navigation actions
+- **Developer Experience**:
+  - Comprehensive navigation documentation at `docs/navigation/app-shell-action-navigation.md`
+  - Interactive demo screen showcasing all navigation patterns
+  - Migration examples from service locator patterns to clean navigation
+
+### Changed
+- **AppShellAction Breaking Changes**:
+  - `onPressed` parameter is now optional (was required)
+  - Added assertion requiring one of: `onPressed`, `route`, or `onNavigate`
+  - Cannot specify both `route` and `onNavigate` simultaneously
+- **ActionButton Enhancement**: Complete rewrite to handle new navigation patterns with automatic error handling
+- **Example App**: Updated to demonstrate all three navigation patterns with interactive examples
+
+### Fixed
+- **Navigation Context Problem**: Eliminated need for service locators in app bar actions
+- **Toggle Actions**: Now support navigation alongside toggle functionality
+
+### Migration Guide
+```dart
+// Before (Required Service Locator)
+AppShellAction(
+  icon: Icons.settings,
+  tooltip: 'Settings',
+  onPressed: () => GetIt.I<NavigationService>().go('/settings'),
+)
+
+// After (Clean & Direct)
+AppShellAction.route(
+  icon: Icons.settings,
+  tooltip: 'Settings',
+  route: '/settings',
+)
+```
+
 ## 0.5.0 - 2025-09-04
 
 ### Added

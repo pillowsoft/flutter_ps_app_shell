@@ -27,6 +27,7 @@ import 'features/cloudflare_demo/cloudflare_demo_screen.dart';
 import 'features/navigation_demo/navigation_demo_screen.dart';
 import 'features/navigation_demo/detail_screen.dart';
 import 'features/navigation_demo/nested_screen.dart';
+import 'features/action_demo/action_navigation_demo_screen.dart';
 
 /// UI System selector widget for the app bar
 class UISystemSelector extends StatelessWidget {
@@ -322,8 +323,15 @@ void main() {
             icon: Icons.cloud,
             builder: (context, state) => const CloudflareDemoScreen(),
           ),
+          AppRoute(
+            title: 'Action Navigation',
+            path: '/action-navigation',
+            icon: Icons.touch_app,
+            builder: (context, state) => const ActionNavigationDemoScreen(),
+          ),
         ],
         actions: [
+          // Custom widget example (existing UI selector)
           AppShellAction(
             icon: Icons.palette,
             tooltip: 'UI System',
@@ -332,18 +340,40 @@ void main() {
             },
             customWidget: const UISystemSelector(),
           ),
-          AppShellAction(
+          
+          // Declarative route navigation example
+          AppShellAction.route(
+            icon: Icons.settings,
+            tooltip: 'Settings',
+            route: '/settings',
+          ),
+          
+          // Context-aware navigation example
+          AppShellAction.navigate(
+            icon: Icons.person,
+            tooltip: 'Profile',
+            onNavigate: (context) {
+              // Can use context for conditional navigation
+              context.go('/profile');
+            },
+          ),
+          
+          // Traditional callback example (backward compatibility)
+          AppShellAction.callback(
             icon: Icons.notifications_outlined,
             tooltip: 'Notifications',
             onPressed: () {
-              AppShellLogger.i('Notifications clicked');
+              AppShellLogger.i('Notifications clicked - using traditional callback');
             },
           ),
-          AppShellAction(
-            icon: Icons.search,
-            tooltip: 'Search',
-            onPressed: () {
-              AppShellLogger.i('Search clicked');
+          
+          // Context-aware navigation with push instead of go
+          AppShellAction.navigate(
+            icon: Icons.info,
+            tooltip: 'Inspector',
+            onNavigate: (context) {
+              // Example: Push to inspector screen
+              context.push('/inspector');
             },
           ),
         ],

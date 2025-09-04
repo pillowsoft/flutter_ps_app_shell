@@ -52,7 +52,7 @@ class DrawerContent extends StatelessWidget {
                   builder: (_, __) => const SizedBox(),
                 ),
                 onTap: () {
-                  action.onPressed();
+                  _handleActionPress(context, action);
                   onItemTap?.call();
                 },
               )),
@@ -85,12 +85,47 @@ class DrawerContent extends StatelessWidget {
       message: action.tooltip,
       child: ui.iconButton(
         onPressed: () {
-          action.onPressed();
+          _handleActionPress(context, action);
           onItemTap?.call();
         },
         icon: Icon(action.icon),
       ),
     );
+  }
+
+  void _handleActionPress(BuildContext context, AppShellAction action) {
+    try {
+      // Priority: route > onNavigate > onPressed
+      if (action.route != null) {
+        _handleRouteNavigation(context, action.route!, action);
+      } else if (action.onNavigate != null) {
+        action.onNavigate!(context);
+      } else if (action.onPressed != null) {
+        action.onPressed!();
+      }
+    } catch (e) {
+      // Fallback: just log the error and continue
+      debugPrint('DrawerContent: Error handling action press for ${action.tooltip}: $e');
+    }
+  }
+
+  void _handleRouteNavigation(BuildContext context, String route, AppShellAction action) {
+    try {
+      final router = GoRouter.of(context);
+      if (action.useReplace) {
+        router.replace(route);
+      } else {
+        router.go(route);
+      }
+    } catch (e) {
+      debugPrint('DrawerContent: Error navigating to route $route: $e');
+      // Fallback: try using Navigator if GoRouter fails
+      try {
+        Navigator.of(context).pushNamed(route);
+      } catch (fallbackError) {
+        debugPrint('DrawerContent: Fallback navigation also failed for $route: $fallbackError');
+      }
+    }
   }
 }
 
