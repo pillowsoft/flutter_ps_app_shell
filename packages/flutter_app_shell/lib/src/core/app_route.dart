@@ -9,6 +9,7 @@ class AppRoute {
   final List<AppRoute> subRoutes;
   final bool requiresAuth;
   final bool showInNavigation;
+  final bool fullscreen;
 
   AppRoute({
     required this.title,
@@ -18,5 +19,6 @@ class AppRoute {
     this.subRoutes = const [],
     this.requiresAuth = false,
     this.showInNavigation = true,
+    this.fullscreen = false,
   });
 }

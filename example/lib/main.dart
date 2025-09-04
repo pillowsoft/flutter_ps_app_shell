@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_shell/flutter_app_shell.dart';
-import 'package:get_it/get_it.dart';
 import 'features/home/home_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/settings/settings_screen.dart';
@@ -29,6 +27,7 @@ import 'features/navigation_demo/detail_screen.dart';
 import 'features/navigation_demo/nested_screen.dart';
 import 'features/action_demo/action_navigation_demo_screen.dart';
 import 'features/responsive_nav_demo/responsive_navigation_demo_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
 
 /// UI System selector widget for the app bar
 class UISystemSelector extends StatelessWidget {
@@ -142,9 +141,23 @@ void main() {
 
   runShellApp(
     () async {
+      // Check if user has seen onboarding
+      final prefs = getIt<PreferencesService>();
+      final hasSeenOnboarding = prefs.getBool('has_seen_onboarding', defaultValue: false).value;
+      
       return AppConfig(
         title: 'Flutter App Shell Demo',
+        initialRoute: hasSeenOnboarding ? '/' : '/onboarding',
         routes: [
+          // Fullscreen onboarding route (no navigation UI)
+          AppRoute(
+            title: 'Onboarding',
+            path: '/onboarding',
+            icon: Icons.start,
+            builder: (context, state) => const OnboardingScreen(),
+            showInNavigation: false, // Don't show in navigation
+            fullscreen: true, // Display fullscreen without AppShell wrapper
+          ),
           AppRoute(
             title: 'Home',
             path: '/',

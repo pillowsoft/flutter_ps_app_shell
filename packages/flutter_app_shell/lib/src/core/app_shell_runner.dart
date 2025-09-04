@@ -305,10 +305,45 @@ void runShellApp(
   final appConfig = await initApp();
   final settingsStore = GetIt.instance.get<AppShellSettingsStore>();
 
+  // Separate fullscreen routes from shell routes
+  final fullscreenRoutes = appConfig.routes.where((r) => r.fullscreen).toList();
+  final shellRoutes = appConfig.routes.where((r) => !r.fullscreen).toList();
+  
+  _logger.info('Configuring router with ${fullscreenRoutes.length} fullscreen routes and ${shellRoutes.length} shell routes');
+
   final router = GoRouter(
     initialLocation: appConfig.initialRoute ?? appConfig.routes.first.path,
     routes: [
-      ShellRoute(
+      // Fullscreen routes (outside ShellRoute)
+      ...fullscreenRoutes.map((route) {
+        _logger.info('Registering fullscreen route: ${route.path} (${route.title})');
+        for (final subRoute in route.subRoutes) {
+          _logger.info(
+              '  → Registering fullscreen sub-route: ${route.path}/${subRoute.path} (${subRoute.title})');
+        }
+        return GoRoute(
+          path: route.path,
+          pageBuilder: (context, state) => _buildPlatformAwarePage(
+            state: state,
+            child: route.builder(context, state),
+            isNestedRoute: false, // Fullscreen routes - no transitions
+          ),
+          routes: route.subRoutes
+              .map((subRoute) => GoRoute(
+                    path: subRoute.path,
+                    pageBuilder: (context, state) => _buildPlatformAwarePage(
+                      state: state,
+                      child: subRoute.builder(context, state),
+                      isNestedRoute: true, // Nested routes - platform-aware transitions
+                    ),
+                  ))
+              .toList(),
+        );
+      }),
+      
+      // Shell routes (wrapped in AppShell)
+      if (shellRoutes.isNotEmpty)
+        ShellRoute(
         builder: (context, state, child) {
           // Find the parent route for the current path
           final currentPath = state.uri.path;
@@ -317,17 +352,17 @@ void runShellApp(
           AppRoute? currentRoute;
 
           // First try exact match
-          currentRoute = appConfig.routes.cast<AppRoute?>().firstWhere(
+          currentRoute = shellRoutes.cast<AppRoute?>().firstWhere(
                 (route) => route?.path == currentPath,
                 orElse: () => null,
               );
 
           // If no exact match, find parent route for nested paths
           if (currentRoute == null) {
-            currentRoute = appConfig.routes.cast<AppRoute?>().firstWhere(
+            currentRoute = shellRoutes.cast<AppRoute?>().firstWhere(
                   (route) =>
                       route != null && currentPath.startsWith('${route.path}/'),
-                  orElse: () => appConfig.routes.first,
+                  orElse: () => shellRoutes.first,
                 );
           }
 
@@ -335,7 +370,7 @@ void runShellApp(
               'ShellRoute builder: matched route = ${currentRoute?.path} (${currentRoute?.title})');
 
           return AppShell(
-            routes: appConfig.routes,
+            routes: shellRoutes, // Only pass shell routes, not fullscreen routes
             title: appConfig.title,
             currentRouteTitle:
                 null, // Let AppShell determine the title dynamically
@@ -344,11 +379,11 @@ void runShellApp(
             child: child,
           );
         },
-        routes: appConfig.routes.map((route) {
-          _logger.info('Registering route: ${route.path} (${route.title})');
+        routes: shellRoutes.map((route) {
+          _logger.info('Registering shell route: ${route.path} (${route.title})');
           for (final subRoute in route.subRoutes) {
             _logger.info(
-                '  → Registering sub-route: ${route.path}/${subRoute.path} (${subRoute.title})');
+                '  → Registering shell sub-route: ${route.path}/${subRoute.path} (${subRoute.title})');
           }
           return GoRoute(
             path: route.path,

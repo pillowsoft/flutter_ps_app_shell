@@ -18,6 +18,7 @@ dependencies:
   # Additional dependencies for demo features
   cupertino_icons: ^1.0.8
   file_picker: ^8.0.0+1
+  smooth_page_indicator: ^1.2.0+3
   
 dev_dependencies:
   flutter_test:
