@@ -147,143 +147,74 @@ class AppShell extends StatelessWidget {
       const DarkModeToggleButton(),
     ];
 
-    // Determine the leading widget and automaticallyImplyLeading behavior
-    final Widget? leading;
-    final bool automaticallyImplyLeading;
-
     final screenWidth = MediaQuery.of(context).size.width;
     AppShellLogger.i(
         'AppShell._buildAppBar: screenWidth=$screenWidth, isWideScreen=$isWideScreen, useMobileDrawer=$useMobileDrawer, useBottomNav=$useBottomNav, hideDrawer=$hideDrawer');
 
-    if (useMobileDrawer && !hideDrawer) {
-      final router = GoRouter.of(context);
-      final canPop = router.canPop();
-      final routerState = GoRouterState.of(context);
-      final currentPath = routerState.uri.path;
+    // EXTRACT BACK NAVIGATION LOGIC - Independent of navigation mode
+    final router = GoRouter.of(context);
+    final canPop = router.canPop();
+    final routerState = GoRouterState.of(context);
+    final currentPath = routerState.uri.path;
+    final pathSegments = currentPath.split('/').where((s) => s.isNotEmpty).toList();
+    final isNestedRoute = pathSegments.length > 1;
+    final shouldShowBackButton = canPop || isNestedRoute;
+    
+    AppShellLogger.i(
+        'AppShell._buildAppBar: Navigation state - canPop=$canPop, currentPath="$currentPath", pathSegments=$pathSegments, isNestedRoute=$isNestedRoute, shouldShowBackButton=$shouldShowBackButton');
 
-      // Alternative check: see if we're on a nested route (contains more than 2 path segments)
-      final pathSegments =
-          currentPath.split('/').where((s) => s.isNotEmpty).toList();
-      final isNestedRoute = pathSegments.length > 1;
+    // Determine the leading widget and automaticallyImplyLeading behavior
+    final Widget? leading;
+    final bool automaticallyImplyLeading;
 
+    // UNIVERSAL BACK NAVIGATION - Works for all navigation modes
+    if (shouldShowBackButton) {
       AppShellLogger.i(
-          'AppShell._buildAppBar: Mobile drawer mode - canPop=$canPop, currentPath="$currentPath", pathSegments=$pathSegments, isNestedRoute=$isNestedRoute');
+          'AppShell._buildAppBar: Using back button - canPop=$canPop, isNestedRoute=$isNestedRoute');
 
-      // Use canPop() as primary check, but fall back to path-based detection for ShellRoute issues
-      final shouldShowBackButton = canPop || isNestedRoute;
-
-      if (shouldShowBackButton) {
-        // Navigation history exists or we're on a nested route - show back button
-        AppShellLogger.i(
-            'AppShell._buildAppBar: Using back button (canPop=$canPop, isNestedRoute=$isNestedRoute)');
-
-        // For Cupertino, we need to explicitly create a back button when using ShellRoute
-        // because automaticallyImplyLeading doesn't work reliably in this context
-        if (ui.runtimeType.toString() == 'CupertinoWidgetFactory') {
-          leading = ui.iconButton(
-            icon: const Icon(Icons.arrow_back_ios),
-            onPressed: () {
-              if (GoRouter.of(context).canPop()) {
-                GoRouter.of(context).pop();
-              } else {
-                // Fallback: navigate back to parent route
-                final pathSegments =
-                    currentPath.split('/').where((s) => s.isNotEmpty).toList();
-                if (pathSegments.length > 1) {
-                  pathSegments.removeLast();
-                  final parentPath = '/${pathSegments.join('/')}';
-                  AppShellLogger.i(
-                      'AppShell._buildAppBar: Fallback navigation to parent: $parentPath');
-                  GoRouter.of(context).go(parentPath);
-                }
+      // For Cupertino, we need to explicitly create a back button when using ShellRoute
+      // because automaticallyImplyLeading doesn't work reliably in this context
+      if (ui.runtimeType.toString() == 'CupertinoWidgetFactory') {
+        leading = ui.iconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              // Fallback: navigate back to parent route
+              if (pathSegments.length > 1) {
+                final parentPathSegments = List<String>.from(pathSegments);
+                parentPathSegments.removeLast();
+                final parentPath = '/${parentPathSegments.join('/')}';
+                AppShellLogger.i(
+                    'AppShell._buildAppBar: Fallback navigation to parent: $parentPath');
+                GoRouter.of(context).go(parentPath);
               }
-            },
-          );
-          automaticallyImplyLeading = false;
-          AppShellLogger.i(
-              'AppShell._buildAppBar: Using explicit Cupertino back button');
-        } else {
-          // Material and ForUI can use automatic back button
-          leading = null;
-          automaticallyImplyLeading = true;
-          AppShellLogger.i(
-              'AppShell._buildAppBar: Using automatic ${ui.runtimeType} back button');
-        }
-      } else if (ui.shouldAddDrawerButton()) {
-        // No navigation history - show drawer button
-        AppShellLogger.i(
-            'AppShell._buildAppBar: Using custom drawer button (${ui.runtimeType})');
-        leading = ui.drawerButton(context);
+            }
+          },
+        );
         automaticallyImplyLeading = false;
-      } else {
-        // Material/ForUI handle drawer automatically
         AppShellLogger.i(
-            'AppShell._buildAppBar: Using framework drawer button (${ui.runtimeType})');
+            'AppShell._buildAppBar: Using explicit Cupertino back button');
+      } else {
+        // Material and ForUI can use automatic back button
         leading = null;
         automaticallyImplyLeading = true;
+        AppShellLogger.i(
+            'AppShell._buildAppBar: Using automatic ${ui.runtimeType} back button');
       }
-    } else if (useBottomNav == true && !hideDrawer) {
-      // Back button logic for bottom navigation mode (≤5 visible routes)
-      final router = GoRouter.of(context);
-      final canPop = router.canPop();
-      final routerState = GoRouterState.of(context);
-      final currentPath = routerState.uri.path;
-
-      // Alternative check: see if we're on a nested route (contains more than 1 path segments)
-      final pathSegments =
-          currentPath.split('/').where((s) => s.isNotEmpty).toList();
-      final isNestedRoute = pathSegments.length > 1;
-
+    } else if (useMobileDrawer && !hideDrawer && ui.shouldAddDrawerButton()) {
+      // Mobile drawer mode without back navigation - show drawer button
       AppShellLogger.i(
-          'AppShell._buildAppBar: Bottom navigation mode - canPop=$canPop, currentPath="$currentPath", pathSegments=$pathSegments, isNestedRoute=$isNestedRoute');
-
-      // Use canPop() as primary check, but fall back to path-based detection for ShellRoute issues
-      final shouldShowBackButton = canPop || isNestedRoute;
-
-      if (shouldShowBackButton) {
-        // Navigation history exists or we're on a nested route - show back button
-        AppShellLogger.i(
-            'AppShell._buildAppBar: Bottom nav using back button (canPop=$canPop, isNestedRoute=$isNestedRoute)');
-
-        // For Cupertino, we need to explicitly create a back button when using ShellRoute
-        // because automaticallyImplyLeading doesn't work reliably in this context
-        if (ui.runtimeType.toString() == 'CupertinoWidgetFactory') {
-          leading = ui.iconButton(
-            icon: const Icon(Icons.arrow_back_ios),
-            onPressed: () {
-              if (GoRouter.of(context).canPop()) {
-                GoRouter.of(context).pop();
-              } else {
-                // Fallback: navigate back to parent route
-                final pathSegments =
-                    currentPath.split('/').where((s) => s.isNotEmpty).toList();
-                if (pathSegments.length > 1) {
-                  pathSegments.removeLast();
-                  final parentPath = '/${pathSegments.join('/')}';
-                  AppShellLogger.i(
-                      'AppShell._buildAppBar: Bottom nav fallback navigation to parent: $parentPath');
-                  GoRouter.of(context).go(parentPath);
-                }
-              }
-            },
-          );
-          automaticallyImplyLeading = false;
-          AppShellLogger.i(
-              'AppShell._buildAppBar: Bottom nav using explicit Cupertino back button');
-        } else {
-          // Material and ForUI can use automatic back button
-          leading = null;
-          automaticallyImplyLeading = true;
-          AppShellLogger.i(
-              'AppShell._buildAppBar: Bottom nav using automatic ${ui.runtimeType} back button');
-        }
-      } else {
-        // No navigation history and not on nested route - no back button needed
-        AppShellLogger.i(
-            'AppShell._buildAppBar: Bottom nav on root route (no back button needed)');
-        leading = null;
-        automaticallyImplyLeading = true;
-      }
+          'AppShell._buildAppBar: Mobile drawer mode - using custom drawer button (${ui.runtimeType})');
+      leading = ui.drawerButton(context);
+      automaticallyImplyLeading = false;
+    } else if (useMobileDrawer && !hideDrawer) {
+      // Mobile drawer mode - Material/ForUI handle drawer automatically
+      AppShellLogger.i(
+          'AppShell._buildAppBar: Mobile drawer mode - using framework drawer button (${ui.runtimeType})');
+      leading = null;
+      automaticallyImplyLeading = true;
     } else if (screenWidth > 1200 && !hideDrawer) {
       // Desktop sidebar toggle remains unchanged
       AppShellLogger.i('AppShell._buildAppBar: Desktop sidebar toggle mode');
