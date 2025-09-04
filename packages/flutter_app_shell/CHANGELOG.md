@@ -2,14 +2,13 @@
 
 ## 0.7.3 - 2025-09-04
 
-### Added
-- 
-
-### Changed
-- 
-
 ### Fixed
-- 
+- **🐛 Service Registration Duplicate Checks**: Added defensive checks to prevent crashes when services are pre-registered
+  - All 10 services now check `getIt.isRegistered<T>()` before registering
+  - Enables pre-initialization for onboarding, auth checks, and testing scenarios
+  - Apps no longer crash with "Type X is already registered inside GetIt" error
+  - Clear logging indicates which services were skipped vs newly registered
+  - Fully backward compatible with existing apps
 
 
 ## 0.7.2 - 2025-09-04
