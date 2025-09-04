@@ -48,6 +48,14 @@ class AppShell extends StatelessWidget {
       final useRail = isWideScreen && !isVeryWideScreen;
       final useSidebar = isVeryWideScreen;
 
+      // Debug logging to help troubleshoot navigation issues
+      final screenWidth = MediaQuery.of(context).size.width;
+      AppShellLogger.i(
+          'AppShell navigation logic: screenWidth=${screenWidth.toInt()}px, '
+          'isWideScreen=$isWideScreen, visibleRoutes=${visibleRoutes.length}, '
+          'useBottomNav=$useBottomNav, useMobileDrawer=$useMobileDrawer, '
+          'useRail=$useRail, useSidebar=$useSidebar');
+
       final isDesktop = defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.windows ||
           defaultTargetPlatform == TargetPlatform.linux;
@@ -73,9 +81,21 @@ class AppShell extends StatelessWidget {
             )
           : null;
 
+      // Create bottom navigation if needed
+      final bottomNavBar = useBottomNav && !hideDrawer
+          ? _buildBottomNavigation(context, ui, visibleRoutes)
+          : null;
+
+      // Debug logging for UI factory inputs
+      AppShellLogger.i(
+          'AppShell scaffold inputs: drawer=${drawer != null ? "present" : "null"}, '
+          'bottomNavBar=${bottomNavBar != null ? "present" : "null"}, '
+          'uiSystem=${settingsStore.uiSystem.value}');
+
       final scaffoldContent = ui.scaffold(
         appBar: _buildAppBar(context, isWideScreen, useMobileDrawer),
         drawer: drawer,
+        bottomNavBar: bottomNavBar,
         body: Row(
           children: [
             if (useSidebar && !hideDrawer) ...[
@@ -104,9 +124,6 @@ class AppShell extends StatelessWidget {
             ),
           ],
         ),
-        bottomNavBar: useBottomNav && !hideDrawer
-            ? _buildBottomNavigation(context, ui, visibleRoutes)
-            : null,
       );
 
       // Apply SafeArea based on platform and UI system

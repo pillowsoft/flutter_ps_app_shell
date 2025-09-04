@@ -111,21 +111,8 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
           )
         : body;
 
-    // If drawer is needed, wrap with Material Scaffold
-    // CupertinoPageScaffold doesn't support drawers natively
-    if (drawer != null) {
-      return Material(
-        child: Scaffold(
-          key: key,
-          appBar: appBar as PreferredSizeWidget?,
-          drawer: drawer,
-          body: wrappedBody,
-          bottomNavigationBar: bottomNavBar,
-          backgroundColor: backgroundColor,
-        ),
-      );
-    }
-
+    // Priority: Bottom navigation first, then drawer
+    // This ensures apps with few routes get bottom tabs instead of drawer fallback
     if (bottomNavBar != null) {
       // Use CupertinoPageScaffold with bottom navigation
       return CupertinoPageScaffold(
@@ -138,6 +125,21 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
             Expanded(child: wrappedBody),
             bottomNavBar,
           ],
+        ),
+      );
+    }
+
+    // If drawer is needed, wrap with Material Scaffold
+    // CupertinoPageScaffold doesn't support drawers natively
+    if (drawer != null) {
+      return Material(
+        child: Scaffold(
+          key: key,
+          appBar: appBar as PreferredSizeWidget?,
+          drawer: drawer,
+          body: wrappedBody,
+          bottomNavigationBar: bottomNavBar, // This will be null when drawer is used
+          backgroundColor: backgroundColor,
         ),
       );
     }
