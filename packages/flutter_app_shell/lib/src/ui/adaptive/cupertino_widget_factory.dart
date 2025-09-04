@@ -206,9 +206,16 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
       onTap: onTap,
       items: items
           .map((item) => BottomNavigationBarItem(
-                icon: Icon(item.icon),
-                activeIcon:
-                    item.activeIcon != null ? Icon(item.activeIcon!) : null,
+                icon: Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Icon(item.icon),
+                ),
+                activeIcon: item.activeIcon != null
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Icon(item.activeIcon!),
+                      )
+                    : null,
                 label: item.label,
               ))
           .toList(),
