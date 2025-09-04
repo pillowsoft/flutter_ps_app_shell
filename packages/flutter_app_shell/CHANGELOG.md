@@ -2,14 +2,15 @@
 
 ## 0.7.1 - 2025-09-04
 
-### Added
-- 
-
-### Changed
-- 
-
 ### Fixed
-- 
+- **🐛 Cupertino Bottom Navigation Priority**: Fixed critical bug where CupertinoWidgetFactory prioritized drawer over bottom navigation
+  - Apps with ≤5 visible routes now correctly show bottom tabs on narrow screens
+  - Reordered scaffold checks to evaluate bottomNavBar before drawer
+  - Resolves issue where 3-route apps showed drawer instead of expected bottom navigation
+- **📊 Enhanced Navigation Debugging**: Added comprehensive logging for navigation logic decisions
+  - Logs screen width, route counts, and navigation type selection
+  - Logs UI factory inputs to help troubleshoot platform-specific issues
+  - Useful for debugging responsive navigation behavior
 
 
 ## 0.7.0 - 2025-09-04
