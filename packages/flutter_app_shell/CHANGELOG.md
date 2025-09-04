@@ -2,14 +2,12 @@
 
 ## 0.7.2 - 2025-09-04
 
-### Added
-- 
-
 ### Changed
-- 
-
-### Fixed
-- 
+- **💄 Improved CupertinoTabBar Icon Centering**: Added 4px top padding to tab bar icons for better visual balance
+  - Icons now appear properly centered within the tab bar height
+  - Equal spacing above and below creates a more polished appearance
+  - Applies to both regular and active icon states
+  - Fixes visual issue where icons appeared too close to the top edge
 
 
 ## 0.7.1 - 2025-09-04
