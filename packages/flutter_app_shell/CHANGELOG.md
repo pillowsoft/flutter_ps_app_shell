@@ -3,13 +3,18 @@
 ## 0.5.0 - 2025-09-04
 
 ### Added
-- 
+- **GitHub Release Integration**: Automated GitHub Release creation using `gh` CLI
+- **New Commands**: 
+  - `just github-release VERSION` - Creates a GitHub Release from an existing tag
+  - `just publish-release VERSION` - Pushes and creates GitHub Release in one command  
+  - `just create-missing-releases` - Creates GitHub Releases for all existing tags
 
 ### Changed
-- 
+- **Release Workflow**: Enhanced to include GitHub Release creation instructions
+- **Documentation**: Updated release process to clarify difference between git tags and GitHub Releases
 
 ### Fixed
-- 
+- **Release Visibility**: Tags now properly appear as GitHub Releases on the repository page
 
 
 ## 0.4.0 - 2025-09-04

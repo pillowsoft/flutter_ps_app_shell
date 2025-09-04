@@ -247,6 +247,73 @@ release-custom VERSION: _release-pre-check
     @echo "Setting custom version: {{VERSION}}"
     @just _do-release {{VERSION}}
 
+# Create a GitHub Release from an existing tag
+github-release VERSION:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    
+    echo "📦 Creating GitHub Release for v{{VERSION}}..."
+    
+    # Check if tag exists
+    if ! git tag -l | grep -q "^v{{VERSION}}$"; then
+        echo "❌ Tag v{{VERSION}} does not exist!"
+        echo "Run 'just release-minor' or 'just release-major' first"
+        exit 1
+    fi
+    
+    # Extract release notes from CHANGELOG
+    RELEASE_NOTES=$(awk '/^## {{VERSION}}/ {flag=1; next} /^## [0-9]/ {flag=0} flag' packages/flutter_app_shell/CHANGELOG.md | sed '/^$/d')
+    
+    if [ -z "$RELEASE_NOTES" ]; then
+        echo "⚠️  No release notes found in CHANGELOG for version {{VERSION}}"
+        RELEASE_NOTES="Release v{{VERSION}}"
+    fi
+    
+    # Create GitHub release
+    gh release create v{{VERSION}} \
+        --title "Flutter App Shell v{{VERSION}}" \
+        --notes "$RELEASE_NOTES" \
+        --verify-tag
+    
+    echo "✅ GitHub Release created successfully!"
+    echo "View it at: https://github.com/yourusername/flutter_ps_app_shell/releases/tag/v{{VERSION}}"
+
+# Publish a release (push + create GitHub release)
+publish-release VERSION:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    
+    echo "🚀 Publishing release v{{VERSION}}..."
+    
+    # Push commits and tags
+    git push origin main
+    git push origin v{{VERSION}}
+    
+    # Create GitHub release
+    just github-release {{VERSION}}
+
+# Create GitHub releases for existing tags
+create-missing-releases:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    
+    echo "🔍 Checking for tags without GitHub releases..."
+    
+    # Get all tags
+    for tag in $(git tag -l | grep "^v[0-9]"); do
+        version=${tag#v}
+        
+        # Check if release exists
+        if gh release view "$tag" >/dev/null 2>&1; then
+            echo "✅ Release exists for $tag"
+        else
+            echo "📦 Creating release for $tag..."
+            just github-release $version
+        fi
+    done
+    
+    echo "✅ All releases created!"
+
 # Private recipe: Check prerequisites before release
 _release-pre-check:
     @echo "Checking release prerequisites..."
@@ -326,9 +393,11 @@ _do-release VERSION:
     echo ""
     echo "🎉 Release v{{VERSION}} prepared successfully!"
     echo ""
-    echo "To push the release to GitHub, run:"
-    echo "  git push origin main"
-    echo "  git push origin v{{VERSION}}"
+    echo "Next steps:"
+    echo "  1. Push changes:  git push origin main && git push origin v{{VERSION}}"
+    echo "  2. Create GitHub Release:  just github-release {{VERSION}}"
+    echo ""
+    echo "Or do both at once:  just publish-release {{VERSION}}"
     echo ""
     echo "Other projects can now depend on this version using:"
     echo "  flutter_app_shell:"
