@@ -256,39 +256,85 @@ _release-pre-check:
 
 # Private recipe: Execute the release
 _do-release VERSION:
-    @echo "📦 Creating release v{{VERSION}}"
-    @echo ""
+    #!/usr/bin/env bash
+    set -euo pipefail
+    
+    echo "📦 Creating release v{{VERSION}}"
+    echo ""
     
     # Update version in pubspec.yaml
-    @sed -i.bak 's/^version: .*/version: {{VERSION}}/' packages/flutter_app_shell/pubspec.yaml && rm packages/flutter_app_shell/pubspec.yaml.bak
-    @echo "✅ Updated pubspec.yaml to version {{VERSION}}"
+    sed -i.bak 's/^version: .*/version: {{VERSION}}/' packages/flutter_app_shell/pubspec.yaml && rm packages/flutter_app_shell/pubspec.yaml.bak
+    echo "✅ Updated pubspec.yaml to version {{VERSION}}"
     
-    # Update CHANGELOG.md
-    @echo "" && echo "📝 Please update CHANGELOG.md with release notes for v{{VERSION}}"
-    @echo "Press Enter to open CHANGELOG.md in your editor (or Ctrl+C to cancel)..."
-    @read _
-    @${EDITOR:-nano} packages/flutter_app_shell/CHANGELOG.md
+    # Check if CHANGELOG entry exists for this version
+    if grep -q "## {{VERSION}}" packages/flutter_app_shell/CHANGELOG.md; then
+        echo "✅ CHANGELOG.md already contains entry for v{{VERSION}}"
+    else
+        echo ""
+        echo "📝 Adding CHANGELOG entry for v{{VERSION}}"
+        
+        # Add new version entry at the top of CHANGELOG
+        DATE=$(date +%Y-%m-%d)
+        TEMP_FILE=$(mktemp)
+        
+        # Write new entry
+        echo "# Changelog" > "$TEMP_FILE"
+        echo "" >> "$TEMP_FILE"
+        echo "## {{VERSION}} - $DATE" >> "$TEMP_FILE"
+        echo "" >> "$TEMP_FILE"
+        echo "### Added" >> "$TEMP_FILE"
+        echo "- " >> "$TEMP_FILE"
+        echo "" >> "$TEMP_FILE"
+        echo "### Changed" >> "$TEMP_FILE"
+        echo "- " >> "$TEMP_FILE"
+        echo "" >> "$TEMP_FILE"
+        echo "### Fixed" >> "$TEMP_FILE"
+        echo "- " >> "$TEMP_FILE"
+        echo "" >> "$TEMP_FILE"
+        
+        # Append existing content (skip the first "# Changelog" line)
+        tail -n +2 packages/flutter_app_shell/CHANGELOG.md >> "$TEMP_FILE"
+        
+        # Replace the original file
+        mv "$TEMP_FILE" packages/flutter_app_shell/CHANGELOG.md
+        
+        echo "✅ Added CHANGELOG template for v{{VERSION}}"
+        echo ""
+        echo "⚠️  Please edit packages/flutter_app_shell/CHANGELOG.md to add release notes"
+        echo "   Then run: git add . && git commit -m 'chore: release v{{VERSION}}'"
+        echo "   Finally: git tag -a v{{VERSION}} -m 'Release v{{VERSION}}'"
+    fi
     
     # Commit changes
-    @git add packages/flutter_app_shell/pubspec.yaml packages/flutter_app_shell/CHANGELOG.md
-    @git commit -m "chore: release v{{VERSION}}" || true
+    git add packages/flutter_app_shell/pubspec.yaml packages/flutter_app_shell/CHANGELOG.md
     
-    # Create and push tag
-    @git tag -a "v{{VERSION}}" -m "Release v{{VERSION}}"
-    @echo "✅ Created tag v{{VERSION}}"
+    if git diff --cached --quiet; then
+        echo "ℹ️  No changes to commit"
+    else
+        git commit -m "chore: release v{{VERSION}}"
+        echo "✅ Committed release v{{VERSION}}"
+    fi
     
-    @echo ""
-    @echo "🎉 Release v{{VERSION}} prepared successfully!"
-    @echo ""
-    @echo "To push the release to GitHub, run:"
-    @echo "  git push origin main"
-    @echo "  git push origin v{{VERSION}}"
-    @echo ""
-    @echo "Other projects can now depend on this version using:"
-    @echo "  flutter_app_shell:"
-    @echo "    git:"
-    @echo "      url: https://github.com/yourusername/flutter_ps_app_shell"
-    @echo "      ref: v{{VERSION}}"
+    # Create tag
+    if git tag -l | grep -q "^v{{VERSION}}$"; then
+        echo "⚠️  Tag v{{VERSION}} already exists"
+    else
+        git tag -a "v{{VERSION}}" -m "Release v{{VERSION}}"
+        echo "✅ Created tag v{{VERSION}}"
+    fi
+    
+    echo ""
+    echo "🎉 Release v{{VERSION}} prepared successfully!"
+    echo ""
+    echo "To push the release to GitHub, run:"
+    echo "  git push origin main"
+    echo "  git push origin v{{VERSION}}"
+    echo ""
+    echo "Other projects can now depend on this version using:"
+    echo "  flutter_app_shell:"
+    echo "    git:"
+    echo "      url: https://github.com/yourusername/flutter_ps_app_shell"
+    echo "      ref: v{{VERSION}}"
 
 # =====================================
 # Cloudflare Workers Integration
