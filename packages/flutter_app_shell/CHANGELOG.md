@@ -3,13 +3,16 @@
 ## 0.7.0 - 2025-09-04
 
 ### Added
-- 
+- **🎯 Responsive Navigation Demo**: Comprehensive interactive demo screen at `/responsive-navigation` showing navigation threshold logic and hidden routes
+- **📱 Hidden Routes Documentation**: Complete examples and use cases for workflow routes accessible via code but not shown in navigation
 
 ### Changed
-- 
+- **⚡ Navigation Threshold Logic**: Updated to count only visible routes (`showInNavigation: true`) instead of all routes when determining navigation type
+- **📖 Enhanced Documentation**: Updated README.md and CLAUDE.md with navigation fixes and hidden routes examples
 
 ### Fixed
-- 
+- **🐛 Critical Navigation Bug**: Apps now correctly show bottom navigation when ≤5 visible routes (was incorrectly showing drawer when hidden routes pushed count >5)
+- **🎮 Responsive Behavior**: Mobile apps with ≤5 visible routes now properly display bottom tabs instead of drawer navigation
 
 
 ## 0.6.0 - 2025-09-04
