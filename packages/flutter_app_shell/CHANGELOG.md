@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.7 - 2025-09-05
+
+### Fixed
+- **🐛 Sidebar Navigation Vertical Alignment**: Fixed sidebar/drawer navigation items being centered vertically instead of top-aligned
+  - Added proper mainAxisAlignment.start to ensure items appear at top in both collapsed and expanded states
+  - Wrapped expanded drawer content in Align widget with topLeft alignment for consistent positioning
+  - Navigation items now consistently appear at the top of the sidebar/drawer in all states
+- **🔧 Button Method Compilation Errors**: Fixed compilation errors in action_navigation_demo_screen.dart
+  - Replaced non-existent filledButton method with button method
+  - Updated button parameter from 'text' to correct 'label' parameter
+  - Example app now compiles and runs without errors
+
 ## 0.7.3 - 2025-09-04
 
 ### Fixed
