@@ -21,19 +21,23 @@ class DrawerContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (collapsed) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(height: 8),
-          ...routes
-              .where((route) => route.showInNavigation)
-              .map((route) => _buildCollapsedItem(context, route)),
-          if (actions.isNotEmpty) ...[
-            const Divider(),
-            ...actions.map((action) => _buildCollapsedAction(context, action)),
+      return Align(
+        alignment: Alignment.topCenter,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 8),
+            ...routes
+                .where((route) => route.showInNavigation)
+                .map((route) => _buildCollapsedItem(context, route)),
+            if (actions.isNotEmpty) ...[
+              const Divider(),
+              ...actions.map((action) => _buildCollapsedAction(context, action)),
+            ],
           ],
-        ],
+        ),
       );
     }
 

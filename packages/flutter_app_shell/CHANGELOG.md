@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.8 - 2025-09-05
+
+### Fixed
+- **🐛 Collapsed Sidebar Icons Vertical Alignment**: Fixed collapsed sidebar navigation icons being centered vertically instead of top-aligned
+  - Wrapped collapsed Column in Align widget with topCenter alignment
+  - Added mainAxisSize.min to ensure Column only takes needed space
+  - Icons now consistently appear at the top in both collapsed and expanded states
+  - Maintains horizontal center alignment while fixing vertical positioning
+
 ## 0.7.7 - 2025-09-05
 
 ### Fixed
