@@ -22,6 +22,7 @@ class DrawerContent extends StatelessWidget {
   Widget build(BuildContext context) {
     if (collapsed) {
       return Column(
+        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 8),
@@ -36,27 +37,31 @@ class DrawerContent extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ...routes
-              .where((route) => route.showInNavigation)
-              .map((route) => DrawerItem(route: route, onTap: onItemTap)),
-          if (actions.isNotEmpty) const Divider(),
-          ...actions.map((action) => DrawerItem(
-                route: AppRoute(
-                  title: action.tooltip,
-                  path: '',
-                  icon: action.icon,
-                  builder: (_, __) => const SizedBox(),
-                ),
-                onTap: () {
-                  _handleActionPress(context, action);
-                  onItemTap?.call();
-                },
-              )),
-        ],
+    return Align(
+      alignment: Alignment.topLeft,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ...routes
+                .where((route) => route.showInNavigation)
+                .map((route) => DrawerItem(route: route, onTap: onItemTap)),
+            if (actions.isNotEmpty) const Divider(),
+            ...actions.map((action) => DrawerItem(
+                  route: AppRoute(
+                    title: action.tooltip,
+                    path: '',
+                    icon: action.icon,
+                    builder: (_, __) => const SizedBox(),
+                  ),
+                  onTap: () {
+                    _handleActionPress(context, action);
+                    onItemTap?.call();
+                  },
+                )),
+          ],
+        ),
       ),
     );
   }

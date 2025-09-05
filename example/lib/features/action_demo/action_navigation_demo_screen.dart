@@ -112,20 +112,20 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    ui.filledButton(
-                      text: 'Go to Settings',
+                    ui.button(
+                      label: 'Go to Settings',
                       onPressed: () => context.go('/settings'),
                     ),
-                    ui.filledButton(
-                      text: 'Push Inspector',
+                    ui.button(
+                      label: 'Push Inspector',
                       onPressed: () => context.push('/inspector'),
                     ),
                     ui.outlinedButton(
-                      text: 'Navigate to Profile',
+                      label: 'Navigate to Profile',
                       onPressed: () => context.go('/profile'),
                     ),
                     ui.outlinedButton(
-                      text: 'Push Dashboard',
+                      label: 'Push Dashboard',
                       onPressed: () => context.push('/dashboard'),
                     ),
                   ],
@@ -143,12 +143,12 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 8),
-                ui.filledButton(
-                  text: 'Replace with Home (No Back Button)',
+                ui.button(
+                  label: 'Replace with Home (No Back Button)',
                   onPressed: () => context.replace('/'),
                 ),
-                ui.filledButton(
-                  text: 'Hidden Route Demo',
+                ui.button(
+                  label: 'Hidden Route Demo',
                   onPressed: () => context.push('/responsive-navigation'),
                 ),
               ],
