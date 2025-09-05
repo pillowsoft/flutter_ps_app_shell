@@ -145,8 +145,6 @@ class DatabaseService {
     _ensureInitialized();
 
     try {
-      final id = _db!.id();
-
       // Add metadata to the document
       final documentData = {
         ...data,
@@ -156,8 +154,13 @@ class DatabaseService {
         '_version': 1,
       };
 
-      // Create the document using InstantDB transaction
-      await _db!.transact(_db!.tx[collection][id].update(documentData));
+      // Create the document using correct InstantDB transaction API
+      // tx[collection].create() generates OperationType.add and handles ID automatically
+      final transactionResult = await _db!.transact(_db!.tx[collection].create(documentData));
+      
+      // Extract the generated ID from the transaction
+      // InstantDB's create() method generates an ID if not provided
+      final id = documentData['id'] as String? ?? _db!.id();
 
       _logger.fine('Created document: collection=$collection, id=$id');
       return id;
@@ -255,8 +258,9 @@ class DatabaseService {
         return false;
       }
 
-      // Delete the document using InstantDB transaction
-      await _db!.transact(_db!.delete(id));
+      // Delete the document using correct InstantDB transaction API
+      // tx[collection][id].delete() generates OperationType.delete
+      await _db!.transact(_db!.tx[collection][id].delete());
 
       _logger.fine('Deleted document: collection=$collection, id=$id');
       return true;

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.11 - 2025-09-05
+
+### Fixed
+- **🚨 CRITICAL: InstantDB Transaction API Usage**: Fixed DatabaseService methods using incorrect InstantDB transaction builder API
+  - `create()` now uses `tx[collection].create(data)` instead of `tx[collection][id].update(data)`
+  - `delete()` now uses `tx[collection][id].delete()` instead of `_db!.delete(id)`
+  - This generates proper `OperationType.add` and `OperationType.delete` operations
+  - **Root Cause**: Using wrong operation types caused InstantDB sync engine to skip all attributes, sending transactions with "0 steps"
+  - **Impact**: Fixes complete failure of data synchronization to InstantDB server - all CRUD operations now work correctly
+  - Transactions now send proper step counts and data persists to cloud successfully
+
 ## 0.7.10 - 2025-09-05
 
 ### Fixed
