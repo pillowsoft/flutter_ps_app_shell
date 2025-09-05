@@ -178,7 +178,9 @@ class DatabaseService {
       // Query for the specific document
       final query = {
         collection: {
-          '\$': {'id': id}
+          '\$': {
+            'where': {'id': id}
+          }
         }
       };
 

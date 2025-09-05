@@ -1,6 +1,6 @@
 name: flutter_app_shell
 description: A comprehensive Flutter application shell framework for rapid development with adaptive UI, service architecture, and state management.
-version: 0.7.9
+version: 0.7.10
 homepage: https://github.com/yourusername/flutter_app_shell
 repository: https://github.com/yourusername/flutter_app_shell
 

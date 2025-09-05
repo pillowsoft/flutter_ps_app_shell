@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.10 - 2025-09-05
+
+### Fixed
+- **🐛 InstantDB Query Syntax Error**: Fixed critical bug in DatabaseService.read() method
+  - Corrected InstantDB query syntax by wrapping field conditions in 'where' clause
+  - Query now properly uses `{'$': {'where': {'id': id}}}` instead of `{'$': {'id': id}}`
+  - This fix resolves document retrieval failures that also affected update() and delete() operations
+  - All CRUD operations now function correctly with InstantDB backend
+
 ## 0.7.9 - 2025-09-05
 
 ### Fixed
