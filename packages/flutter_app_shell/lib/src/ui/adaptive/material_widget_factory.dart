@@ -1207,21 +1207,24 @@ class MaterialWidgetFactory extends AdaptiveWidgetFactory {
             ))
         .toList();
 
-    return material.SingleChildScrollView(
-      child: material.ConstrainedBox(
-        constraints: const material.BoxConstraints(
-          minHeight: 0,
-        ),
-        child: material.IntrinsicHeight(
-          child: NavigationRail(
-            selectedIndex: currentIndex >= 0
-                ? currentIndex
-                : null, // Allow null for no selection
-            onDestinationSelected: onDestinationSelected,
-            labelType: showLabels
-                ? NavigationRailLabelType.all
-                : NavigationRailLabelType.none,
-            destinations: destinations,
+    return material.Align(
+      alignment: material.Alignment.topCenter,
+      child: material.SingleChildScrollView(
+        child: material.ConstrainedBox(
+          constraints: const material.BoxConstraints(
+            minHeight: 0,
+          ),
+          child: material.IntrinsicHeight(
+            child: NavigationRail(
+              selectedIndex: currentIndex >= 0
+                  ? currentIndex
+                  : null, // Allow null for no selection
+              onDestinationSelected: onDestinationSelected,
+              labelType: showLabels
+                  ? NavigationRailLabelType.all
+                  : NavigationRailLabelType.none,
+              destinations: destinations,
+            ),
           ),
         ),
       ),

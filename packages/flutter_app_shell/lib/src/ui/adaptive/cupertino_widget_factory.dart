@@ -1408,9 +1408,12 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
           CupertinoColors.systemBackground,
           context,
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            children: routes
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: routes
                 .where((route) => route.showInNavigation)
                 .toList()
                 .asMap()
@@ -1448,6 +1451,7 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
                 ),
               );
             }).toList(),
+            ),
           ),
         ),
       ),

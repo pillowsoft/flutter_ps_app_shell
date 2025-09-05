@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.9 - 2025-09-05
+
+### Fixed
+- **🐛 Navigation Rail Vertical Alignment**: Fixed navigation rail items being vertically centered in Material and Cupertino modes
+  - Material: Wrapped NavigationRail's SingleChildScrollView in Align widget with topCenter alignment
+  - Cupertino: Added Align wrapper with topCenter alignment and mainAxisAlignment.start to Column
+  - Navigation items now consistently appear at the top in collapsed sidebar mode across all UI systems
+  - Completes the vertical alignment fixes started in v0.7.8 for drawer/sidebar navigation
+
 ## 0.7.8 - 2025-09-05
 
 ### Fixed
