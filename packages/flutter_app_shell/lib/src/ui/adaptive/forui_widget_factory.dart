@@ -2693,22 +2693,25 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
       context: context,
       barrierDismissible: dismissible,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: FTheme.of(context).colorScheme.background,
+        backgroundColor: Colors.white,
         content: ValueListenableBuilder<String?>(
           valueListenable: controller.messageNotifier,
           builder: (context, currentMessage, _) {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(
-                  color: FTheme.of(context).colorScheme.primary,
+                const CircularProgressIndicator(
+                  color: _primaryColor,
                 ),
                 if (currentMessage != null) ...[
                   const SizedBox(height: 16),
                   Text(
                     currentMessage,
                     textAlign: TextAlign.center,
-                    style: FTheme.of(context).typography.base,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: _primaryColor,
+                    ),
                   ),
                 ],
               ],
@@ -2740,11 +2743,15 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
       context: context,
       barrierDismissible: dismissible,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: FTheme.of(context).colorScheme.background,
+        backgroundColor: Colors.white,
         title: title != null
             ? Text(
                 title,
-                style: FTheme.of(context).typography.xl,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: _primaryColor,
+                ),
               )
             : null,
         content: Column(
@@ -2753,12 +2760,10 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
             ValueListenableBuilder<double?>(
               valueListenable: controller.progressNotifier,
               builder: (context, progress, _) {
-                return FProgress(
-                  value: progress ?? 0,
-                  style: FProgressStyle(
-                    backgroundColor: FTheme.of(context).colorScheme.border,
-                    progressColor: FTheme.of(context).colorScheme.primary,
-                  ),
+                return LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: _mutedColor,
+                  valueColor: const AlwaysStoppedAnimation<Color>(_primaryColor),
                 );
               },
             ),
@@ -2769,7 +2774,10 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
                 return Text(
                   currentMessage ?? '',
                   textAlign: TextAlign.center,
-                  style: FTheme.of(context).typography.base,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: _primaryColor,
+                  ),
                 );
               },
             ),
