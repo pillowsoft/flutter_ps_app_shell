@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.13 - 2025-09-06
+
+### Fixed
+- **🐛 ForUI Dialog Compilation**: Fixed compilation errors in ForUIWidgetFactory dialog implementations
+  - Replaced ForUI component references with Material equivalents
+  - Used LinearProgressIndicator instead of FProgress
+  - Applied custom styling to maintain ForUI design aesthetics
+  - Ensures compatibility when ForUI package is not available
+
 ## 0.7.12 - 2025-09-06
 
 ### Added
