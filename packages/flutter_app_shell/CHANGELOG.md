@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.7.12 - 2025-09-06
+
+### Added
+- **🎯 Enhanced Dialog System**: Comprehensive dialog handling improvements based on developer feedback
+  - `DialogHandle` class for managing dialog lifecycle with state updates
+  - `LoadingDialogController` for loading dialogs with message updates
+  - `ProgressDialogController` for progress tracking with step management
+  - Safe dialog dismissal methods: `dismissDialog()`, `hasDialog()`, `dismissDialogIfShowing()`
+  - Built-in loading dialog: `showLoadingDialog()` with updatable messages
+  - Progress dialog support: `showProgressDialog()` with step tracking
+  - Platform-adaptive implementations across Material, Cupertino, and ForUI
+
+### Enhanced
+- **🚀 NavigationService Dialog Awareness**: Navigation service now coordinates with dialog system
+  - Dialog state tracking to prevent navigation conflicts
+  - `safeNavigate()` method that handles dialog dismissal
+  - Before-navigate callbacks for dialog auto-dismissal
+  - Context stack management for modal awareness
+  - Prevention of "black screen" issue from incorrect Navigator.pop() calls
+  - `canNavigate()` check for dialog-aware navigation guards
+
+### Developer Experience
+- **📝 Simplified Dialog Patterns**: No more manual Navigator context confusion
+  - Automatic handling of `rootNavigator: true` context
+  - Dialog handles for easy dismissal without context issues
+  - Reactive state updates for loading and progress messages
+  - Integration with GoRouter navigation prevents conflicts
+
 ## 0.7.11 - 2025-09-05
 
 ### Fixed

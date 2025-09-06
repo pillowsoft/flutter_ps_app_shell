@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' as material
 import 'adaptive_widget_factory.dart';
 import 'components/adaptive_dialog_models.dart';
 import '../../core/app_route.dart';
+import '../dialog/dialog_handle.dart';
 
 /// ForUI implementation of the adaptive widget factory
 /// Implements ForUI-style components using Material widgets with custom styling
@@ -2653,5 +2654,130 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
         ),
       ),
     );
+  }
+
+  // Enhanced Dialog Utilities
+
+  @override
+  void dismissDialog(BuildContext context) {
+    if (hasDialog(context)) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+
+  @override
+  bool hasDialog(BuildContext context) {
+    return Navigator.of(context, rootNavigator: true).canPop();
+  }
+
+  @override
+  void dismissDialogIfShowing(BuildContext context) {
+    if (hasDialog(context)) {
+      dismissDialog(context);
+    }
+  }
+
+  @override
+  LoadingDialogController showLoadingDialog({
+    required BuildContext context,
+    String? message,
+    bool dismissible = false,
+  }) {
+    final controller = LoadingDialogController(
+      context: context,
+      initialMessage: message,
+      dismissible: dismissible,
+    );
+
+    showAdaptiveDialog(
+      context: context,
+      barrierDismissible: dismissible,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: FTheme.of(context).colorScheme.background,
+        content: ValueListenableBuilder<String?>(
+          valueListenable: controller.messageNotifier,
+          builder: (context, currentMessage, _) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  color: FTheme.of(context).colorScheme.primary,
+                ),
+                if (currentMessage != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    currentMessage,
+                    textAlign: TextAlign.center,
+                    style: FTheme.of(context).typography.base,
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+
+    return controller;
+  }
+
+  @override
+  ProgressDialogController showProgressDialog({
+    required BuildContext context,
+    String? title,
+    String? initialMessage,
+    int totalSteps = 1,
+    bool dismissible = false,
+  }) {
+    final controller = ProgressDialogController(
+      context: context,
+      initialMessage: initialMessage,
+      totalSteps: totalSteps,
+      dismissible: dismissible,
+    );
+
+    showAdaptiveDialog(
+      context: context,
+      barrierDismissible: dismissible,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: FTheme.of(context).colorScheme.background,
+        title: title != null
+            ? Text(
+                title,
+                style: FTheme.of(context).typography.xl,
+              )
+            : null,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ValueListenableBuilder<double?>(
+              valueListenable: controller.progressNotifier,
+              builder: (context, progress, _) {
+                return FProgress(
+                  value: progress ?? 0,
+                  style: FProgressStyle(
+                    backgroundColor: FTheme.of(context).colorScheme.border,
+                    progressColor: FTheme.of(context).colorScheme.primary,
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            ValueListenableBuilder<String?>(
+              valueListenable: controller.messageNotifier,
+              builder: (context, currentMessage, _) {
+                return Text(
+                  currentMessage ?? '',
+                  textAlign: TextAlign.center,
+                  style: FTheme.of(context).typography.base,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return controller;
   }
 }

@@ -71,6 +71,7 @@ import 'package:flutter/material.dart'
 import 'adaptive_widget_factory.dart';
 import 'components/adaptive_dialog_models.dart';
 import '../../core/app_route.dart';
+import '../dialog/dialog_handle.dart';
 
 /// Material Design implementation of the adaptive widget factory
 class MaterialWidgetFactory extends AdaptiveWidgetFactory {
@@ -1661,5 +1662,115 @@ class MaterialWidgetFactory extends AdaptiveWidgetFactory {
         ],
       ),
     );
+  }
+
+  // Enhanced Dialog Utilities
+
+  @override
+  void dismissDialog(BuildContext context) {
+    if (hasDialog(context)) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+
+  @override
+  bool hasDialog(BuildContext context) {
+    return Navigator.of(context, rootNavigator: true).canPop();
+  }
+
+  @override
+  void dismissDialogIfShowing(BuildContext context) {
+    if (hasDialog(context)) {
+      dismissDialog(context);
+    }
+  }
+
+  @override
+  LoadingDialogController showLoadingDialog({
+    required BuildContext context,
+    String? message,
+    bool dismissible = false,
+  }) {
+    final controller = LoadingDialogController(
+      context: context,
+      initialMessage: message,
+      dismissible: dismissible,
+    );
+
+    material.showDialog(
+      context: context,
+      barrierDismissible: dismissible,
+      builder: (dialogContext) => material.AlertDialog(
+        content: material.ValueListenableBuilder<String?>(
+          valueListenable: controller.messageNotifier,
+          builder: (context, currentMessage, _) {
+            return material.Column(
+              mainAxisSize: material.MainAxisSize.min,
+              children: [
+                const material.CircularProgressIndicator(),
+                if (currentMessage != null) ...[
+                  const material.SizedBox(height: 16),
+                  material.Text(
+                    currentMessage,
+                    textAlign: material.TextAlign.center,
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+
+    return controller;
+  }
+
+  @override
+  ProgressDialogController showProgressDialog({
+    required BuildContext context,
+    String? title,
+    String? initialMessage,
+    int totalSteps = 1,
+    bool dismissible = false,
+  }) {
+    final controller = ProgressDialogController(
+      context: context,
+      initialMessage: initialMessage,
+      totalSteps: totalSteps,
+      dismissible: dismissible,
+    );
+
+    material.showDialog(
+      context: context,
+      barrierDismissible: dismissible,
+      builder: (dialogContext) => material.AlertDialog(
+        title: title != null ? material.Text(title) : null,
+        content: material.Column(
+          mainAxisSize: material.MainAxisSize.min,
+          children: [
+            material.ValueListenableBuilder<double?>(
+              valueListenable: controller.progressNotifier,
+              builder: (context, progress, _) {
+                return material.LinearProgressIndicator(
+                  value: progress,
+                );
+              },
+            ),
+            const material.SizedBox(height: 16),
+            material.ValueListenableBuilder<String?>(
+              valueListenable: controller.messageNotifier,
+              builder: (context, currentMessage, _) {
+                return material.Text(
+                  currentMessage ?? '',
+                  textAlign: material.TextAlign.center,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return controller;
   }
 }

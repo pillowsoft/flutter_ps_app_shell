@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/app_route.dart';
 import 'components/adaptive_dialog_models.dart';
+import '../dialog/dialog_handle.dart';
 
 /// Navigation item model for bottom navigation
 class AdaptiveNavItem {
@@ -617,5 +618,32 @@ abstract class AdaptiveWidgetFactory {
     String? cancelText,
     bool isDestructive = false,
     IconData? icon,
+  });
+
+  // Enhanced Dialog Utilities
+
+  /// Safely dismiss a dialog if one is showing
+  void dismissDialog(BuildContext context);
+
+  /// Check if a dialog is currently showing
+  bool hasDialog(BuildContext context);
+
+  /// Dismiss dialog only if one is showing (no-op if not)
+  void dismissDialogIfShowing(BuildContext context);
+
+  /// Show a loading dialog with optional message updates
+  LoadingDialogController showLoadingDialog({
+    required BuildContext context,
+    String? message,
+    bool dismissible = false,
+  });
+
+  /// Show a progress dialog with step tracking
+  ProgressDialogController showProgressDialog({
+    required BuildContext context,
+    String? title,
+    String? initialMessage,
+    int totalSteps = 1,
+    bool dismissible = false,
   });
 }

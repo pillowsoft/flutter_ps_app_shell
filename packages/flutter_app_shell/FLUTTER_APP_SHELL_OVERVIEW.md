@@ -12,11 +12,23 @@
 
 ### Core Services (Always Available)
 
-#### NavigationService
+#### NavigationService (GoRouter-based)
 ```dart
 final nav = getIt<NavigationService>();
-nav.goTo('/dashboard');  // Navigate to routes
-nav.goBack();           // Handle back navigation
+
+// Basic navigation
+nav.go('/dashboard');              // Navigate to route (replaces stack)
+nav.push('/details', extra: data); // Push route onto stack
+nav.pop();                         // Go back if possible
+nav.replace('/login');             // Replace current route
+nav.pushReplacement('/home');      // Push and replace
+
+// Navigation state
+final currentPath = nav.currentPath; // Get current route path
+final canGoBack = nav.canPop();     // Check if back navigation possible
+
+// Access underlying GoRouter for advanced features
+nav.router.goNamed('profile', params: {'id': '123'});
 ```
 
 #### AppShellSettingsStore (Reactive Settings)
@@ -118,6 +130,104 @@ final ui = getAdaptiveFactory(context);
 - **Tablet (600-1200px)**: Side navigation rail with collapsible labels
 - **Desktop (>1200px)**: Full sidebar with collapse/expand functionality
 
+### Dialogs, Sheets & Notifications
+
+#### Dialogs (Platform-Adaptive)
+```dart
+// Basic dialog
+await ui.showDialog<String>(
+  context: context,
+  title: Text('Confirm Action'),
+  content: Text('Are you sure you want to proceed?'),
+  actions: [
+    ui.textButton(label: 'Cancel', onPressed: () => Navigator.pop(context)),
+    ui.button(label: 'Confirm', onPressed: () => Navigator.pop(context, 'confirmed')),
+  ],
+);
+// Cupertino: CupertinoAlertDialog
+// Material: AlertDialog
+// ForUI: Custom dialog with ForUI styling
+
+// Confirmation dialog with built-in handling
+final confirmed = await ui.showConfirmationDialog(
+  context: context,
+  title: 'Delete Item',
+  message: 'This action cannot be undone.',
+  confirmText: 'Delete',
+  cancelText: 'Keep',
+  isDestructive: true,  // Red text in iOS
+  icon: Icons.warning,   // Optional icon
+);
+if (confirmed == true) { /* proceed */ }
+```
+
+#### Bottom Sheets & Action Sheets
+```dart
+// Modal bottom sheet (slides up from bottom)
+await ui.showModalBottomSheet<String>(
+  context: context,
+  builder: (context) => Container(
+    height: 200,
+    child: ListView(/* options */),
+  ),
+);
+
+// Action sheet (iOS) / Bottom sheet menu (Android)
+final action = await ui.showActionSheet<String>(
+  context: context,
+  title: 'Choose Action',
+  message: 'What would you like to do?',
+  actions: [
+    AdaptiveActionSheetAction(
+      label: 'Edit',
+      value: 'edit',
+      icon: Icons.edit,
+    ),
+    AdaptiveActionSheetAction(
+      label: 'Delete',
+      value: 'delete',
+      icon: Icons.delete,
+      isDestructive: true,  // Shows in red on iOS
+    ),
+  ],
+);
+```
+
+#### Notifications & Feedback
+```dart
+// Snackbar/Toast notification (auto-adapts to platform)
+ui.showSnackBar(
+  context,
+  'File saved successfully',
+  action: SnackBarAction(
+    label: 'UNDO',
+    onPressed: () => undoSave(),
+  ),
+  duration: Duration(seconds: 3),
+);
+// Cupertino: iOS-style notification banner at top
+// Material: Material snackbar at bottom
+// ForUI: Custom notification with ForUI styling
+
+// For important messages, combine with haptic feedback
+HapticFeedback.mediumImpact();  // On supported devices
+ui.showSnackBar(context, 'Item deleted');
+```
+
+#### Navigation-Aware Dialogs
+```dart
+// Dialogs work correctly during UI system switches
+// The framework ensures dialogs close properly when UI system changes
+// Use rootNavigator for system-level dialogs:
+Navigator.of(context, rootNavigator: true).pop();
+
+// For navigation after dialog:
+final result = await ui.showDialog(...);
+if (result == 'navigate') {
+  getIt<NavigationService>().push('/next-screen');
+}
+```
+
 ### 30+ Adaptive Components
 
 #### Essential UI Components
@@ -196,10 +306,39 @@ ui.popupMenuButton<String>(
   ],
   onSelected: (value) => handleAction(value),
 )
+```
 
-// Date & Time Pickers (distinct styling per UI system)
-await ui.showDatePicker(context: context, initialDate: DateTime.now())
-await ui.showTimePicker(context: context, initialTime: TimeOfDay.now())
+#### Date & Time Pickers
+```dart
+// Date picker (platform-specific)
+final date = await ui.showDatePicker(
+  context: context,
+  initialDate: DateTime.now(),
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+);
+// Cupertino: iOS-style modal picker
+// Material: Material calendar dialog
+// ForUI: Flat design with sharp corners
+
+// Time picker
+final time = await ui.showTimePicker(
+  context: context,
+  initialTime: TimeOfDay.now(),
+);
+// Cupertino: iOS-style spinning wheels
+// Material: Clock face or input dialog
+// ForUI: Custom time selection
+
+// Date range picker (for selecting periods)
+final range = await ui.showDateRangePicker(
+  context: context,
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+);
+if (range != null) {
+  print('From ${range.start} to ${range.end}');
+}
 ```
 
 #### Advanced Components
@@ -250,6 +389,96 @@ Watch((context) {
 });
 ```
 
+### Common Integration Patterns
+
+#### Navigation with Dialogs
+```dart
+// Show loading dialog during async operations
+ui.showDialog(
+  context: context,
+  barrierDismissible: false,
+  title: Text('Loading'),
+  content: ui.circularProgressIndicator(),
+  actions: [],
+);
+
+// Perform async operation
+await performOperation();
+
+// Close dialog and navigate
+Navigator.of(context, rootNavigator: true).pop();
+getIt<NavigationService>().push('/success');
+```
+
+#### Form Validation with Feedback
+```dart
+// Form submission with validation feedback
+Future<void> submitForm() async {
+  if (!formKey.currentState!.validate()) {
+    ui.showSnackBar(context, 'Please fix the errors in red');
+    return;
+  }
+
+  // Show progress
+  ui.showDialog(
+    context: context,
+    title: Text('Saving'),
+    content: ui.linearProgressIndicator(),
+  );
+
+  try {
+    await saveData();
+    Navigator.pop(context); // Close dialog
+    ui.showSnackBar(context, 'Saved successfully!');
+    getIt<NavigationService>().pop(); // Go back
+  } catch (e) {
+    Navigator.pop(context); // Close dialog
+    ui.showSnackBar(
+      context,
+      'Error: ${e.toString()}',
+      backgroundColor: Colors.red,
+    );
+  }
+}
+```
+
+#### Service Integration in Screens
+```dart
+class DataScreen extends StatelessWidget {
+  Widget build(BuildContext context) {
+    final ui = getAdaptiveFactory(context);
+    final db = getIt<DatabaseService>();
+    final nav = getIt<NavigationService>();
+    
+    return FutureBuilder(
+      future: db.findAll('items'),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          // Show error with retry option
+          return Center(
+            child: Column(
+              children: [
+                Text('Error loading data'),
+                ui.button(
+                  label: 'Retry',
+                  onPressed: () => nav.replace(nav.currentPath),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        if (!snapshot.hasData) {
+          return Center(child: ui.circularProgressIndicator());
+        }
+        
+        return ListView(/* render data */);
+      },
+    );
+  }
+}
+```
+
 ### Development Best Practices
 - **Import Organization**: Dart → Flutter → Packages (alphabetical) → Project imports
 - **File Naming**: `*_service.dart`, `*_store.dart`, `adaptive_*.dart`, `*_screen.dart`
@@ -267,3 +496,46 @@ The framework includes 10+ example screens demonstrating all features:
 - **Settings**: Complete settings management with persistence
 
 All settings automatically persist across app restarts using SharedPreferences with reactive effects.
+
+---
+
+## 📋 Quick Reference Summary
+
+### Service Access Pattern
+```dart
+// Always access services through GetIt
+final nav = getIt<NavigationService>();
+final db = getIt<DatabaseService>();
+final auth = getIt<AuthenticationService>();
+final settings = getIt<AppShellSettingsStore>();
+```
+
+### UI Component Access Pattern
+```dart
+// Always get adaptive factory from context
+final ui = getAdaptiveFactory(context);
+// All UI components automatically adapt to current system
+```
+
+### Navigation & Feedback Flow
+1. **User Action** → Show loading/progress indicator
+2. **Async Operation** → Perform service calls
+3. **Success** → Close dialog, show success snackbar, navigate
+4. **Error** → Close dialog, show error snackbar with retry option
+
+### Platform-Specific Behaviors
+- **iOS/Cupertino**: Top notification banners, modal pickers, action sheets, grouped settings
+- **Android/Material**: Bottom snackbars, calendar dialogs, bottom sheets, card-based settings  
+- **ForUI**: Clean flat design, custom components, consistent zinc color palette
+
+### Key Features to Remember
+- ✅ All settings auto-persist with reactive updates
+- ✅ Navigation service integrates with dialogs and sheets
+- ✅ UI system can be switched at runtime
+- ✅ All components adapt automatically
+- ✅ Services are singleton instances via GetIt
+- ✅ Screens return content directly (no scaffold wrapper)
+- ✅ InstantDB requires no code generation
+- ✅ Desktop window state persistence is automatic
+
+This guide provides comprehensive coverage of Flutter App Shell's navigation, dialog, notification, and UI capabilities for effective AI-assisted development.
