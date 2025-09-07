@@ -155,7 +155,7 @@ abstract class AdaptiveWidgetFactory {
   /// Creates a dialog
   Future<T?> showDialog<T>({
     required BuildContext context,
-    required Widget title,
+    Widget? title,
     required Widget content,
     List<Widget>? actions,
     bool barrierDismissible = true,
