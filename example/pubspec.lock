@@ -188,7 +188,7 @@ packages:
       path: "../packages/flutter_app_shell"
       relative: true
     source: path
-    version: "0.7.14"
+    version: "0.7.15"
   flutter_dotenv:
     dependency: transitive
     description:
