@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.14 - 2025-09-07
+
+### Fixed
+- **🐛 DatabaseService Race Condition**: Fixed critical race condition in query methods
+  - `findAll()`, `findWhere()`, and `read()` were returning empty results on initial query
+  - Methods were synchronously reading signal values before WebSocket responses arrived
+  - Now uses InstantDB's `queryOnce()` API which properly waits for initial data load
+  - This ensures reliable data retrieval on first call instead of empty results
+  - Root cause: Synchronous read of reactive signal before async data population
+
 ## 0.7.13 - 2025-09-06
 
 ### Fixed

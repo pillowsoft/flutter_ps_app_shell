@@ -187,8 +187,8 @@ class DatabaseService {
         }
       };
 
-      final querySignal = _db!.subscribeQuery(query);
-      final result = querySignal.value;
+      // Use queryOnce to wait for the initial data load
+      final result = await _db!.queryOnce(query);
 
       // Check if query has data and the collection exists
       if (result.hasData && result.data![collection] != null) {
@@ -289,8 +289,8 @@ class DatabaseService {
         query[collection]['limit'] = limit;
       }
 
-      final querySignal = _db!.subscribeQuery(query);
-      final result = querySignal.value;
+      // Use queryOnce to wait for the initial data load
+      final result = await _db!.queryOnce(query);
 
       if (result.hasData && result.data![collection] != null) {
         final collectionData = result.data![collection] as List?;
@@ -335,8 +335,8 @@ class DatabaseService {
         query[collection]['limit'] = limit;
       }
 
-      final querySignal = _db!.subscribeQuery(query);
-      final result = querySignal.value;
+      // Use queryOnce to wait for the initial data load
+      final result = await _db!.queryOnce(query);
 
       if (result.hasData && result.data![collection] != null) {
         final collectionData = result.data![collection] as List?;
