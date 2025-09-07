@@ -328,7 +328,7 @@ class MaterialWidgetFactory extends AdaptiveWidgetFactory {
   @override
   Future<T?> showDialog<T>({
     required BuildContext context,
-    required Widget title,
+    Widget? title,
     required Widget content,
     List<Widget>? actions,
     bool barrierDismissible = true,
@@ -1697,30 +1697,37 @@ class MaterialWidgetFactory extends AdaptiveWidgetFactory {
       dismissible: dismissible,
     );
 
-    material.showDialog(
+    final dialogFuture = material.showDialog(
       context: context,
       barrierDismissible: dismissible,
-      builder: (dialogContext) => material.AlertDialog(
-        content: material.ValueListenableBuilder<String?>(
-          valueListenable: controller.messageNotifier,
-          builder: (context, currentMessage, _) {
-            return material.Column(
-              mainAxisSize: material.MainAxisSize.min,
-              children: [
-                const material.CircularProgressIndicator(),
-                if (currentMessage != null) ...[
-                  const material.SizedBox(height: 16),
-                  material.Text(
-                    currentMessage,
-                    textAlign: material.TextAlign.center,
-                  ),
+      builder: (dialogContext) {
+        // Pass the dialog context to the controller
+        controller.setDialogContext(dialogContext);
+        return material.AlertDialog(
+          content: material.ValueListenableBuilder<String?>(
+            valueListenable: controller.messageNotifier,
+            builder: (context, currentMessage, _) {
+              return material.Column(
+                mainAxisSize: material.MainAxisSize.min,
+                children: [
+                  const material.CircularProgressIndicator(),
+                  if (currentMessage != null) ...[
+                    const material.SizedBox(height: 16),
+                    material.Text(
+                      currentMessage,
+                      textAlign: material.TextAlign.center,
+                    ),
+                  ],
                 ],
-              ],
-            );
-          },
-        ),
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
+
+    // Store the future in the controller for proper cleanup
+    controller.setDialogFuture(dialogFuture);
 
     return controller;
   }

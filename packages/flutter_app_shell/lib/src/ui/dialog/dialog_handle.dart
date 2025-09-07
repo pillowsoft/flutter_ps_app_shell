@@ -10,6 +10,10 @@ class DialogHandle {
   bool _isDismissed = false;
   VoidCallback? _onDismiss;
   
+  // Dialog context and future tracking for proper dismissal
+  BuildContext? _dialogContext;
+  Future? _dialogFuture;
+  
   // For progress dialogs
   final ValueNotifier<String?> _messageNotifier = ValueNotifier<String?>(null);
   final ValueNotifier<double?> _progressNotifier = ValueNotifier<double?>(null);
@@ -47,6 +51,18 @@ class DialogHandle {
     _onDismiss = callback;
   }
   
+  /// Internal method to set the dialog context for proper dismissal
+  /// This method is used internally by the adaptive widget factories
+  void setDialogContext(BuildContext context) {
+    _dialogContext = context;
+  }
+  
+  /// Internal method to set the dialog future for tracking
+  /// This method is used internally by the adaptive widget factories
+  void setDialogFuture(Future future) {
+    _dialogFuture = future;
+  }
+  
   /// Update the message displayed in the dialog
   void updateMessage(String message) {
     if (!_isDismissed) {
@@ -70,9 +86,10 @@ class DialogHandle {
     // Notify navigation service
     _navigationService?.setDialogActive(false);
     
-    // Try to pop the dialog
-    if (_context.mounted) {
-      Navigator.of(_context, rootNavigator: true).pop();
+    // Use dialog context if available, fallback to original context
+    final contextToUse = _dialogContext ?? _context;
+    if (contextToUse.mounted) {
+      Navigator.of(contextToUse, rootNavigator: true).pop();
     }
     
     // Call dismiss callback
@@ -85,10 +102,13 @@ class DialogHandle {
   
   /// Dismiss only if dialog is showing
   void dismissIfShowing() {
-    if (!_isDismissed && _context.mounted) {
-      final navigator = Navigator.of(_context, rootNavigator: true);
-      if (navigator.canPop()) {
-        dismiss();
+    if (!_isDismissed) {
+      final contextToUse = _dialogContext ?? _context;
+      if (contextToUse.mounted) {
+        final navigator = Navigator.of(contextToUse, rootNavigator: true);
+        if (navigator.canPop()) {
+          dismiss();
+        }
       }
     }
   }

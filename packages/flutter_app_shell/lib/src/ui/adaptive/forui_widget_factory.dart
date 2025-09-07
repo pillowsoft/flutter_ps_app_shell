@@ -560,7 +560,7 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
   @override
   Future<T?> showDialog<T>({
     required BuildContext context,
-    required Widget title,
+    Widget? title,
     required Widget content,
     List<Widget>? actions,
     bool barrierDismissible = true,
@@ -570,7 +570,7 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
       barrierDismissible: barrierDismissible,
       barrierColor: _primaryColor.withValues(alpha: 0.5),
       builder: (dialogContext) => AlertDialog(
-        title: DefaultTextStyle(
+        title: title != null ? DefaultTextStyle(
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -578,7 +578,7 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
             height: 1.4,
           ),
           child: title,
-        ),
+        ) : null,
         content: DefaultTextStyle(
           style: const TextStyle(
             fontSize: 14,
@@ -2689,37 +2689,44 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
       dismissible: dismissible,
     );
 
-    showAdaptiveDialog(
+    final dialogFuture = showAdaptiveDialog(
       context: context,
       barrierDismissible: dismissible,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
-        content: ValueListenableBuilder<String?>(
-          valueListenable: controller.messageNotifier,
-          builder: (context, currentMessage, _) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(
-                  color: _primaryColor,
-                ),
-                if (currentMessage != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    currentMessage,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: _primaryColor,
-                    ),
+      builder: (dialogContext) {
+        // Pass the dialog context to the controller
+        controller.setDialogContext(dialogContext);
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          content: ValueListenableBuilder<String?>(
+            valueListenable: controller.messageNotifier,
+            builder: (context, currentMessage, _) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(
+                    color: _primaryColor,
                   ),
+                  if (currentMessage != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      currentMessage,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: _primaryColor,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
-            );
-          },
-        ),
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
+
+    // Store the future in the controller for proper cleanup
+    controller.setDialogFuture(dialogFuture);
 
     return controller;
   }
