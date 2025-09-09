@@ -299,13 +299,12 @@ class _DatalogInvestigationScreenState
               children: [
                 Expanded(
                   child: Watch((context) {
-                    final VoidCallback? callback = _isRunning.value
-                        ? null
-                        : () {
-                            _runInvestigation();
-                          };
                     return ui.button(
-                      onPressed: callback,
+                      onPressed: _isRunning.value
+                          ? () {}  // Disabled button - empty callback
+                          : () {
+                              _runInvestigation();
+                            },
                       child: _isRunning.value
                           ? const Text('Running Investigation...')
                           : const Text('Start Investigation'),
