@@ -259,10 +259,10 @@ packages:
     dependency: transitive
     description:
       name: instantdb_flutter
-      sha256: "3f856f9424fa4a1f0d9600ebbc6117369be6eee786ab0a65b927d5aa6745d1f0"
+      sha256: ee610c2fa96356642ca76b6c3ac652c2883030cbf82abf54d9380f2aaa8b85eb
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1"
+    version: "0.2.1"
   intl:
     dependency: transitive
     description:

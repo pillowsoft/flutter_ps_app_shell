@@ -7,6 +7,10 @@ import '../utils/logger.dart';
 
 /// Real-time database service using InstantDB with built-in cloud sync
 /// Supports both local-only mode (no app ID) and cloud-sync mode (with app ID)
+/// 
+/// IMPORTANT: This service includes a workaround for InstantDB Flutter package bug
+/// where datalog-result format from the server is not properly converted to the
+/// expected collection format. Remove the workaround when the package is fixed.
 class DatabaseService {
   static DatabaseService? _instance;
   static DatabaseService get instance => _instance ??= DatabaseService._();
@@ -292,19 +296,29 @@ class DatabaseService {
       // Use queryOnce to wait for the initial data load
       final result = await _db!.queryOnce(query);
 
-      if (result.hasData && result.data![collection] != null) {
-        final collectionData = result.data![collection] as List?;
-        if (collectionData != null) {
-          final documents = List<Map<String, dynamic>>.from(
-              collectionData.map((item) => Map<String, dynamic>.from(item)));
-          // Add IDs to each document
-          for (int i = 0; i < documents.length; i++) {
-            final doc = documents[i];
-            if (doc.containsKey('id')) {
-              doc['_id'] = doc['id'];
-            }
-          }
+      if (result.hasData && result.data != null) {
+        // Check for datalog format first (workaround for InstantDB package bug)
+        if (result.data!['datalog-result'] != null) {
+          final documents = _parseDatalogResult(result.data!, collection);
+          _logger.fine('Parsed ${documents.length} documents from datalog format');
           return documents;
+        }
+
+        // Fall back to standard format
+        if (result.data![collection] != null) {
+          final collectionData = result.data![collection] as List?;
+          if (collectionData != null) {
+            final documents = List<Map<String, dynamic>>.from(
+                collectionData.map((item) => Map<String, dynamic>.from(item)));
+            // Add IDs to each document
+            for (int i = 0; i < documents.length; i++) {
+              final doc = documents[i];
+              if (doc.containsKey('id')) {
+                doc['_id'] = doc['id'];
+              }
+            }
+            return documents;
+          }
         }
       }
 
@@ -338,19 +352,29 @@ class DatabaseService {
       // Use queryOnce to wait for the initial data load
       final result = await _db!.queryOnce(query);
 
-      if (result.hasData && result.data![collection] != null) {
-        final collectionData = result.data![collection] as List?;
-        if (collectionData != null) {
-          final documents = List<Map<String, dynamic>>.from(
-              collectionData.map((item) => Map<String, dynamic>.from(item)));
-          // Add IDs to each document
-          for (int i = 0; i < documents.length; i++) {
-            final doc = documents[i];
-            if (doc.containsKey('id')) {
-              doc['_id'] = doc['id'];
-            }
-          }
+      if (result.hasData && result.data != null) {
+        // Check for datalog format first (workaround for InstantDB package bug)
+        if (result.data!['datalog-result'] != null) {
+          final documents = _parseDatalogResult(result.data!, collection);
+          _logger.fine('Parsed ${documents.length} documents from datalog format (findWhere)');
           return documents;
+        }
+
+        // Fall back to standard format
+        if (result.data![collection] != null) {
+          final collectionData = result.data![collection] as List?;
+          if (collectionData != null) {
+            final documents = List<Map<String, dynamic>>.from(
+                collectionData.map((item) => Map<String, dynamic>.from(item)));
+            // Add IDs to each document
+            for (int i = 0; i < documents.length; i++) {
+              final doc = documents[i];
+              if (doc.containsKey('id')) {
+                doc['_id'] = doc['id'];
+              }
+            }
+            return documents;
+          }
         }
       }
 
@@ -383,19 +407,28 @@ class DatabaseService {
     // Transform the InstantDB signal to our format
     final transformedSignal = computed(() {
       final result = querySignal.value;
-      if (result.hasData && result.data![collection] != null) {
-        final collectionData = result.data![collection] as List?;
-        if (collectionData != null) {
-          final documents = List<Map<String, dynamic>>.from(
-              collectionData.map((item) => Map<String, dynamic>.from(item)));
-          // Add IDs to each document
-          for (int i = 0; i < documents.length; i++) {
-            final doc = documents[i];
-            if (doc.containsKey('id')) {
-              doc['_id'] = doc['id'];
-            }
-          }
+      if (result.hasData && result.data != null) {
+        // Check for datalog format first (workaround for InstantDB package bug)
+        if (result.data!['datalog-result'] != null) {
+          final documents = _parseDatalogResult(result.data!, collection);
           return documents;
+        }
+
+        // Fall back to standard format
+        if (result.data![collection] != null) {
+          final collectionData = result.data![collection] as List?;
+          if (collectionData != null) {
+            final documents = List<Map<String, dynamic>>.from(
+                collectionData.map((item) => Map<String, dynamic>.from(item)));
+            // Add IDs to each document
+            for (int i = 0; i < documents.length; i++) {
+              final doc = documents[i];
+              if (doc.containsKey('id')) {
+                doc['_id'] = doc['id'];
+              }
+            }
+            return documents;
+          }
         }
       }
       return <Map<String, dynamic>>[];
@@ -426,19 +459,28 @@ class DatabaseService {
     // Transform the InstantDB signal to our format
     final transformedSignal = computed(() {
       final result = querySignal.value;
-      if (result.hasData && result.data![collection] != null) {
-        final collectionData = result.data![collection] as List?;
-        if (collectionData != null) {
-          final documents = List<Map<String, dynamic>>.from(
-              collectionData.map((item) => Map<String, dynamic>.from(item)));
-          // Add IDs to each document
-          for (int i = 0; i < documents.length; i++) {
-            final doc = documents[i];
-            if (doc.containsKey('id')) {
-              doc['_id'] = doc['id'];
-            }
-          }
+      if (result.hasData && result.data != null) {
+        // Check for datalog format first (workaround for InstantDB package bug)
+        if (result.data!['datalog-result'] != null) {
+          final documents = _parseDatalogResult(result.data!, collection);
           return documents;
+        }
+
+        // Fall back to standard format
+        if (result.data![collection] != null) {
+          final collectionData = result.data![collection] as List?;
+          if (collectionData != null) {
+            final documents = List<Map<String, dynamic>>.from(
+                collectionData.map((item) => Map<String, dynamic>.from(item)));
+            // Add IDs to each document
+            for (int i = 0; i < documents.length; i++) {
+              final doc = documents[i];
+              if (doc.containsKey('id')) {
+                doc['_id'] = doc['id'];
+              }
+            }
+            return documents;
+          }
         }
       }
       return <Map<String, dynamic>>[];
@@ -506,6 +548,7 @@ class DatabaseService {
   Map<String, dynamic>? get currentUser =>
       _db?.auth.currentUser.value?.toJson();
 
+
   /// Get database statistics
   Future<DatabaseStats> getStats() async {
     _ensureInitialized();
@@ -549,6 +592,78 @@ class DatabaseService {
   }
 
   // Private Methods
+
+  /// Parse InstantDB's datalog-result format into entity list
+  /// This is a workaround for the InstantDB package bug where datalog results
+  /// are not properly converted to the expected collection format
+  List<Map<String, dynamic>> _parseDatalogResult(
+      Map<String, dynamic> data, String collection) {
+    final datalogResult = data['datalog-result'];
+    if (datalogResult == null || datalogResult['join-rows'] == null) {
+      return [];
+    }
+
+    final joinRows = datalogResult['join-rows'] as List;
+    if (joinRows.isEmpty) {
+      return [];
+    }
+
+    // Group rows by entity ID to reconstruct documents
+    final entityMap = <String, Map<String, dynamic>>{};
+
+    // Common attribute ID mappings (these would ideally come from the schema)
+    final attributeMap = <String, String>{
+      // Common InstantDB attribute IDs - these may need to be updated
+      // based on your specific schema
+      '8ce3e8f1-1c42-4683-9e91-dfe8f6879e1b': 'id',
+      '82a884f7-6e0f-427d-88b6-66c550e86d98': 'title',
+      '90774276-102f-4963-856b-2e69315c0bfd': 'createdAt',
+      '253a7374-4154-4cc4-b71b-5eca6f8e5db6': 'updatedAt',
+      // Add more mappings as needed based on your schema
+    };
+
+    for (final row in joinRows) {
+      if (row is List && row.length >= 4) {
+        final entityId = row[0] as String;
+        final attributeId = row[1] as String;
+        final value = row[2];
+        // final timestamp = row[3]; // Not used currently
+
+        // Initialize entity if not exists
+        entityMap[entityId] ??= {'id': entityId};
+
+        // Map attribute ID to field name
+        final fieldName = attributeMap[attributeId];
+        if (fieldName != null) {
+          entityMap[entityId]![fieldName] = value;
+        } else {
+          // For unknown attribute IDs, try to infer based on value type
+          if (value is bool && !entityMap[entityId]!.containsKey('completed')) {
+            // Boolean values are likely 'completed' for todos
+            entityMap[entityId]!['completed'] = value;
+          } else if (value is String && value.contains('@')) {
+            // Email-like strings might be email field
+            entityMap[entityId]!['email'] = value;
+          } else {
+            // Use the attribute ID as the field name for now
+            entityMap[entityId]![attributeId] = value;
+            _logger.fine('Unknown attribute ID: $attributeId, using as field name');
+          }
+        }
+      }
+    }
+
+    // Convert to list and add metadata
+    final documents = entityMap.values.map((entity) {
+      final doc = Map<String, dynamic>.from(entity);
+      // Add standard metadata if not present
+      doc['_id'] = doc['id'];
+      doc['__type'] = collection;
+      return doc;
+    }).toList();
+
+    return documents;
+  }
 
   void _ensureInitialized() {
     if (!isInitialized) {

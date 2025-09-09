@@ -351,6 +351,14 @@ void main() {
             builder: (context, state) => const ResponsiveNavigationDemoScreen(),
             showInNavigation: false, // This demonstrates hidden routes!
           ),
+          // Datalog investigation screen for debugging InstantDB issues
+          AppRoute(
+            title: 'Datalog Investigation',
+            path: '/datalog-investigation',
+            icon: Icons.bug_report,
+            builder: (context, state) => const DatalogInvestigationScreen(),
+            showInNavigation: false, // Hidden debugging screen
+          ),
         ],
         actions: [
           // Custom widget example (existing UI selector)

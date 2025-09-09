@@ -45,7 +45,7 @@ dependencies:
   yaml: ^3.1.2
 
   # Database
-  instantdb_flutter: ^0.1.1
+  instantdb_flutter: ^0.2.1
 
   # Environment configuration
   flutter_dotenv: ^6.0.0
