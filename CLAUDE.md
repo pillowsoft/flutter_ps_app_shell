@@ -298,7 +298,7 @@ Core framework dependencies that should not be changed without careful considera
 - `go_router: ^14.2.3` - Navigation
 - `get_it: ^8.0.0` - Dependency injection
 - `signals: ^6.0.2` - Primary state management (NO CODE GENERATION!)
-- `instantdb_flutter: ^0.1.1` - Real-time database with authentication (NO CODE GENERATION!)
+- `instantdb_flutter: ^0.2.1` - Real-time database with authentication (NO CODE GENERATION!)
 - `shared_preferences: ^2.3.1` - Local storage
 
 ## 🎯 Currently Working Features (All Verified and Tested)
@@ -331,6 +331,10 @@ Core framework dependencies that should not be changed without careful considera
 
 ### ✅ Advanced Services
 - **DatabaseService**: InstantDB-powered NoSQL with reactive queries and real-time synchronization (zero code generation!)
+  - **v0.7.19 Update**: Enhanced datalog parsing with flexible attribute mapping
+  - **Diagnostic Tools**: New `diagnoseDatalogParsing()` method for debugging
+  - **Collection-Specific Mappings**: Support for schema-specific attribute IDs
+  - **See DATALOG_PARSING_GUIDE.md** for troubleshooting datalog format issues
 - **NetworkService**: Dio HTTP client with offline queue and automatic retry
 - **AuthenticationService**: JWT tokens, biometric auth, complete user management
 - **PreferencesService**: Type-safe reactive preferences with Signals integration
@@ -634,6 +638,29 @@ Created comprehensive demo screen at `/responsive-navigation` showing:
 - Screen width and breakpoint detection
 - Interactive hidden routes demo
 - Navigation threshold logic explanation
+
+## Recent Updates
+
+### 🎉 v0.7.19 - Enhanced Datalog Parsing (Latest)
+- **Fixed Critical Bug**: DatabaseService now correctly parses InstantDB datalog format
+- **Flexible Attribute Mapping**: Support for schema-specific and collection-specific attribute IDs
+- **Diagnostic Tools**: New `diagnoseDatalogParsing()` method for debugging parsing issues
+- **Investigation Screen**: Enhanced `/datalog-investigation` route for testing
+- **Documentation**: Added comprehensive DATALOG_PARSING_GUIDE.md
+
+### 📦 InstantDB Flutter v0.2.3 Integration
+The project now uses InstantDB Flutter v0.2.3 which includes:
+- ✅ Fixed race condition in query execution
+- ✅ Comprehensive logging throughout datalog conversion
+- ✅ Queries now return cached data immediately (no more "0 documents" issue)
+- ✅ Proper datalog-to-collection format conversion
+- ✅ Published to pub.dev at https://pub.dev/packages/instantdb_flutter/versions/0.2.3
+
+### 🔧 v0.7.16-v0.7.18 Updates
+- Upgraded InstantDB from v0.1.1 to v0.2.1
+- Added datalog investigation tools
+- Applied comprehensive code formatting
+- Fixed nullable callback type errors
 
 ## Large Title Features
 
