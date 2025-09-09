@@ -143,8 +143,9 @@ void main() {
     () async {
       // Check if user has seen onboarding
       final prefs = getIt<PreferencesService>();
-      final hasSeenOnboarding = prefs.getBool('has_seen_onboarding', defaultValue: false).value;
-      
+      final hasSeenOnboarding =
+          prefs.getBool('has_seen_onboarding', defaultValue: false).value;
+
       return AppConfig(
         title: 'Flutter App Shell Demo',
         initialRoute: hasSeenOnboarding ? '/' : '/onboarding',
@@ -370,14 +371,14 @@ void main() {
             },
             customWidget: const UISystemSelector(),
           ),
-          
+
           // Declarative route navigation example
           AppShellAction.route(
             icon: Icons.settings,
             tooltip: 'Settings',
             route: '/settings',
           ),
-          
+
           // Context-aware navigation example
           AppShellAction.navigate(
             icon: Icons.person,
@@ -387,16 +388,17 @@ void main() {
               context.go('/profile');
             },
           ),
-          
+
           // Traditional callback example (backward compatibility)
           AppShellAction.callback(
             icon: Icons.notifications_outlined,
             tooltip: 'Notifications',
             onPressed: () {
-              AppShellLogger.i('Notifications clicked - using traditional callback');
+              AppShellLogger.i(
+                  'Notifications clicked - using traditional callback');
             },
           ),
-          
+
           // Context-aware navigation with push instead of go
           AppShellAction.navigate(
             icon: Icons.info,

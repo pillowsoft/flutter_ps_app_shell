@@ -570,15 +570,17 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
       barrierDismissible: barrierDismissible,
       barrierColor: _primaryColor.withValues(alpha: 0.5),
       builder: (dialogContext) => AlertDialog(
-        title: title != null ? DefaultTextStyle(
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: _primaryColor,
-            height: 1.4,
-          ),
-          child: title,
-        ) : null,
+        title: title != null
+            ? DefaultTextStyle(
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: _primaryColor,
+                  height: 1.4,
+                ),
+                child: title,
+              )
+            : null,
         content: DefaultTextStyle(
           style: const TextStyle(
             fontSize: 14,
@@ -2770,7 +2772,8 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
                 return LinearProgressIndicator(
                   value: progress,
                   backgroundColor: _mutedColor,
-                  valueColor: const AlwaysStoppedAnimation<Color>(_primaryColor),
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(_primaryColor),
                 );
               },
             ),

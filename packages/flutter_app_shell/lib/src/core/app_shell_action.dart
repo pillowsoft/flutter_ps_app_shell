@@ -11,7 +11,7 @@ class AppShellAction {
   final IconData? toggledIcon;
   final String? toggledTooltip;
   final Widget? customWidget;
-  
+
   // New navigation properties
   final String? route;
   final void Function(BuildContext)? onNavigate;
@@ -31,15 +31,13 @@ class AppShellAction {
     this.route,
     this.onNavigate,
     this.useReplace = false,
-  }) : assert(
+  })  : assert(
             !isToggleable ||
                 (isToggleable && onToggle != null && initialValue != null),
             'Toggle actions must provide onToggle and initialValue'),
-       assert(
-            onPressed != null || route != null || onNavigate != null,
+        assert(onPressed != null || route != null || onNavigate != null,
             'AppShellAction must provide one of: onPressed, route, or onNavigate'),
-       assert(
-            !(route != null && onNavigate != null),
+        assert(!(route != null && onNavigate != null),
             'Cannot specify both route and onNavigate - use one or the other');
 
   /// Factory constructor for simple navigation to a route

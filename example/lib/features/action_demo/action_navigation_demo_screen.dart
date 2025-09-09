@@ -13,7 +13,6 @@ class ActionNavigationDemoScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         ui.pageTitle('App Bar Action Navigation'),
-        
         ui.card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -34,7 +33,8 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                   context,
                   icon: Icons.settings,
                   title: 'Declarative Route Navigation',
-                  description: 'Settings button uses AppShellAction.route() for simple navigation to /settings',
+                  description:
+                      'Settings button uses AppShellAction.route() for simple navigation to /settings',
                   codeExample: '''AppShellAction.route(
   icon: Icons.settings,
   tooltip: 'Settings',
@@ -46,7 +46,8 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                   context,
                   icon: Icons.person,
                   title: 'Context-Aware Navigation',
-                  description: 'Profile button uses context for conditional navigation with onNavigate callback',
+                  description:
+                      'Profile button uses context for conditional navigation with onNavigate callback',
                   codeExample: '''AppShellAction.navigate(
   icon: Icons.person,
   tooltip: 'Profile',
@@ -60,7 +61,8 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                   context,
                   icon: Icons.info,
                   title: 'Push Navigation',
-                  description: 'Inspector button uses context.push() to stack screens',
+                  description:
+                      'Inspector button uses context.push() to stack screens',
                   codeExample: '''AppShellAction.navigate(
   icon: Icons.info,
   tooltip: 'Inspector',
@@ -74,7 +76,8 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                   context,
                   icon: Icons.notifications_outlined,
                   title: 'Traditional Callback (Backward Compatible)',
-                  description: 'Notifications button uses traditional VoidCallback for non-navigation actions',
+                  description:
+                      'Notifications button uses traditional VoidCallback for non-navigation actions',
                   codeExample: '''AppShellAction.callback(
   icon: Icons.notifications,
   tooltip: 'Notifications',
@@ -87,9 +90,7 @@ class ActionNavigationDemoScreen extends StatelessWidget {
             ),
           ),
         ),
-        
         const SizedBox(height: 24),
-        
         ui.card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -106,7 +107,7 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Interactive examples
                 Wrap(
                   spacing: 8,
@@ -130,9 +131,9 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 Text(
                   'Replace Navigation Example',
                   style: Theme.of(context).textTheme.titleMedium,
@@ -155,9 +156,7 @@ class ActionNavigationDemoScreen extends StatelessWidget {
             ),
           ),
         ),
-        
         const SizedBox(height: 24),
-        
         ui.card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -169,7 +168,6 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 16),
-                
                 _buildMigrationExample(
                   context,
                   title: 'Before (Required Service Locator)',
@@ -183,9 +181,7 @@ class ActionNavigationDemoScreen extends StatelessWidget {
 )''',
                   isOld: true,
                 ),
-                
                 const SizedBox(height: 16),
-                
                 _buildMigrationExample(
                   context,
                   title: 'After (Clean & Direct)',
@@ -228,8 +224,8 @@ class ActionNavigationDemoScreen extends StatelessWidget {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ),
             ],
@@ -249,8 +245,8 @@ class ActionNavigationDemoScreen extends StatelessWidget {
             child: Text(
               codeExample,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontFamily: 'monospace',
-              ),
+                    fontFamily: 'monospace',
+                  ),
             ),
           ),
         ],
@@ -268,7 +264,9 @@ class ActionNavigationDemoScreen extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border: Border.all(
-          color: isOld ? Colors.red.withOpacity(0.5) : Colors.green.withOpacity(0.5),
+          color: isOld
+              ? Colors.red.withOpacity(0.5)
+              : Colors.green.withOpacity(0.5),
         ),
         borderRadius: BorderRadius.circular(8),
         color: (isOld ? Colors.red : Colors.green).withOpacity(0.1),
@@ -287,9 +285,9 @@ class ActionNavigationDemoScreen extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isOld ? Colors.red : Colors.green,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: isOld ? Colors.red : Colors.green,
+                    ),
               ),
             ],
           ),
@@ -303,8 +301,8 @@ class ActionNavigationDemoScreen extends StatelessWidget {
             child: Text(
               code,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontFamily: 'monospace',
-              ),
+                    fontFamily: 'monospace',
+                  ),
             ),
           ),
         ],

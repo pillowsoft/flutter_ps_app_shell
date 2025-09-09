@@ -4,7 +4,7 @@ import 'package:get_it/get_it.dart';
 
 class NavigationService {
   late GoRouter _router;
-  
+
   // Dialog awareness
   bool _hasActiveDialog = false;
   bool _allowNavigationWithDialog = false;
@@ -15,7 +15,7 @@ class NavigationService {
 
   /// Whether a dialog is currently active
   bool get hasActiveDialog => _hasActiveDialog;
-  
+
   /// Whether navigation is allowed when a dialog is showing
   bool get allowNavigationWithDialog => _allowNavigationWithDialog;
 
@@ -27,7 +27,7 @@ class NavigationService {
   void setDialogActive(bool active) {
     _hasActiveDialog = active;
   }
-  
+
   /// Set whether navigation should be allowed with an active dialog
   void setAllowNavigationWithDialog(bool allow) {
     _allowNavigationWithDialog = allow;
@@ -37,7 +37,7 @@ class NavigationService {
   void addBeforeNavigateCallback(VoidCallback callback) {
     _beforeNavigateCallbacks.add(callback);
   }
-  
+
   /// Remove a before navigate callback
   void removeBeforeNavigateCallback(VoidCallback callback) {
     _beforeNavigateCallbacks.remove(callback);
@@ -49,7 +49,8 @@ class NavigationService {
   }
 
   /// Safely navigate, dismissing dialogs if needed
-  Future<void> safeNavigate(String path, {Object? extra, bool dismissDialogs = true}) async {
+  Future<void> safeNavigate(String path,
+      {Object? extra, bool dismissDialogs = true}) async {
     if (_hasActiveDialog && dismissDialogs) {
       // Notify all callbacks (dialogs can auto-dismiss)
       for (final callback in List.from(_beforeNavigateCallbacks)) {
@@ -82,7 +83,7 @@ class NavigationService {
     if (isDialog) {
       _hasActiveDialog = false;
     }
-    
+
     if (_router.canPop()) {
       _router.pop();
     }
@@ -116,21 +117,21 @@ class NavigationService {
   bool canPop() {
     return _router.canPop();
   }
-  
+
   // Context stack management for dialog awareness
-  
+
   /// Push a context to the stack (used when showing dialogs)
   void pushContext(BuildContext context) {
     _contextStack.add(context);
   }
-  
+
   /// Pop a context from the stack (used when dismissing dialogs)
   void popContext() {
     if (_contextStack.isNotEmpty) {
       _contextStack.removeLast();
     }
   }
-  
+
   /// Check if there's a modal context (dialog) in the stack
   bool hasModalContext() {
     return _contextStack.any((ctx) {
@@ -141,7 +142,7 @@ class NavigationService {
       }
     });
   }
-  
+
   /// Clear all contexts (used on app reset)
   void clearContextStack() {
     _contextStack.clear();

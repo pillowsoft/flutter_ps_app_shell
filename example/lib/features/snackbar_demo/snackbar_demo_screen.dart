@@ -12,32 +12,33 @@ class SnackBarDemoScreen extends StatefulWidget {
 class _SnackBarDemoScreenState extends State<SnackBarDemoScreen> {
   // Track active snackbar controller for programmatic dismissal demo
   ScaffoldFeatureController? _activeController;
-  
+
   @override
   Widget build(BuildContext context) {
     final ui = getAdaptiveFactory(context);
     final settingsStore = getIt<AppShellSettingsStore>();
-    
+
     return Watch((context) {
       final currentSystem = settingsStore.uiSystem.value;
-      
+
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
           // Page Title
           _buildPageTitle(context, 'SnackBar Demo'),
           const SizedBox(height: 8),
-          _buildPageSubtitle(context, 
-            'Platform-adaptive notifications that respect each UI system'),
+          _buildPageSubtitle(context,
+              'Platform-adaptive notifications that respect each UI system'),
           const SizedBox(height: 24),
-          
+
           // Platform Behavior Info
           ui.card(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionTitle(context, 'Current: ${_getSystemName(currentSystem)}'),
+                _buildSectionTitle(
+                    context, 'Current: ${_getSystemName(currentSystem)}'),
                 const SizedBox(height: 8),
                 Text(
                   _getPlatformBehavior(currentSystem),
@@ -47,16 +48,19 @@ class _SnackBarDemoScreenState extends State<SnackBarDemoScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.info_outline, 
-                        size: 16, 
-                        color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.info_outline,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Try swiping up on the notification to dismiss!',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                         ),
                       ),
                     ],
@@ -65,9 +69,9 @@ class _SnackBarDemoScreenState extends State<SnackBarDemoScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Basic SnackBars
           ui.listSection(
             header: const Text('Basic SnackBars'),
@@ -121,9 +125,9 @@ class _SnackBarDemoScreenState extends State<SnackBarDemoScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Styled SnackBars
           ui.listSection(
             header: const Text('Styled SnackBars'),
@@ -203,9 +207,9 @@ class _SnackBarDemoScreenState extends State<SnackBarDemoScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Advanced Examples
           ui.listSection(
             header: const Text('Advanced Examples'),
@@ -223,18 +227,20 @@ class _SnackBarDemoScreenState extends State<SnackBarDemoScreen> {
                           'First message (3 seconds)',
                           duration: const Duration(seconds: 3),
                         );
-                        
-                        await Future.delayed(const Duration(seconds: 3, milliseconds: 500));
-                        
+
+                        await Future.delayed(
+                            const Duration(seconds: 3, milliseconds: 500));
+
                         ui.showSnackBar(
                           context,
                           'Second message (3 seconds)',
                           backgroundColor: Colors.purple.shade600,
                           duration: const Duration(seconds: 3),
                         );
-                        
-                        await Future.delayed(const Duration(seconds: 3, milliseconds: 500));
-                        
+
+                        await Future.delayed(
+                            const Duration(seconds: 3, milliseconds: 500));
+
                         ui.showSnackBar(
                           context,
                           'Third and final message!',
@@ -252,7 +258,7 @@ class _SnackBarDemoScreenState extends State<SnackBarDemoScreen> {
                           duration: const Duration(minutes: 1), // Long duration
                           backgroundColor: Colors.indigo.shade600,
                         );
-                        
+
                         // Show another snackbar with dismiss button
                         Future.delayed(const Duration(seconds: 2), () {
                           ui.showSnackBar(
@@ -295,9 +301,9 @@ class _SnackBarDemoScreenState extends State<SnackBarDemoScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Usage Guide
           ui.listSection(
             header: const Text('Usage Guide'),
@@ -350,34 +356,34 @@ ui.showSnackBar(
       );
     });
   }
-  
+
   Widget _buildPageTitle(BuildContext context, String title) {
     return Text(
       title,
       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-      ),
+            fontWeight: FontWeight.bold,
+          ),
     );
   }
-  
+
   Widget _buildPageSubtitle(BuildContext context, String subtitle) {
     return Text(
       subtitle,
       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-        color: Theme.of(context).textTheme.bodySmall?.color,
-      ),
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
     );
   }
-  
+
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
+            fontWeight: FontWeight.w600,
+          ),
     );
   }
-  
+
   Widget _buildCodeExample(
     BuildContext context, {
     required String title,
@@ -389,14 +395,17 @@ ui.showSnackBar(
         Text(
           title,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            color: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withOpacity(0.5),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
@@ -414,7 +423,7 @@ ui.showSnackBar(
       ],
     );
   }
-  
+
   String _getSystemName(String system) {
     switch (system) {
       case 'material':
@@ -427,7 +436,7 @@ ui.showSnackBar(
         return system;
     }
   }
-  
+
   String _getPlatformBehavior(String system) {
     switch (system) {
       case 'material':

@@ -64,7 +64,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     // Save that onboarding has been completed
     final prefs = getIt<PreferencesService>();
     prefs.setBool('has_seen_onboarding', true);
-    
+
     // Navigate to the main app (with shell navigation)
     if (mounted) {
       context.go('/'); // Go to home screen with navigation UI
@@ -75,7 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final ui = getAdaptiveFactory(context);
     final theme = Theme.of(context);
-    
+
     return ui.scaffold(
       body: SafeArea(
         child: Column(
@@ -97,7 +97,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-            
+
             // Page content
             Expanded(
               child: PageView.builder(
@@ -129,9 +129,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             color: page.color,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 48),
-                        
+
                         // Title
                         Text(
                           page.title,
@@ -140,9 +140,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Description
                         Text(
                           page.description,
@@ -157,7 +157,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-            
+
             // Bottom section with indicators and button
             Padding(
               padding: const EdgeInsets.all(32.0),
@@ -176,9 +176,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       dotColor: theme.colorScheme.onSurface.withOpacity(0.2),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Next/Get Started button
                   SizedBox(
                     width: double.infinity,
@@ -192,7 +192,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                       child: Text(
-                        _currentPage == _pages.length - 1 ? 'Get Started' : 'Next',
+                        _currentPage == _pages.length - 1
+                            ? 'Get Started'
+                            : 'Next',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

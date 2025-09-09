@@ -42,7 +42,8 @@ class AppShell extends StatelessWidget {
       final sidebarCollapsed = settingsStore.sidebarCollapsed.value;
 
       // Determine navigation style based on screen size and visible route count
-      final visibleRoutes = routes.where((route) => route.showInNavigation).toList();
+      final visibleRoutes =
+          routes.where((route) => route.showInNavigation).toList();
       final useBottomNav = !isWideScreen && visibleRoutes.length <= 5;
       final useMobileDrawer = !isWideScreen && visibleRoutes.length > 5;
       final useRail = isWideScreen && !isVeryWideScreen;
@@ -93,7 +94,8 @@ class AppShell extends StatelessWidget {
           'uiSystem=${settingsStore.uiSystem.value}');
 
       final scaffoldContent = ui.scaffold(
-        appBar: _buildAppBar(context, isWideScreen, useMobileDrawer, useBottomNav: useBottomNav),
+        appBar: _buildAppBar(context, isWideScreen, useMobileDrawer,
+            useBottomNav: useBottomNav),
         drawer: drawer,
         bottomNavBar: bottomNavBar,
         body: Row(
@@ -139,7 +141,8 @@ class AppShell extends StatelessWidget {
   }
 
   Widget _buildAppBar(
-      BuildContext context, bool isWideScreen, bool useMobileDrawer, {bool? useBottomNav}) {
+      BuildContext context, bool isWideScreen, bool useMobileDrawer,
+      {bool? useBottomNav}) {
     final settingsStore = GetIt.I<AppShellSettingsStore>();
     final ui = getAdaptiveFactory(context);
     final actions = <Widget>[
@@ -156,10 +159,11 @@ class AppShell extends StatelessWidget {
     final canPop = router.canPop();
     final routerState = GoRouterState.of(context);
     final currentPath = routerState.uri.path;
-    final pathSegments = currentPath.split('/').where((s) => s.isNotEmpty).toList();
+    final pathSegments =
+        currentPath.split('/').where((s) => s.isNotEmpty).toList();
     final isNestedRoute = pathSegments.length > 1;
     final shouldShowBackButton = canPop || isNestedRoute;
-    
+
     AppShellLogger.i(
         'AppShell._buildAppBar: Navigation state - canPop=$canPop, currentPath="$currentPath", pathSegments=$pathSegments, isNestedRoute=$isNestedRoute, shouldShowBackButton=$shouldShowBackButton');
 
@@ -334,8 +338,8 @@ class AppShell extends StatelessWidget {
     });
   }
 
-  Widget _buildBottomNavigation(
-      BuildContext context, AdaptiveWidgetFactory ui, List<AppRoute> visibleRoutes) {
+  Widget _buildBottomNavigation(BuildContext context, AdaptiveWidgetFactory ui,
+      List<AppRoute> visibleRoutes) {
     final currentPath = GoRouterState.of(context).uri.path;
 
     // Use pre-calculated visible routes to avoid duplicate filtering

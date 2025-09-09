@@ -308,15 +308,17 @@ void runShellApp(
   // Separate fullscreen routes from shell routes
   final fullscreenRoutes = appConfig.routes.where((r) => r.fullscreen).toList();
   final shellRoutes = appConfig.routes.where((r) => !r.fullscreen).toList();
-  
-  _logger.info('Configuring router with ${fullscreenRoutes.length} fullscreen routes and ${shellRoutes.length} shell routes');
+
+  _logger.info(
+      'Configuring router with ${fullscreenRoutes.length} fullscreen routes and ${shellRoutes.length} shell routes');
 
   final router = GoRouter(
     initialLocation: appConfig.initialRoute ?? appConfig.routes.first.path,
     routes: [
       // Fullscreen routes (outside ShellRoute)
       ...fullscreenRoutes.map((route) {
-        _logger.info('Registering fullscreen route: ${route.path} (${route.title})');
+        _logger.info(
+            'Registering fullscreen route: ${route.path} (${route.title})');
         for (final subRoute in route.subRoutes) {
           _logger.info(
               '  → Registering fullscreen sub-route: ${route.path}/${subRoute.path} (${subRoute.title})');
@@ -334,79 +336,84 @@ void runShellApp(
                     pageBuilder: (context, state) => _buildPlatformAwarePage(
                       state: state,
                       child: subRoute.builder(context, state),
-                      isNestedRoute: true, // Nested routes - platform-aware transitions
+                      isNestedRoute:
+                          true, // Nested routes - platform-aware transitions
                     ),
                   ))
               .toList(),
         );
       }),
-      
+
       // Shell routes (wrapped in AppShell)
       if (shellRoutes.isNotEmpty)
         ShellRoute(
-        builder: (context, state, child) {
-          // Find the parent route for the current path
-          final currentPath = state.uri.path;
-          _logger.info('ShellRoute builder: current path = $currentPath');
+          builder: (context, state, child) {
+            // Find the parent route for the current path
+            final currentPath = state.uri.path;
+            _logger.info('ShellRoute builder: current path = $currentPath');
 
-          AppRoute? currentRoute;
+            AppRoute? currentRoute;
 
-          // First try exact match
-          currentRoute = shellRoutes.cast<AppRoute?>().firstWhere(
-                (route) => route?.path == currentPath,
-                orElse: () => null,
-              );
-
-          // If no exact match, find parent route for nested paths
-          if (currentRoute == null) {
+            // First try exact match
             currentRoute = shellRoutes.cast<AppRoute?>().firstWhere(
-                  (route) =>
-                      route != null && currentPath.startsWith('${route.path}/'),
-                  orElse: () => shellRoutes.first,
+                  (route) => route?.path == currentPath,
+                  orElse: () => null,
                 );
-          }
 
-          _logger.info(
-              'ShellRoute builder: matched route = ${currentRoute?.path} (${currentRoute?.title})');
+            // If no exact match, find parent route for nested paths
+            if (currentRoute == null) {
+              currentRoute = shellRoutes.cast<AppRoute?>().firstWhere(
+                    (route) =>
+                        route != null &&
+                        currentPath.startsWith('${route.path}/'),
+                    orElse: () => shellRoutes.first,
+                  );
+            }
 
-          return AppShell(
-            routes: shellRoutes, // Only pass shell routes, not fullscreen routes
-            title: appConfig.title,
-            currentRouteTitle:
-                null, // Let AppShell determine the title dynamically
-            hideDrawer: appConfig.hideDrawer,
-            actions: appConfig.actions,
-            child: child,
-          );
-        },
-        routes: shellRoutes.map((route) {
-          _logger.info('Registering shell route: ${route.path} (${route.title})');
-          for (final subRoute in route.subRoutes) {
             _logger.info(
-                '  → Registering shell sub-route: ${route.path}/${subRoute.path} (${subRoute.title})');
-          }
-          return GoRoute(
-            path: route.path,
-            pageBuilder: (context, state) => _buildPlatformAwarePage(
-              state: state,
-              child: route.builder(context, state),
-              isNestedRoute:
-                  false, // Main shell routes - no transitions between tabs
-            ),
-            routes: route.subRoutes
-                .map((subRoute) => GoRoute(
-                      path: subRoute.path,
-                      pageBuilder: (context, state) => _buildPlatformAwarePage(
-                        state: state,
-                        child: subRoute.builder(context, state),
-                        isNestedRoute:
-                            true, // Nested routes - platform-aware transitions
-                      ),
-                    ))
-                .toList(),
-          );
-        }).toList(),
-      ),
+                'ShellRoute builder: matched route = ${currentRoute?.path} (${currentRoute?.title})');
+
+            return AppShell(
+              routes:
+                  shellRoutes, // Only pass shell routes, not fullscreen routes
+              title: appConfig.title,
+              currentRouteTitle:
+                  null, // Let AppShell determine the title dynamically
+              hideDrawer: appConfig.hideDrawer,
+              actions: appConfig.actions,
+              child: child,
+            );
+          },
+          routes: shellRoutes.map((route) {
+            _logger.info(
+                'Registering shell route: ${route.path} (${route.title})');
+            for (final subRoute in route.subRoutes) {
+              _logger.info(
+                  '  → Registering shell sub-route: ${route.path}/${subRoute.path} (${subRoute.title})');
+            }
+            return GoRoute(
+              path: route.path,
+              pageBuilder: (context, state) => _buildPlatformAwarePage(
+                state: state,
+                child: route.builder(context, state),
+                isNestedRoute:
+                    false, // Main shell routes - no transitions between tabs
+              ),
+              routes: route.subRoutes
+                  .map((subRoute) => GoRoute(
+                        path: subRoute.path,
+                        pageBuilder: (context, state) =>
+                            _buildPlatformAwarePage(
+                          state: state,
+                          child: subRoute.builder(context, state),
+                          isNestedRoute:
+                              true, // Nested routes - platform-aware transitions
+                        ),
+                      ))
+                  .toList(),
+            );
+          }).toList(),
+        ),
     ],
   );
 

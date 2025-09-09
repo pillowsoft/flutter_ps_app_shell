@@ -40,16 +40,22 @@ class ActionButton extends StatelessWidget {
       if (action.route != null) {
         _handleRouteNavigation(context, action.route!);
       } else if (action.onNavigate != null) {
-        AppShellLogger.i('ActionButton: Executing context-aware navigation for ${action.tooltip}');
+        AppShellLogger.i(
+            'ActionButton: Executing context-aware navigation for ${action.tooltip}');
         action.onNavigate!(context);
       } else if (action.onPressed != null) {
-        AppShellLogger.i('ActionButton: Executing callback for ${action.tooltip}');
+        AppShellLogger.i(
+            'ActionButton: Executing callback for ${action.tooltip}');
         action.onPressed!();
       } else {
-        AppShellLogger.w('ActionButton: No action defined for ${action.tooltip}');
+        AppShellLogger.w(
+            'ActionButton: No action defined for ${action.tooltip}');
       }
     } catch (e, stackTrace) {
-      AppShellLogger.e('ActionButton: Error handling press for ${action.tooltip}', e, stackTrace);
+      AppShellLogger.e(
+          'ActionButton: Error handling press for ${action.tooltip}',
+          e,
+          stackTrace);
       // Don't rethrow - just log and continue
     }
   }
@@ -65,12 +71,15 @@ class ActionButton extends StatelessWidget {
         router.go(route);
       }
     } catch (e, stackTrace) {
-      AppShellLogger.e('ActionButton: Error navigating to route $route', e, stackTrace);
+      AppShellLogger.e(
+          'ActionButton: Error navigating to route $route', e, stackTrace);
       // Fallback: try using Navigator if GoRouter fails
       try {
         Navigator.of(context).pushNamed(route);
       } catch (fallbackError) {
-        AppShellLogger.e('ActionButton: Fallback navigation also failed for $route', fallbackError);
+        AppShellLogger.e(
+            'ActionButton: Fallback navigation also failed for $route',
+            fallbackError);
       }
     }
   }
@@ -121,19 +130,24 @@ class _ToggleActionButtonState extends State<ToggleActionButton> {
         isToggled = !isToggled;
       });
       widget.action.onToggle?.call(isToggled);
-      
+
       // Handle navigation or callback
       if (widget.action.route != null) {
         _handleRouteNavigation(context, widget.action.route!);
       } else if (widget.action.onNavigate != null) {
-        AppShellLogger.i('ToggleActionButton: Executing context-aware navigation for ${widget.action.tooltip}');
+        AppShellLogger.i(
+            'ToggleActionButton: Executing context-aware navigation for ${widget.action.tooltip}');
         widget.action.onNavigate!(context);
       } else if (widget.action.onPressed != null) {
-        AppShellLogger.i('ToggleActionButton: Executing callback for ${widget.action.tooltip}');
+        AppShellLogger.i(
+            'ToggleActionButton: Executing callback for ${widget.action.tooltip}');
         widget.action.onPressed!();
       }
     } catch (e, stackTrace) {
-      AppShellLogger.e('ToggleActionButton: Error handling toggle press for ${widget.action.tooltip}', e, stackTrace);
+      AppShellLogger.e(
+          'ToggleActionButton: Error handling toggle press for ${widget.action.tooltip}',
+          e,
+          stackTrace);
     }
   }
 
@@ -148,12 +162,15 @@ class _ToggleActionButtonState extends State<ToggleActionButton> {
         router.go(route);
       }
     } catch (e, stackTrace) {
-      AppShellLogger.e('ToggleActionButton: Error navigating to route $route', e, stackTrace);
+      AppShellLogger.e('ToggleActionButton: Error navigating to route $route',
+          e, stackTrace);
       // Fallback: try using Navigator if GoRouter fails
       try {
         Navigator.of(context).pushNamed(route);
       } catch (fallbackError) {
-        AppShellLogger.e('ToggleActionButton: Fallback navigation also failed for $route', fallbackError);
+        AppShellLogger.e(
+            'ToggleActionButton: Fallback navigation also failed for $route',
+            fallbackError);
       }
     }
   }

@@ -34,7 +34,8 @@ class DrawerContent extends StatelessWidget {
                 .map((route) => _buildCollapsedItem(context, route)),
             if (actions.isNotEmpty) ...[
               const Divider(),
-              ...actions.map((action) => _buildCollapsedAction(context, action)),
+              ...actions
+                  .map((action) => _buildCollapsedAction(context, action)),
             ],
           ],
         ),
@@ -114,11 +115,13 @@ class DrawerContent extends StatelessWidget {
       }
     } catch (e) {
       // Fallback: just log the error and continue
-      debugPrint('DrawerContent: Error handling action press for ${action.tooltip}: $e');
+      debugPrint(
+          'DrawerContent: Error handling action press for ${action.tooltip}: $e');
     }
   }
 
-  void _handleRouteNavigation(BuildContext context, String route, AppShellAction action) {
+  void _handleRouteNavigation(
+      BuildContext context, String route, AppShellAction action) {
     try {
       final router = GoRouter.of(context);
       if (action.useReplace) {
@@ -132,7 +135,8 @@ class DrawerContent extends StatelessWidget {
       try {
         Navigator.of(context).pushNamed(route);
       } catch (fallbackError) {
-        debugPrint('DrawerContent: Fallback navigation also failed for $route: $fallbackError');
+        debugPrint(
+            'DrawerContent: Fallback navigation also failed for $route: $fallbackError');
       }
     }
   }

@@ -47,7 +47,7 @@ void main() {
     test('Back navigation logic detects nested routes correctly', () {
       // Test the path parsing logic that determines if a route is nested
       const currentPath1 = '/'; // Root route
-      const currentPath2 = '/home'; // Single-level route  
+      const currentPath2 = '/home'; // Single-level route
       const currentPath3 = '/navigation/detail/1'; // Nested route
       const currentPath4 = '/profile/settings/advanced'; // Deep nested route
 
@@ -58,7 +58,8 @@ void main() {
       expect(getPathSegments(currentPath1).length, 0); // Root: no segments
       expect(getPathSegments(currentPath2).length, 1); // Single: 1 segment
       expect(getPathSegments(currentPath3).length, 3); // Nested: 3 segments
-      expect(getPathSegments(currentPath4).length, 3); // Deep nested: 3 segments
+      expect(
+          getPathSegments(currentPath4).length, 3); // Deep nested: 3 segments
 
       // Nested route detection: more than 1 segment
       bool isNestedRoute(String path) => getPathSegments(path).length > 1;
@@ -78,7 +79,8 @@ void main() {
           !isWideScreen(width) && visibleRoutes <= 5;
       bool useMobileDrawer(double width, int visibleRoutes) =>
           !isWideScreen(width) && visibleRoutes > 5;
-      bool useRail(double width) => isWideScreen(width) && !isVeryWideScreen(width);
+      bool useRail(double width) =>
+          isWideScreen(width) && !isVeryWideScreen(width);
       bool useSidebar(double width) => isVeryWideScreen(width);
 
       // Test mobile scenarios (width <= 600)
@@ -87,13 +89,16 @@ void main() {
       expect(useMobileDrawer(400, 6), true); // Mobile with 6 routes
       expect(useMobileDrawer(400, 10), true); // Mobile with 10 routes
 
-      expect(useBottomNav(400, 6), false); // Mobile with 6 routes should use drawer
-      expect(useMobileDrawer(400, 3), false); // Mobile with 3 routes should use bottom nav
+      expect(useBottomNav(400, 6),
+          false); // Mobile with 6 routes should use drawer
+      expect(useMobileDrawer(400, 3),
+          false); // Mobile with 3 routes should use bottom nav
 
       // Test tablet scenarios (600 < width <= 1200)
       expect(useRail(800), true); // Tablet width
       expect(useBottomNav(800, 3), false); // Tablet doesn't use bottom nav
-      expect(useMobileDrawer(800, 10), false); // Tablet doesn't use mobile drawer
+      expect(
+          useMobileDrawer(800, 10), false); // Tablet doesn't use mobile drawer
 
       // Test desktop scenarios (width > 1200)
       expect(useSidebar(1400), true); // Desktop width

@@ -139,7 +139,8 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
           appBar: appBar as PreferredSizeWidget?,
           drawer: drawer,
           body: wrappedBody,
-          bottomNavigationBar: bottomNavBar, // This will be null when drawer is used
+          bottomNavigationBar:
+              bottomNavBar, // This will be null when drawer is used
           backgroundColor: backgroundColor,
         ),
       );
@@ -1415,43 +1416,43 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: routes
-                .where((route) => route.showInNavigation)
-                .toList()
-                .asMap()
-                .entries
-                .map((entry) {
-              final index = entry.key;
-              final route = entry.value;
-              final isSelected = currentIndex >= 0 && index == currentIndex;
+                  .where((route) => route.showInNavigation)
+                  .toList()
+                  .asMap()
+                  .entries
+                  .map((entry) {
+                final index = entry.key;
+                final route = entry.value;
+                final isSelected = currentIndex >= 0 && index == currentIndex;
 
-              return CupertinoButton(
-                padding: const EdgeInsets.all(12),
-                onPressed: () => onDestinationSelected(index),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      route.icon,
-                      color: isSelected
-                          ? CupertinoColors.activeBlue
-                          : CupertinoColors.inactiveGray,
-                    ),
-                    if (showLabels) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        route.title,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isSelected
-                              ? CupertinoColors.activeBlue
-                              : CupertinoColors.inactiveGray,
-                        ),
+                return CupertinoButton(
+                  padding: const EdgeInsets.all(12),
+                  onPressed: () => onDestinationSelected(index),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        route.icon,
+                        color: isSelected
+                            ? CupertinoColors.activeBlue
+                            : CupertinoColors.inactiveGray,
                       ),
+                      if (showLabels) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          route.title,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected
+                                ? CupertinoColors.activeBlue
+                                : CupertinoColors.inactiveGray,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              );
-            }).toList(),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ),

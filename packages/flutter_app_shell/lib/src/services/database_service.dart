@@ -7,7 +7,7 @@ import '../utils/logger.dart';
 
 /// Real-time database service using InstantDB with built-in cloud sync
 /// Supports both local-only mode (no app ID) and cloud-sync mode (with app ID)
-/// 
+///
 /// IMPORTANT: This service includes a workaround for InstantDB Flutter package bug
 /// where datalog-result format from the server is not properly converted to the
 /// expected collection format. Remove the workaround when the package is fixed.
@@ -160,8 +160,9 @@ class DatabaseService {
 
       // Create the document using correct InstantDB transaction API
       // tx[collection].create() generates OperationType.add and handles ID automatically
-      final transactionResult = await _db!.transact(_db!.tx[collection].create(documentData));
-      
+      final transactionResult =
+          await _db!.transact(_db!.tx[collection].create(documentData));
+
       // Extract the generated ID from the transaction
       // InstantDB's create() method generates an ID if not provided
       final id = documentData['id'] as String? ?? _db!.id();
@@ -300,7 +301,8 @@ class DatabaseService {
         // Check for datalog format first (workaround for InstantDB package bug)
         if (result.data!['datalog-result'] != null) {
           final documents = _parseDatalogResult(result.data!, collection);
-          _logger.fine('Parsed ${documents.length} documents from datalog format');
+          _logger
+              .fine('Parsed ${documents.length} documents from datalog format');
           return documents;
         }
 
@@ -356,7 +358,8 @@ class DatabaseService {
         // Check for datalog format first (workaround for InstantDB package bug)
         if (result.data!['datalog-result'] != null) {
           final documents = _parseDatalogResult(result.data!, collection);
-          _logger.fine('Parsed ${documents.length} documents from datalog format (findWhere)');
+          _logger.fine(
+              'Parsed ${documents.length} documents from datalog format (findWhere)');
           return documents;
         }
 
@@ -548,7 +551,6 @@ class DatabaseService {
   Map<String, dynamic>? get currentUser =>
       _db?.auth.currentUser.value?.toJson();
 
-
   /// Get database statistics
   Future<DatabaseStats> getStats() async {
     _ensureInitialized();
@@ -647,7 +649,8 @@ class DatabaseService {
           } else {
             // Use the attribute ID as the field name for now
             entityMap[entityId]![attributeId] = value;
-            _logger.fine('Unknown attribute ID: $attributeId, using as field name');
+            _logger.fine(
+                'Unknown attribute ID: $attributeId, using as field name');
           }
         }
       }
