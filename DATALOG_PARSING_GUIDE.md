@@ -1,5 +1,14 @@
 # InstantDB Datalog Parsing Guide
 
+## Important Update: InstantDB v0.2.4 Fixes
+
+**As of InstantDB Flutter v0.2.4, the datalog conversion issues have been fully resolved!** The package now:
+- ✅ Correctly detects entity types from query responses
+- ✅ Caches entities under the proper collection name
+- ✅ Returns data for all collections (not just 'todos')
+
+While our DatabaseService workaround remains in place for compatibility, InstantDB v0.2.4 should handle datalog conversion correctly without needing manual attribute mapping in most cases.
+
 ## Overview
 
 The Flutter App Shell's DatabaseService includes comprehensive support for parsing InstantDB's datalog format. This guide explains how to diagnose and fix datalog parsing issues.

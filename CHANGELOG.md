@@ -64,6 +64,14 @@ For versions before 0.7.14, please refer to the git history and release tags.
 
 ## InstantDB Flutter Package Updates
 
+### [instantdb_flutter 0.2.4] - External Package Update (Latest)
+**Fix Entity Type Resolution - Completes the datalog conversion fix trilogy**
+- Fixed entities being cached under wrong collection name
+- Queries for 'conversations' no longer return 0 documents when entities lack __type field
+- Proper entity type detection from response data['q'] field
+- Correct cache key resolution - entities cached under query type instead of 'todos'
+- Smart grouping with proper fallback chain through conversion pipeline
+
 ### [instantdb_flutter 0.2.3] - External Package Update
 - Fixed race condition in query execution
 - Added comprehensive logging throughout datalog conversion

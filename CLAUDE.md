@@ -648,13 +648,22 @@ Created comprehensive demo screen at `/responsive-navigation` showing:
 - **Investigation Screen**: Enhanced `/datalog-investigation` route for testing
 - **Documentation**: Added comprehensive DATALOG_PARSING_GUIDE.md
 
-### 📦 InstantDB Flutter v0.2.3 Integration
-The project now uses InstantDB Flutter v0.2.3 which includes:
+### 📦 InstantDB Flutter v0.2.4 Integration (Latest)
+The project now uses InstantDB Flutter v0.2.4 which completes the datalog conversion fix trilogy:
+
+#### v0.2.4 - Fix Entity Type Resolution
+- ✅ **Fixed entities being cached under wrong collection name** - Queries for 'conversations' no longer return 0 documents
+- ✅ **Proper entity type detection** - Extracts query entity type from response data['q'] field
+- ✅ **Correct cache key resolution** - Entities cached under their query type instead of defaulting to 'todos'
+- ✅ **Smart grouping with proper fallback chain** - Type propagation through entire conversion pipeline
+
+#### Previous Fixes (v0.2.3)
 - ✅ Fixed race condition in query execution
 - ✅ Comprehensive logging throughout datalog conversion
 - ✅ Queries now return cached data immediately (no more "0 documents" issue)
 - ✅ Proper datalog-to-collection format conversion
-- ✅ Published to pub.dev at https://pub.dev/packages/instantdb_flutter/versions/0.2.3
+
+Published to pub.dev at https://pub.dev/packages/instantdb_flutter/versions/0.2.4
 
 ### 🔧 v0.7.16-v0.7.18 Updates
 - Upgraded InstantDB from v0.1.1 to v0.2.1
