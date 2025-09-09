@@ -551,6 +551,113 @@ class DatabaseService {
   Map<String, dynamic>? get currentUser =>
       _db?.auth.currentUser.value?.toJson();
 
+  /// Diagnose datalog parsing for debugging issues
+  /// Returns detailed information about the parsing process
+  Future<Map<String, dynamic>> diagnoseDatalogParsing(String collection) async {
+    _ensureInitialized();
+    
+    final diagnosis = <String, dynamic>{
+      'collection': collection,
+      'timestamp': DateTime.now().toIso8601String(),
+      'attributeMappings': {},
+      'queryResult': {},
+      'parsedDocuments': 0,
+      'unmappedAttributes': [],
+      'errors': [],
+    };
+
+    try {
+      // Get the attribute mappings for this collection
+      final mappings = _getAttributeMappings(collection);
+      diagnosis['attributeMappings'] = mappings;
+      
+      // Run a query to get datalog format
+      final query = {collection: {}};
+      final result = await _db!.queryOnce(query);
+      
+      diagnosis['queryResult'] = {
+        'hasData': result.hasData,
+        'hasError': result.hasError,
+        'error': result.error?.toString(),
+      };
+      
+      if (result.hasData && result.data != null) {
+        final data = result.data!;
+        
+        // Check format
+        if (data['datalog-result'] != null) {
+          diagnosis['format'] = 'datalog';
+          final datalogResult = data['datalog-result'] as Map;
+          final joinRows = datalogResult['join-rows'] as List?;
+          
+          diagnosis['joinRowCount'] = joinRows?.length ?? 0;
+          
+          if (joinRows != null && joinRows.isNotEmpty) {
+            // Analyze attribute IDs in the data
+            final foundAttributeIds = <String, Map<String, dynamic>>{};
+            
+            for (final row in joinRows) {
+              if (row is List && row.length >= 4) {
+                final attributeId = row[1] as String;
+                final value = row[2];
+                
+                if (!foundAttributeIds.containsKey(attributeId)) {
+                  foundAttributeIds[attributeId] = {
+                    'sampleValue': value,
+                    'valueType': value.runtimeType.toString(),
+                    'isMapped': mappings.containsKey(attributeId),
+                    'mappedTo': mappings[attributeId],
+                    'occurrences': 1,
+                  };
+                } else {
+                  foundAttributeIds[attributeId]!['occurrences']++;
+                }
+              }
+            }
+            
+            diagnosis['foundAttributeIds'] = foundAttributeIds;
+            
+            // Identify unmapped attributes
+            final unmapped = foundAttributeIds.entries
+                .where((e) => !e.value['isMapped'])
+                .map((e) => {
+                      'id': e.key,
+                      'sampleValue': e.value['sampleValue'],
+                      'valueType': e.value['valueType'],
+                      'occurrences': e.value['occurrences'],
+                    })
+                .toList();
+            
+            diagnosis['unmappedAttributes'] = unmapped;
+            
+            // Try to parse with current mappings
+            final parsedDocs = _parseDatalogResult(data, collection);
+            diagnosis['parsedDocuments'] = parsedDocs.length;
+            
+            if (parsedDocs.isNotEmpty) {
+              diagnosis['sampleDocument'] = parsedDocs.first;
+              diagnosis['documentFields'] = parsedDocs.first.keys.toList();
+            }
+          }
+        } else if (data[collection] != null) {
+          diagnosis['format'] = 'collection';
+          final collectionData = data[collection] as List?;
+          diagnosis['documentCount'] = collectionData?.length ?? 0;
+        } else {
+          diagnosis['format'] = 'unknown';
+          diagnosis['dataKeys'] = data.keys.toList();
+        }
+      }
+    } catch (e, stack) {
+      diagnosis['errors'].add({
+        'message': e.toString(),
+        'stackTrace': stack.toString().split('\n').take(5).join('\n'),
+      });
+    }
+    
+    return diagnosis;
+  }
+
   /// Get database statistics
   Future<DatabaseStats> getStats() async {
     _ensureInitialized();
@@ -595,6 +702,55 @@ class DatabaseService {
 
   // Private Methods
 
+  /// Get attribute ID mappings for a specific collection
+  /// Supports multiple possible IDs per field to handle schema variations
+  Map<String, String> _getAttributeMappings(String collection) {
+    // Collection-specific mappings
+    final collectionMappings = <String, Map<String, List<String>>>{
+      'conversations': {
+        'id': ['8ce3e8f1-1c42-4683-9e91-dfe8f6879e1b'],
+        'title': ['82a884f7-6e0f-427d-88b6-66c550e86d98'],
+        'createdAt': ['90774276-102f-4963-856b-2e69315c0bfd'],
+        'updatedAt': ['253a7374-4154-4cc4-b71b-5eca6f8e5db6'],
+      },
+      'test_conversations': {
+        'id': ['8ce3e8f1-1c42-4683-9e91-dfe8f6879e1b'],
+        'title': ['82a884f7-6e0f-427d-88b6-66c550e86d98'],
+        'createdAt': ['90774276-102f-4963-856b-2e69315c0bfd'],
+        'updatedAt': ['253a7374-4154-4cc4-b71b-5eca6f8e5db6'],
+      },
+      'todos': {
+        'id': ['8ce3e8f1-1c42-4683-9e91-dfe8f6879e1b'],
+        'title': ['82a884f7-6e0f-427d-88b6-66c550e86d98'],
+        'completed': ['a1b2c3d4-e5f6-7890-abcd-ef1234567890'], // Example ID
+        'createdAt': ['90774276-102f-4963-856b-2e69315c0bfd'],
+        'updatedAt': ['253a7374-4154-4cc4-b71b-5eca6f8e5db6'],
+      },
+    };
+
+    // Default/common mappings that apply to most collections
+    final defaultMappings = {
+      'id': ['8ce3e8f1-1c42-4683-9e91-dfe8f6879e1b'],
+      'title': ['82a884f7-6e0f-427d-88b6-66c550e86d98'],
+      'name': ['82a884f7-6e0f-427d-88b6-66c550e86d98'], // title/name often share IDs
+      'createdAt': ['90774276-102f-4963-856b-2e69315c0bfd'],
+      'updatedAt': ['253a7374-4154-4cc4-b71b-5eca6f8e5db6'],
+    };
+
+    // Get mappings for this collection or use defaults
+    final mappings = collectionMappings[collection] ?? defaultMappings;
+    
+    // Convert from field->IDs to ID->field for efficient lookup
+    final attributeMap = <String, String>{};
+    mappings.forEach((fieldName, attributeIds) {
+      for (final attrId in attributeIds) {
+        attributeMap[attrId] = fieldName;
+      }
+    });
+
+    return attributeMap;
+  }
+
   /// Parse InstantDB's datalog-result format into entity list
   /// This is a workaround for the InstantDB package bug where datalog results
   /// are not properly converted to the expected collection format
@@ -610,19 +766,16 @@ class DatabaseService {
       return [];
     }
 
+    _logger.info('🔍 Parsing datalog for collection "$collection" with ${joinRows.length} join-rows');
+
     // Group rows by entity ID to reconstruct documents
     final entityMap = <String, Map<String, dynamic>>{};
+    
+    // Track unmapped attribute IDs for debugging
+    final unmappedAttributes = <String, dynamic>{};
 
-    // Common attribute ID mappings (these would ideally come from the schema)
-    final attributeMap = <String, String>{
-      // Common InstantDB attribute IDs - these may need to be updated
-      // based on your specific schema
-      '8ce3e8f1-1c42-4683-9e91-dfe8f6879e1b': 'id',
-      '82a884f7-6e0f-427d-88b6-66c550e86d98': 'title',
-      '90774276-102f-4963-856b-2e69315c0bfd': 'createdAt',
-      '253a7374-4154-4cc4-b71b-5eca6f8e5db6': 'updatedAt',
-      // Add more mappings as needed based on your schema
-    };
+    // Get attribute mappings for this collection
+    final attributeMap = _getAttributeMappings(collection);
 
     for (final row in joinRows) {
       if (row is List && row.length >= 4) {
@@ -639,6 +792,17 @@ class DatabaseService {
         if (fieldName != null) {
           entityMap[entityId]![fieldName] = value;
         } else {
+          // Track unmapped attributes for debugging
+          if (!unmappedAttributes.containsKey(attributeId)) {
+            unmappedAttributes[attributeId] = {
+              'sampleValue': value,
+              'valueType': value.runtimeType.toString(),
+              'count': 1,
+            };
+          } else {
+            unmappedAttributes[attributeId]['count']++;
+          }
+          
           // For unknown attribute IDs, try to infer based on value type
           if (value is bool && !entityMap[entityId]!.containsKey('completed')) {
             // Boolean values are likely 'completed' for todos
@@ -646,14 +810,28 @@ class DatabaseService {
           } else if (value is String && value.contains('@')) {
             // Email-like strings might be email field
             entityMap[entityId]!['email'] = value;
+          } else if (value is String && 
+                     (value.contains('T') && value.contains(':')) &&
+                     !entityMap[entityId]!.containsKey('createdAt')) {
+            // ISO date strings for createdAt if not mapped
+            entityMap[entityId]!['createdAt'] = value;
           } else {
             // Use the attribute ID as the field name for now
             entityMap[entityId]![attributeId] = value;
             _logger.fine(
-                'Unknown attribute ID: $attributeId, using as field name');
+                'Unknown attribute ID: $attributeId with value: $value (${value.runtimeType})');
           }
         }
       }
+    }
+    
+    // Log unmapped attributes summary
+    if (unmappedAttributes.isNotEmpty) {
+      _logger.warning('⚠️ Found ${unmappedAttributes.length} unmapped attribute IDs:');
+      unmappedAttributes.forEach((attrId, info) {
+        _logger.warning('  - $attrId: ${info['valueType']} (${info['count']} occurrences) sample: "${info['sampleValue']}"');
+      });
+      _logger.warning('Consider adding these mappings to the attributeMap');
     }
 
     // Convert to list and add metadata
@@ -664,6 +842,11 @@ class DatabaseService {
       doc['__type'] = collection;
       return doc;
     }).toList();
+
+    _logger.info('✅ Parsed ${documents.length} documents from ${joinRows.length} join-rows');
+    if (documents.isNotEmpty) {
+      _logger.fine('Sample document fields: ${documents.first.keys.toList()}');
+    }
 
     return documents;
   }

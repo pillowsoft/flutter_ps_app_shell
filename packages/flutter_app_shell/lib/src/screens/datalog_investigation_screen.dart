@@ -53,6 +53,9 @@ class _DatalogInvestigationScreenState
 
       // Test 5: Monitor raw query results
       await _testRawQueryMonitoring();
+      
+      // Test 6: Run diagnostic analysis
+      await _testDiagnosticAnalysis();
 
       _addResult('✅ Investigation completed');
     } catch (e, stackTrace) {
@@ -274,6 +277,83 @@ class _DatalogInvestigationScreenState
       _addResult('   ✅ Raw query monitoring completed');
     } catch (e) {
       _addResult('   ❌ Raw query monitoring failed: $e');
+    }
+  }
+
+  Future<void> _testDiagnosticAnalysis() async {
+    _addResult('🔬 Running diagnostic analysis...');
+    
+    try {
+      // Test with different collections
+      final collections = ['test_conversations', 'conversations', 'todos'];
+      
+      for (final collection in collections) {
+        _addResult('');
+        _addResult('📊 Diagnosing collection: $collection');
+        
+        final diagnosis = await _dbService.diagnoseDatalogParsing(collection);
+        
+        _addResult('   • Format: ${diagnosis['format'] ?? 'unknown'}');
+        _addResult('   • Parsed documents: ${diagnosis['parsedDocuments']}');
+        
+        if (diagnosis['joinRowCount'] != null) {
+          _addResult('   • Join-rows: ${diagnosis['joinRowCount']}');
+        }
+        
+        // Show attribute mappings
+        final mappings = diagnosis['attributeMappings'] as Map?;
+        if (mappings != null && mappings.isNotEmpty) {
+          _addResult('   • Configured mappings: ${mappings.length}');
+        }
+        
+        // Show found attribute IDs
+        final foundIds = diagnosis['foundAttributeIds'] as Map?;
+        if (foundIds != null && foundIds.isNotEmpty) {
+          _addResult('   • Unique attribute IDs found: ${foundIds.length}');
+          
+          foundIds.forEach((attrId, info) {
+            final isMapped = info['isMapped'] as bool;
+            final mappedTo = info['mappedTo'];
+            final valueType = info['valueType'];
+            final occurrences = info['occurrences'];
+            
+            if (isMapped) {
+              _addResult('     ✅ $attrId → $mappedTo ($valueType, $occurrences occurrences)');
+            } else {
+              final sampleValue = info['sampleValue'];
+              _addResult('     ⚠️  $attrId → UNMAPPED ($valueType, $occurrences occurrences)');
+              _addResult('        Sample: "$sampleValue"');
+            }
+          });
+        }
+        
+        // Show unmapped attributes summary
+        final unmapped = diagnosis['unmappedAttributes'] as List?;
+        if (unmapped != null && unmapped.isNotEmpty) {
+          _addResult('   ⚠️  ${unmapped.length} unmapped attribute IDs need attention!');
+          _addResult('   📝 Add these to _getAttributeMappings() in DatabaseService');
+        }
+        
+        // Show sample document if parsed
+        if (diagnosis['sampleDocument'] != null) {
+          final fields = diagnosis['documentFields'] as List?;
+          _addResult('   • Document fields: ${fields?.join(', ') ?? 'none'}');
+        }
+        
+        // Show any errors
+        final errors = diagnosis['errors'] as List?;
+        if (errors != null && errors.isNotEmpty) {
+          for (final error in errors) {
+            _addResult('   ❌ Error: ${error['message']}');
+          }
+        }
+      }
+      
+      _addResult('');
+      _addResult('✅ Diagnostic analysis completed');
+      
+    } catch (e) {
+      _addResult('❌ Diagnostic analysis failed: $e');
     }
   }
 
