@@ -1,13 +1,21 @@
 # InstantDB Datalog Parsing Guide
 
-## Important Update: InstantDB v0.2.4 Fixes
+## Important Updates
 
+### InstantDB v0.2.4 Fixes
 **As of InstantDB Flutter v0.2.4, the datalog conversion issues have been fully resolved!** The package now:
 - ✅ Correctly detects entity types from query responses
 - ✅ Caches entities under the proper collection name
 - ✅ Returns data for all collections (not just 'todos')
 
-While our DatabaseService workaround remains in place for compatibility, InstantDB v0.2.4 should handle datalog conversion correctly without needing manual attribute mapping in most cases.
+### Critical Bug Fix: Query Operator Format (v0.7.21)
+**Fixed critical bug in `findWhere` and `watchWhere` methods** that generated malformed InstantDB queries:
+- ✅ **Proper operator wrapping**: Simple values now wrapped with `$eq` operator
+- ✅ **Correct query structure**: Uses `{'$': {'where': transformedWhere}}` format
+- ✅ **Cache pollution eliminated**: No more validation errors or cache corruption
+- ✅ **UI bugs resolved**: Collections display correctly after navigation
+
+While our DatabaseService includes comprehensive workarounds and fixes, InstantDB v0.2.4+ should handle most operations correctly without manual intervention.
 
 ## Overview
 

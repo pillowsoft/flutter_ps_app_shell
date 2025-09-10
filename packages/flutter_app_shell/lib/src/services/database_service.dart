@@ -341,14 +341,19 @@ class DatabaseService {
     _ensureInitialized();
 
     try {
+      // Transform where clause to use InstantDB operators
+      final transformedWhere = _transformWhereClause(where);
+      
       final query = <String, dynamic>{
         collection: <String, dynamic>{
-          'where': where,
+          '\$': <String, dynamic>{
+            'where': transformedWhere,
+          }
         }
       };
 
       if (limit != null) {
-        query[collection]['limit'] = limit;
+        query[collection]['\$']['limit'] = limit;
       }
 
       // Use queryOnce to wait for the initial data load
@@ -451,9 +456,14 @@ class DatabaseService {
       String collection, Map<String, dynamic> where) {
     _ensureInitialized();
 
+    // Transform where clause to use InstantDB operators
+    final transformedWhere = _transformWhereClause(where);
+    
     final query = <String, dynamic>{
       collection: <String, dynamic>{
-        'where': where,
+        '\$': <String, dynamic>{
+          'where': transformedWhere,
+        }
       }
     };
 
@@ -701,6 +711,24 @@ class DatabaseService {
   }
 
   // Private Methods
+
+  /// Transform where clause to use InstantDB operators
+  /// Wraps simple equality checks with $eq operator
+  Map<String, dynamic> _transformWhereClause(Map<String, dynamic> where) {
+    final transformed = <String, dynamic>{};
+    
+    for (final entry in where.entries) {
+      if (entry.value is Map<String, dynamic>) {
+        // Already has operators (e.g., {"$eq": "value"}), use as-is
+        transformed[entry.key] = entry.value;
+      } else {
+        // Simple value, wrap with $eq operator
+        transformed[entry.key] = {'\$eq': entry.value};
+      }
+    }
+    
+    return transformed;
+  }
 
   /// Get attribute ID mappings for a specific collection
   /// Supports multiple possible IDs per field to handle schema variations

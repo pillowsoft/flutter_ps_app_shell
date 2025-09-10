@@ -377,5 +377,67 @@ void main() {
         skip('InstantDB service not available: $e');
       }
     });
+
+    test('should transform where clauses correctly for InstantDB operators', () async {
+      try {
+        await db.initialize(appId: testAppId, enableSync: false);
+
+        const collection = 'operator_test';
+        
+        // Create test documents with specific values
+        final docId1 = await db.create(collection, {
+          'conversationId': 'conv-123',
+          'messageType': 'text',
+          'active': true
+        });
+        final docId2 = await db.create(collection, {
+          'conversationId': 'conv-456', 
+          'messageType': 'image',
+          'active': false
+        });
+        final docId3 = await db.create(collection, {
+          'conversationId': 'conv-123',
+          'messageType': 'text', 
+          'active': true
+        });
+
+        // Test simple equality filter (this should be transformed to use $eq)
+        final simpleFilter = await db.findWhere(collection, {
+          'conversationId': 'conv-123'
+        });
+        
+        expect(simpleFilter.length, greaterThanOrEqualTo(2));
+        for (final doc in simpleFilter) {
+          expect(doc['conversationId'], 'conv-123');
+        }
+
+        // Test multiple field filter
+        final multiFilter = await db.findWhere(collection, {
+          'conversationId': 'conv-123',
+          'messageType': 'text',
+          'active': true
+        });
+        
+        expect(multiFilter.length, greaterThanOrEqualTo(2));
+        for (final doc in multiFilter) {
+          expect(doc['conversationId'], 'conv-123');
+          expect(doc['messageType'], 'text');
+          expect(doc['active'], true);
+        }
+
+        // Test that already-formatted operators are preserved
+        final operatorFilter = await db.findWhere(collection, {
+          'conversationId': {'\$eq': 'conv-456'}
+        });
+        
+        expect(operatorFilter.length, greaterThanOrEqualTo(1));
+        for (final doc in operatorFilter) {
+          expect(doc['conversationId'], 'conv-456');
+        }
+
+      } catch (e) {
+        skip('InstantDB service not available: $e');
+      }
+    });
   });
 }

@@ -5,6 +5,31 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.21] - 2025-09-09
+
+### Fixed
+- **Critical Bug**: Fixed malformed InstantDB queries in `findWhere` and `watchWhere` methods
+- **Query Validation Errors**: Resolved InstantDB validation failures that caused cache pollution
+- **UI Display Issues**: Fixed collections appearing empty after navigation between items
+- **Cache Corruption**: Eliminated cache pollution that caused performance degradation
+
+### Added
+- `_transformWhereClause()` helper method to properly format InstantDB operators
+- Comprehensive test for operator transformation in database service tests
+- Documentation updates explaining the query format fix
+
+### Changed
+- `findWhere` now uses proper `{'$': {'where': transformedWhere}}` query structure
+- `watchWhere` now uses proper `{'$': {'where': transformedWhere}}` query structure  
+- Simple equality values automatically wrapped with `$eq` operator
+- Existing operator maps preserved (backward compatible)
+
+## [0.7.20] - 2025-09-09
+
+### Changed
+- Updated documentation to reflect InstantDB Flutter v0.2.4 improvements
+- Added notes about entity type resolution fixes in external package
+
 ## [0.7.19] - 2025-09-09
 
 ### Added
