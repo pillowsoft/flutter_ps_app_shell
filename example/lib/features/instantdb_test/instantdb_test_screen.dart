@@ -304,7 +304,6 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
     return ui.scaffold(
       appBar: ui.appBar(
         title: const Text('InstantDB Test'),
-        backgroundColor: Colors.orange[300], // Orange to indicate this is a test screen
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
