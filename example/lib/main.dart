@@ -28,6 +28,7 @@ import 'features/navigation_demo/nested_screen.dart';
 import 'features/action_demo/action_navigation_demo_screen.dart';
 import 'features/responsive_nav_demo/responsive_navigation_demo_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
+import 'features/instantdb_test/instantdb_test_screen.dart';
 
 /// UI System selector widget for the app bar
 class UISystemSelector extends StatelessWidget {
@@ -360,6 +361,14 @@ void main() {
             builder: (context, state) => const DatalogInvestigationScreen(),
             showInNavigation: false, // Hidden debugging screen
           ),
+          // InstantDB test screen for debugging query issues
+          AppRoute(
+            title: 'InstantDB Test',
+            path: '/instantdb-test',
+            icon: Icons.science,
+            builder: (context, state) => const InstantDBTestScreen(),
+            showInNavigation: false, // Hidden debugging screen
+          ),
         ],
         actions: [
           // Custom widget example (existing UI selector)
@@ -406,6 +415,15 @@ void main() {
             onNavigate: (context) {
               // Example: Push to inspector screen
               context.push('/inspector');
+            },
+          ),
+
+          // Temporary action for InstantDB testing
+          AppShellAction.navigate(
+            icon: Icons.science,
+            tooltip: 'InstantDB Test',
+            onNavigate: (context) {
+              context.push('/instantdb-test');
             },
           ),
         ],

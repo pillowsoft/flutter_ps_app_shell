@@ -401,7 +401,7 @@ void main() {
           'active': true
         });
 
-        // Test simple equality filter (this should be transformed to use $eq)
+        // Test simple equality filter (uses direct value like read method)
         final simpleFilter = await db.findWhere(collection, {
           'conversationId': 'conv-123'
         });

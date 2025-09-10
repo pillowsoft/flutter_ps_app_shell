@@ -5,23 +5,40 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.22] - 2025-09-10
+
+### Fixed
+- **Critical Bug Resolution**: Fixed InstantDB validation failures by using direct values instead of $eq wrapping
+- **Query Format Correction**: `findWhere` and `watchWhere` now match working `read` method behavior
+- **Cache Pollution Eliminated**: Proper query format prevents validation errors that corrupt the cache
+
+### Added
+- Comprehensive InstantDB test screen (`/instantdb-test`) for reproducing and debugging query issues
+- Test screen integrated into example app with science icon access button
+- Enhanced debugging capabilities with real-time logging and cache pollution detection
+
+### Changed
+- `_transformWhereClause()` now preserves simple values directly (matches read method)
+- Removed automatic `$eq` operator wrapping that caused validation failures
+- Updated query transformation to only preserve existing operator maps
+
 ## [0.7.21] - 2025-09-09
 
 ### Fixed
-- **Critical Bug**: Fixed malformed InstantDB queries in `findWhere` and `watchWhere` methods
-- **Query Validation Errors**: Resolved InstantDB validation failures that caused cache pollution
+- **Critical Bug**: Fixed malformed InstantDB queries in `findWhere` and `watchWhere` methods (incomplete fix)
+- **Query Validation Errors**: Attempted to resolve InstantDB validation failures 
 - **UI Display Issues**: Fixed collections appearing empty after navigation between items
-- **Cache Corruption**: Eliminated cache pollution that caused performance degradation
+- **Cache Corruption**: Attempted to eliminate cache pollution
 
 ### Added
-- `_transformWhereClause()` helper method to properly format InstantDB operators
+- `_transformWhereClause()` helper method to format InstantDB operators (incorrect implementation)
 - Comprehensive test for operator transformation in database service tests
 - Documentation updates explaining the query format fix
 
 ### Changed
 - `findWhere` now uses proper `{'$': {'where': transformedWhere}}` query structure
 - `watchWhere` now uses proper `{'$': {'where': transformedWhere}}` query structure  
-- Simple equality values automatically wrapped with `$eq` operator
+- Simple equality values automatically wrapped with `$eq` operator (this caused the issue)
 - Existing operator maps preserved (backward compatible)
 
 ## [0.7.20] - 2025-09-09

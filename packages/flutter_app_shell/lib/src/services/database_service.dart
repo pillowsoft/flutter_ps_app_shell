@@ -713,17 +713,18 @@ class DatabaseService {
   // Private Methods
 
   /// Transform where clause to use InstantDB operators
-  /// Wraps simple equality checks with $eq operator
+  /// Preserves simple values directly (like the working read method)
+  /// Only preserves existing operator maps
   Map<String, dynamic> _transformWhereClause(Map<String, dynamic> where) {
     final transformed = <String, dynamic>{};
     
     for (final entry in where.entries) {
       if (entry.value is Map<String, dynamic>) {
-        // Already has operators (e.g., {"$eq": "value"}), use as-is
+        // Already has operators (e.g., {"$eq": "value"}), preserve as-is
         transformed[entry.key] = entry.value;
       } else {
-        // Simple value, wrap with $eq operator
-        transformed[entry.key] = {'\$eq': entry.value};
+        // Simple value: use directly (matches working read method behavior)
+        transformed[entry.key] = entry.value;
       }
     }
     
