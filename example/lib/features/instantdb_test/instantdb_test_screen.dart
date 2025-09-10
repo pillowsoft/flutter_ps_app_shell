@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:signals_flutter/signals_flutter.dart';
-import 'package:get_it/get_it.dart';
 import 'package:flutter_app_shell/flutter_app_shell.dart';
 
 /// Comprehensive test screen for InstantDB query issues
 /// This reproduces the exact bug reported by users and helps verify fixes
-class InstantDBTestScreen extends StatefulHookWidget {
+class InstantDBTestScreen extends StatefulWidget {
   const InstantDBTestScreen({super.key});
 
   @override
@@ -22,45 +19,46 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
   final List<String> _testConversationIds = [];
   final List<String> _testMessageIds = [];
   
-  // Reactive signals for UI updates
-  late final Signal<List<Map<String, dynamic>>> _conversations;
-  late final Signal<List<Map<String, dynamic>>> _messages;
+  // Reactive signals for UI updates - using proper computed pattern
+  late final Computed<List<Map<String, dynamic>>> _conversations;
+  late final Computed<List<Map<String, dynamic>>> _messages;
   late final Signal<bool> _isRunning;
 
   @override
   void initState() {
     super.initState();
-    // Initialize with empty signals first
-    _conversations = signal<List<Map<String, dynamic>>>([]);
-    _messages = signal<List<Map<String, dynamic>>>([]);
+    // Initialize running state signal
     _isRunning = signal(false);
     
-    // Set up reactive queries if database is ready
+    // Use computed values that automatically update from database signals
     if (_db.isInitialized) {
-      _setupReactiveQueries();
+      _conversations = computed(() => _db.watchCollection('test_conversations').value);
+      _messages = computed(() => _db.watchCollection('test_messages').value);
+    } else {
+      // Fallback computed values for uninitialized database
+      _conversations = computed(() => <Map<String, dynamic>>[]);
+      _messages = computed(() => <Map<String, dynamic>>[]);
     }
   }
 
-  void _setupReactiveQueries() {
-    // Skip reactive setup to avoid cycles - test screen will update manually
-    // The signals are initialized with empty lists and will be populated during tests
-  }
-
   void _addLog(String message) {
-    final timestamp = DateTime.now().toString().substring(11, 19);
-    setState(() {
-      _logs.add('[$timestamp] $message');
-    });
-    
-    // Auto-scroll to bottom
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
+    // Use untracked to prevent logging from creating reactive dependencies
+    untracked(() {
+      final timestamp = DateTime.now().toString().substring(11, 19);
+      setState(() {
+        _logs.add('[$timestamp] $message');
+      });
+      
+      // Auto-scroll to bottom
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     });
   }
 
@@ -138,8 +136,7 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
       final allConversations = await _db.findAll('test_conversations');
       _addLog('✅ findAll returned ${allConversations.length} conversations');
       
-      // Update signal manually to avoid reactive cycles
-      _conversations.value = allConversations;
+      // No manual update needed - computed values will automatically reflect database changes
       
       // Test 2: read method (should work - this is our baseline)
       if (_testConversationIds.isNotEmpty) {
@@ -160,9 +157,7 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
         _addLog('✅ findWhere working correctly!');
       }
       
-      // Update messages signal manually
-      final allMessages = await _db.findAll('test_messages');
-      _messages.value = allMessages;
+      // No manual update needed - computed values will automatically reflect database changes
       
       // Test 4: findWhere with multiple conditions
       _addLog('🔍 Testing findWhere with multiple conditions...');
