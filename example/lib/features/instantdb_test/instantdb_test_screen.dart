@@ -19,26 +19,18 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
   final List<String> _testConversationIds = [];
   final List<String> _testMessageIds = [];
   
-  // Reactive signals for UI updates - using proper computed pattern
-  late final Computed<List<Map<String, dynamic>>> _conversations;
-  late final Computed<List<Map<String, dynamic>>> _messages;
+  // Reactive signals for UI updates - using simple signals to avoid computed cycles
+  late final Signal<List<Map<String, dynamic>>> _conversations;
+  late final Signal<List<Map<String, dynamic>>> _messages;
   late final Signal<bool> _isRunning;
 
   @override
   void initState() {
     super.initState();
-    // Initialize running state signal
+    // Initialize all signals with empty/default values
+    _conversations = signal<List<Map<String, dynamic>>>([]);
+    _messages = signal<List<Map<String, dynamic>>>([]);
     _isRunning = signal(false);
-    
-    // Use computed values that automatically update from database signals
-    if (_db.isInitialized) {
-      _conversations = computed(() => _db.watchCollection('test_conversations').value);
-      _messages = computed(() => _db.watchCollection('test_messages').value);
-    } else {
-      // Fallback computed values for uninitialized database
-      _conversations = computed(() => <Map<String, dynamic>>[]);
-      _messages = computed(() => <Map<String, dynamic>>[]);
-    }
   }
 
   void _addLog(String message) {
@@ -136,7 +128,10 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
       final allConversations = await _db.findAll('test_conversations');
       _addLog('✅ findAll returned ${allConversations.length} conversations');
       
-      // No manual update needed - computed values will automatically reflect database changes
+      // Update signal to reflect current data (batched to prevent cascading updates)
+      batch(() {
+        _conversations.value = allConversations;
+      });
       
       // Test 2: read method (should work - this is our baseline)
       if (_testConversationIds.isNotEmpty) {
@@ -157,7 +152,11 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
         _addLog('✅ findWhere working correctly!');
       }
       
-      // No manual update needed - computed values will automatically reflect database changes
+      // Update messages signal with current data (batched to prevent cascading updates)
+      final allMessages = await _db.findAll('test_messages');
+      batch(() {
+        _messages.value = allMessages;
+      });
       
       // Test 4: findWhere with multiple conditions
       _addLog('🔍 Testing findWhere with multiple conditions...');
