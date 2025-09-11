@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_app_shell/flutter_app_shell.dart';
 
 /// Comprehensive test screen for InstantDB query issues
@@ -27,10 +28,24 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize all signals with empty/default values
-    _conversations = signal<List<Map<String, dynamic>>>([]);
-    _messages = signal<List<Map<String, dynamic>>>([]);
-    _isRunning = signal(false);
+    print('[InstantDBTest] initState: Starting signal initialization');
+    
+    try {
+      // Initialize all signals with empty/default values
+      _conversations = signal<List<Map<String, dynamic>>>([]);
+      print('[InstantDBTest] initState: _conversations signal created');
+      
+      _messages = signal<List<Map<String, dynamic>>>([]);
+      print('[InstantDBTest] initState: _messages signal created');
+      
+      _isRunning = signal(false);
+      print('[InstantDBTest] initState: _isRunning signal created');
+      
+      print('[InstantDBTest] initState: All signals initialized successfully');
+    } catch (e, stack) {
+      print('[InstantDBTest] initState ERROR: $e');
+      print('[InstantDBTest] initState STACK: $stack');
+    }
   }
 
   void _addLog(String message) {
@@ -52,6 +67,23 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
         }
       });
     });
+  }
+
+  /// Diagnostic wrapper for safe signal reads with cycle detection
+  T _safeSignalRead<T>(String location, T Function() reader) {
+    try {
+      return reader();
+    } catch (e) {
+      if (e.toString().contains('Cycle detected')) {
+        _addLog('🔴 CYCLE DETECTED at: $location');
+        _addLog('   Error: ${e.toString()}');
+        if (e is Error) {
+          final stackLines = e.stackTrace?.toString().split('\n').take(5).join('\n   ');
+          _addLog('   Stack:\n   $stackLines');
+        }
+      }
+      rethrow;
+    }
   }
 
   Future<void> _createTestData() async {
@@ -321,12 +353,27 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
                     ),
                     const SizedBox(height: 8),
                     Watch((context) {
-                      return Text(
-                        'Status: ${_db.isInitialized ? "Connected" : "Disconnected"} • '
-                        'Conversations: ${_conversations.value.length} • '
-                        'Messages: ${_messages.value.length}',
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      );
+                      try {
+                        final convCount = _safeSignalRead(
+                          'Status display - conversations count',
+                          () => _conversations.value.length,
+                        );
+                        final msgCount = _safeSignalRead(
+                          'Status display - messages count',
+                          () => _messages.value.length,
+                        );
+                        return Text(
+                          'Status: ${_db.isInitialized ? "Connected" : "Disconnected"} • '
+                          'Conversations: $convCount • '
+                          'Messages: $msgCount',
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        );
+                      } catch (e) {
+                        return Text(
+                          'Status: Error reading signals - $e',
+                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                        );
+                      }
                     }),
                   ],
                 ),
@@ -340,18 +387,45 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
               children: [
                 Expanded(
                   child: Watch((context) {
-                    return ui.button(
-                      onPressed: _isRunning.value ? () {} : _runFullTest,
-                      child: _isRunning.value 
-                        ? const Text('Running Tests...')
-                        : const Text('Run Full Test'),
-                    );
+                    try {
+                      final isRunning = _safeSignalRead(
+                        'Run button - isRunning check',
+                        () => _isRunning.value,
+                      );
+                      return ui.button(
+                        onPressed: isRunning ? () {} : _runFullTest,
+                        child: isRunning 
+                          ? const Text('Running Tests...')
+                          : const Text('Run Full Test'),
+                      );
+                    } catch (e) {
+                      return ui.button(
+                        onPressed: () {},
+                        child: const Text('Error - Check Logs'),
+                      );
+                    }
                   }),
                 ),
                 const SizedBox(width: 8),
                 ui.button(
                   onPressed: _clearTestData,
                   child: const Text('Clear Data'),
+                ),
+                const SizedBox(width: 8),
+                ui.button(
+                  onPressed: () async {
+                    final logsText = _logs.join('\n');
+                    await Clipboard.setData(ClipboardData(text: logsText));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Logs copied to clipboard'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Copy Logs'),
                 ),
                 const SizedBox(width: 8),
                 ui.button(
