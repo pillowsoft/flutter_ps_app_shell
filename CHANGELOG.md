@@ -5,6 +5,31 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.23] - 2025-09-11
+
+### Fixed
+- **Reactive Cycles Eliminated**: Removed problematic `effect()` calls from `watchCollection` and `watchWhere` methods that caused "Cycle detected" errors
+- **ScaffoldMessenger Error**: Fixed runtime error in Cupertino mode by using adaptive `ui.showSnackBar()` instead of Material-specific API
+- **Signal Dependencies**: Properly structured all signal operations to prevent circular dependencies
+- **watchWhere Test**: Modified test to avoid reading computed signal values that trigger cycles
+
+### Added
+- **Copy Logs Button**: One-click log copying to clipboard in InstantDB test screen
+- **Diagnostic Wrappers**: Added `_safeSignalRead()` method for debugging signal cycles with detailed error locations
+- **Enhanced Logging**: Console logging with `[InstantDBTest]` prefix for better signal initialization visibility
+- **Defensive Logging**: Added logging in `watchCollection` and `watchWhere` methods for debugging
+
+### Changed
+- **InstantDB Test Screen**: Now fully functional across all UI systems (Material, Cupertino, ForUI)
+- **Error Handling**: Added graceful fallbacks when signal operations fail
+- **Cross-Platform Notifications**: Proper platform-specific notification styling for all UI modes
+
+### Technical Details
+- Removed `realtimeUpdates.value++` from effect blocks that were causing immediate cycles
+- Changed from `StatefulHookWidget` to `StatefulWidget` in test screen
+- Replaced intermediate signal copying with direct computed values where appropriate
+- Added `untracked()` wrapper for logging operations to prevent dependency creation
+
 ## [0.7.22] - 2025-09-10
 
 ### Fixed

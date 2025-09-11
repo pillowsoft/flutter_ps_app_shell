@@ -449,6 +449,10 @@ Navigate to the "Inspector" tab in the example app to explore all service capabi
 11. **Use the Navigation Demo screen** to verify back button behavior and transition animations
 12. **Verify iOS sliding transitions** work properly in Cupertino mode
 13. **Check tab switching has no animations** (correct behavior for main navigation)
+14. **Use InstantDB Test Screen** (`/instantdb-test`) to verify database queries and debug issues
+    - Access via science icon (🔬) in app toolbar
+    - Features Copy Logs button for easy debugging
+    - Tests findWhere, watchWhere, and cache pollution
 - Never launch the app yourself. Ask the user to do it. And if we want to hot reload, ask the user to do that as well.
 
 ## Navigation System & Transitions
@@ -641,7 +645,18 @@ Created comprehensive demo screen at `/responsive-navigation` showing:
 
 ## Recent Updates
 
-### 🎉 v0.7.19 - Enhanced Datalog Parsing (Latest)
+### 🎉 v0.7.23 - Complete Signals Fix & UI Improvements (Latest)
+- ✅ **Fixed all reactive cycle issues** - Removed problematic effects from watchCollection/watchWhere
+- ✅ **Fixed ScaffoldMessenger error** - Now uses adaptive UI system for cross-platform compatibility
+- ✅ **Enhanced InstantDB test screen** - Added Copy Logs button and comprehensive diagnostics
+- ✅ **Improved signal patterns** - Proper use of computed(), untracked(), and batch() throughout
+
+### 📦 v0.7.22 - InstantDB Validation Fix
+- Fixed critical bug where findWhere/watchWhere generated malformed queries
+- Queries now use direct values instead of $eq wrapping (matches read method)
+- Eliminated cache pollution and validation errors
+
+### 🎉 v0.7.19 - Enhanced Datalog Parsing
 - **Fixed Critical Bug**: DatabaseService now correctly parses InstantDB datalog format
 - **Flexible Attribute Mapping**: Support for schema-specific and collection-specific attribute IDs
 - **Diagnostic Tools**: New `diagnoseDatalogParsing()` method for debugging parsing issues
