@@ -179,8 +179,8 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
         'conversationId': _testConversationIds.first
       });
       
-      // Check initial results without creating effect cycle
-      final initialResults = watchSignal.value;
+      // Use untracked to read the value without creating a reactive dependency cycle
+      final initialResults = untracked(() => watchSignal.value);
       _addLog('📡 watchWhere initial results: ${initialResults.length} messages');
       
       _addLog('🎉 Query method testing completed');
