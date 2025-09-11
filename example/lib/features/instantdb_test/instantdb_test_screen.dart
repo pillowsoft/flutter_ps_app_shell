@@ -428,11 +428,10 @@ class _InstantDBTestScreenState extends State<InstantDBTestScreen> {
                     final logsText = _logs.join('\n');
                     await Clipboard.setData(ClipboardData(text: logsText));
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Logs copied to clipboard'),
-                          duration: Duration(seconds: 2),
-                        ),
+                      ui.showSnackBar(
+                        context,
+                        'Logs copied to clipboard',
+                        duration: const Duration(seconds: 2),
                       );
                     }
                   },
