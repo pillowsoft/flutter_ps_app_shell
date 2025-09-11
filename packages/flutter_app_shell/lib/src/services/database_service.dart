@@ -407,6 +407,7 @@ class DatabaseService {
   /// Returns a Signal that updates when the collection changes
   Computed<List<Map<String, dynamic>>> watchCollection(String collection) {
     _ensureInitialized();
+    _logger.fine('watchCollection called for collection: $collection');
 
     final query = <String, dynamic>{collection: <String, dynamic>{}};
 
@@ -442,11 +443,9 @@ class DatabaseService {
       return <Map<String, dynamic>>[];
     });
 
-    // Update real-time counter when data changes
-    effect(() {
-      transformedSignal.value; // Subscribe to changes
-      realtimeUpdates.value++;
-    });
+    // Note: Removed the effect that was causing cycles
+    // The realtimeUpdates counter was creating a reactive dependency cycle
+    // when accessing transformedSignal.value inside an effect
 
     return transformedSignal;
   }
@@ -455,6 +454,7 @@ class DatabaseService {
   Computed<List<Map<String, dynamic>>> watchWhere(
       String collection, Map<String, dynamic> where) {
     _ensureInitialized();
+    _logger.fine('watchWhere called for collection: $collection with where: $where');
 
     // Transform where clause to use InstantDB operators
     final transformedWhere = _transformWhereClause(where);
@@ -499,12 +499,10 @@ class DatabaseService {
       return <Map<String, dynamic>>[];
     });
 
-    // Update real-time counter when data changes
-    effect(() {
-      transformedSignal.value; // Subscribe to changes
-      realtimeUpdates.value++;
-    });
-
+    // Note: Removed the effect that was causing cycles
+    // The realtimeUpdates counter was creating a reactive dependency cycle
+    // when accessing transformedSignal.value inside an effect
+    
     return transformedSignal;
   }
 
