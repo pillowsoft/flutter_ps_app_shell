@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.27 - 2025-10-02
+
+### Fixed
+- **🐛 Cupertino Button Padding Consistency**: Fixed padding inconsistency between filled and outlined buttons
+  - Added missing `padding: EdgeInsets.zero` to `outlinedButton()`
+  - Previously, `outlinedButton()` used CupertinoButton's default 16px padding + Container's 16px padding = 32px total
+  - Now all button types consistently use zero button padding + Container's 16px padding = 16px total
+  - Ensures uniform visual width across all button types (filled, outlined, with/without icons)
+
 ## 0.7.26 - 2025-10-02
 
 ### Fixed
@@ -11,6 +20,7 @@
   - Added Container(width: double.infinity) as button's child with proper padding
   - Now matches the pattern used by outlined buttons for consistency
   - CupertinoButton.filled now properly expands to fill available width
+  - ⚠️ Note: Still had padding inconsistency in `outlinedButton()` - fixed in v0.7.27
 
 ## 0.7.25 - 2025-10-02 [DEPRECATED - INCORRECT FIX]
 

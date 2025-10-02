@@ -512,11 +512,17 @@ Navigate to `/datalog-investigation` for InstantDB debugging:
 
 ## Recent Updates
 
-### v0.7.26 (Latest) - Cupertino Button Width Fix (Corrected)
+### v0.7.27 (Latest) - Button Padding Consistency Fix
+- ✅ Fixed padding inconsistency between filled and outlined buttons
+- ✅ Added missing `padding: EdgeInsets.zero` to `outlinedButton()`
+- ✅ All button types now have uniform visual padding (16px)
+- ✅ Eliminates width differences caused by double-padding
+
+### v0.7.26 - Cupertino Button Width Fix (Corrected)
 - ✅ Fixed v0.7.25 incorrect implementation (SizedBox wrapper doesn't work)
 - ✅ Applied correct pattern: Container as button's child, not wrapper
 - ✅ CupertinoButton.filled now properly expands to fill available width
-- ✅ Matches pattern from outlinedButton for consistency
+- ⚠️ Had padding inconsistency - fixed in v0.7.27
 
 ### v0.7.25 [DEPRECATED] - Incorrect Fix
 - ⚠️ Used wrong approach (SizedBox wrapper)

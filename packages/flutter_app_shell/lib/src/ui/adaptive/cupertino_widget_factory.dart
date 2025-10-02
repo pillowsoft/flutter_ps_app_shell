@@ -377,6 +377,7 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
   }) {
     return CupertinoButton(
       key: key,
+      padding: EdgeInsets.zero,
       onPressed: onPressed,
       child: Container(
         width: double.infinity,
