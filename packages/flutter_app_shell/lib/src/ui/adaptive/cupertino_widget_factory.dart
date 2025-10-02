@@ -328,12 +328,14 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
     final buttonChild = child ?? (label != null ? Text(label) : null);
     assert(buttonChild != null, 'Either label or child must be provided');
 
-    return SizedBox(
-      width: double.infinity,
-      child: CupertinoButton.filled(
-        key: key,
-        onPressed: onPressed,
-        child: buttonChild!,
+    return CupertinoButton.filled(
+      key: key,
+      padding: EdgeInsets.zero,
+      onPressed: onPressed,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Center(child: buttonChild!),
       ),
     );
   }
@@ -346,11 +348,13 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
     required VoidCallback onPressed,
     ButtonStyle? style,
   }) {
-    return SizedBox(
-      width: double.infinity,
-      child: CupertinoButton.filled(
-        key: key,
-        onPressed: onPressed,
+    return CupertinoButton.filled(
+      key: key,
+      padding: EdgeInsets.zero,
+      onPressed: onPressed,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,

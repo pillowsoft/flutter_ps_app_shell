@@ -1,15 +1,24 @@
 # Changelog
 
-## 0.7.25 - 2025-10-02
+## 0.7.26 - 2025-10-02
 
 ### Fixed
-- **🐛 Filled Button Width Constraints**: Completed button width constraint fixes across all UI systems
-  - Fixed `button()` and `buttonWithIcon()` in CupertinoWidgetFactory to respect parent width constraints
-  - Wrapped CupertinoButton.filled in `SizedBox(width: double.infinity)` for consistent expansion
-  - Added `MainAxisAlignment.center` to buttonWithIcon for proper icon/text centering
-  - Fixed `button()` and `buttonWithIcon()` in ForUIWidgetFactory by adding `width: double.infinity`
-  - All button types (filled, outlined, with/without icons) now have consistent widths across Material, Cupertino, and ForUI
-  - Completes the button width fix trilogy started in v0.7.24
+- **🐛 Cupertino Button Width Constraints (Correct Fix)**: Fixed v0.7.25 implementation that used wrong pattern
+  - **Root Cause**: v0.7.25 wrapped CupertinoButton in SizedBox, but CupertinoButton doesn't respect parent width constraints
+  - **Correct Solution**: Container with `width: double.infinity` must be the button's **child**, not its wrapper
+  - Applied correct pattern from `outlinedButton()` to `button()` and `buttonWithIcon()`
+  - Set `padding: EdgeInsets.zero` on CupertinoButton.filled
+  - Added Container(width: double.infinity) as button's child with proper padding
+  - Now matches the pattern used by outlined buttons for consistency
+  - CupertinoButton.filled now properly expands to fill available width
+
+## 0.7.25 - 2025-10-02 [DEPRECATED - INCORRECT FIX]
+
+### Fixed
+- **🐛 Filled Button Width Constraints**: ⚠️ This release used incorrect approach (SizedBox wrapper)
+  - Used wrong pattern: wrapped button in SizedBox instead of Container as child
+  - CupertinoButton doesn't expand with SizedBox wrapper - fix didn't work
+  - See v0.7.26 for correct implementation
 
 ## 0.7.24 - 2025-10-02
 

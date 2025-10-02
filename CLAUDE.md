@@ -512,11 +512,16 @@ Navigate to `/datalog-investigation` for InstantDB debugging:
 
 ## Recent Updates
 
-### v0.7.25 (Latest) - Filled Button Width Fix (Complete)
-- ✅ Fixed filled buttons not respecting parent width constraints
-- ✅ All button types (filled, outlined, with/without icons) now have consistent widths
-- ✅ Applies to CupertinoWidgetFactory and ForUIWidgetFactory
-- ✅ Completes button width constraint fixes across all three UI systems
+### v0.7.26 (Latest) - Cupertino Button Width Fix (Corrected)
+- ✅ Fixed v0.7.25 incorrect implementation (SizedBox wrapper doesn't work)
+- ✅ Applied correct pattern: Container as button's child, not wrapper
+- ✅ CupertinoButton.filled now properly expands to fill available width
+- ✅ Matches pattern from outlinedButton for consistency
+
+### v0.7.25 [DEPRECATED] - Incorrect Fix
+- ⚠️ Used wrong approach (SizedBox wrapper)
+- ❌ CupertinoButton doesn't respect parent SizedBox constraints
+- 📌 Superseded by v0.7.26
 
 ### v0.7.24 - Outlined Button Width Fix
 - ✅ Fixed outlined buttons not respecting parent width constraints
