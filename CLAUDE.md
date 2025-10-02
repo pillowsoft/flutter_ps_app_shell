@@ -4,111 +4,211 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the Flutter PowerSchool App Shell Framework - a comprehensive application framework that provides a zero-configuration foundation for Flutter apps with advanced service architecture and adaptive UI systems.
+Flutter PowerSchool App Shell Framework - A comprehensive application framework providing zero-configuration foundation for Flutter apps with advanced service architecture, adaptive UI systems, and cloud synchronization.
 
-## New Package Structure
+**⚠️ EXPERIMENTAL SOFTWARE - NOT PRODUCTION READY**
 
-The project has been reorganized into a proper Flutter package structure:
-- `packages/flutter_app_shell/` - The main Flutter App Shell package
-- `example/` - Example app demonstrating all package features
-- `justfile` - Build automation with all common tasks
+## Project Structure
 
-## Development Commands
-
-### Quick Start
-```bash
-# Setup the project
-just setup
-
-# Run the example app
-just run
-
-# Run all tests
-just test
+```
+flutter_ps_app_shell/
+├── packages/flutter_app_shell/    # Core framework package
+│   ├── lib/
+│   │   ├── src/
+│   │   │   ├── core/              # App shell, routing, config
+│   │   │   ├── services/          # Core services (9 services)
+│   │   │   ├── plugins/           # Plugin system (4 types)
+│   │   │   ├── ui/adaptive/       # Adaptive UI factories
+│   │   │   ├── wizard/            # Wizard/onboarding system
+│   │   │   ├── state/             # Settings store
+│   │   │   └── utils/             # Logging, utilities
+│   │   └── flutter_app_shell.dart # Main export
+│   └── pubspec.yaml
+├── example/                        # Example app demonstrating features
+│   ├── lib/features/              # Feature demonstrations
+│   └── pubspec.yaml
+├── docs/                          # Comprehensive documentation
+├── workers/                       # Cloudflare Workers (Dart/TypeScript)
+├── justfile                       # Build automation
+└── .env.example                   # Environment configuration template
 ```
 
-### Flutter Development
+## Quick Start Commands
+
+### Essential Commands (Just)
 ```bash
-# Install dependencies
-flutter pub get
+# Project setup
+just setup              # Install dependencies for package + example
+just run                # Run example app
+just test               # Run all tests (package + example)
+just analyze            # Run static analysis on all code
+just format             # Format all code
+just clean              # Clean all build artifacts
 
-# Run development
-flutter run
+# Platform-specific runs
+just run-web            # Run on Chrome
+just run-ios            # Run on iOS simulator
+just run-android        # Run on Android
+just run-macos          # Run on macOS
 
-# Build for platforms
-flutter build apk          # Android
-flutter build ios          # iOS
-flutter build web          # Web
-flutter build windows      # Windows
-flutter build macos        # macOS
-flutter build linux        # Linux
+# Testing
+just test-package       # Test package only
+just test-example       # Test example only
 
-# Run tests
-flutter test
+# Building
+just build-android      # Build Android APK
+just build-ios          # Build iOS app
+just build-web          # Build web app
+just build-macos        # Build macOS app
+just build-windows      # Build Windows app
+just build-linux        # Build Linux app
 
-# Static analysis
-flutter analyze
+# Documentation
+just generate-llms      # Generate llms.txt for AI assistants
 
-# Format code
-dart format .
+# Quality checks
+just pre-commit         # Run format, analyze, test before commit
+just ci                 # Full CI pipeline simulation
 ```
 
-### No Code Generation Required!
-This project uses InstantDB for database and Signals for state management - both work without any code generation. No `build_runner` needed!
+### Release Management
+```bash
+just version            # Show current version and tags
+just release-patch      # Bump patch version (0.7.22 → 0.7.23)
+just release-minor      # Bump minor version (0.7.22 → 0.8.0)
+just release-major      # Bump major version (0.7.22 → 1.0.0)
+just publish-release VERSION  # Push and create GitHub release
+```
 
-### Bun Usage (User Preference)
-For any web-related or Node.js tooling in the project, use `bun` instead of `npm`.
+### Cloudflare Workers Development
+```bash
+just setup-cloudflare        # Setup workers (login, install deps)
+just secrets-cloudflare      # Set basic worker secrets
+just secrets-ai-gateway      # Set AI Gateway secrets
+just dev-dart-worker         # Run Dart worker locally
+just dev-ts-shim             # Run TypeScript auth shim locally
+just deploy-cloudflare       # Deploy both workers
+just tail-dart-worker        # View Dart worker logs
+```
+
+### Direct Flutter Commands
+```bash
+# When working in package or example directory
+flutter pub get              # Install dependencies
+flutter run                  # Run app
+flutter test                 # Run tests
+flutter test path/to/test    # Run specific test
+flutter analyze              # Static analysis
+dart format .                # Format code
+```
+
+## Environment Configuration
+
+### Required Setup for Cloud Features
+
+1. **Copy environment template**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure InstantDB** (for authentication & real-time sync):
+   - Sign up at https://www.instantdb.com
+   - Create a new app in dashboard
+   - Copy App ID to `.env`:
+     ```bash
+     INSTANTDB_APP_ID=your-app-id-here
+     INSTANTDB_ENABLE_SYNC=true
+     INSTANTDB_VERBOSE_LOGGING=false  # Enable for debugging
+     ```
+
+3. **Add .env to pubspec.yaml**:
+   ```yaml
+   flutter:
+     assets:
+       - .env
+   ```
+
+4. **Local-only mode**: Leave `INSTANTDB_APP_ID` empty to run without authentication/cloud sync.
 
 ## Architecture Overview
 
-### Core Framework Structure
-- **App Shell Pattern**: Zero-configuration Flutter app foundation in `possibly_useful_code/app_shell/`
-- **Service Layer**: Dependency injection with GetIt, services configured at startup
-- **State Management**: Primary use of Signals (v6.0.2), secondary MobX for specific components
-- **Navigation**: GoRouter-based with responsive layout adaptation
-- **Multi-UI System**: Complete adaptive system supporting Material, Cupertino, and ForUI with full app-level switching
+### Core Principles
 
-### Key Directories
-- `docs/`: Framework specification (flutter_app_shell_spec.md - comprehensive 1500+ line spec)
-- `possibly_useful_code/`: Implementation prototypes
-  - `adaptive/`: Multi-UI system implementations
-  - `app_shell/`: Core framework implementation
-  - `shadcn_app_shell/`: shadcn/ui variant with Rust bridge support
-  - `core/`: Core services and architecture patterns
-  - `settings/`: Settings screen implementations
-  - `wizard/`: Wizard/onboarding flow examples
+1. **Service-Oriented Architecture**: All business logic in singleton services managed by GetIt
+2. **Adaptive UI System**: Runtime switching between Material, Cupertino, and ForUI design systems
+3. **Reactive State**: Signals-first approach for granular, efficient state updates
+4. **Zero Code Generation**: No `build_runner`, no `.g.dart` files, instant hot reload
+5. **Plugin System**: Extensible architecture for services, widgets, themes, and workflows
 
-### Service Architecture
-All services are registered through GetIt dependency injection:
-- **NavigationService**: Manages GoRouter navigation
-- **AppShellSettingsStore**: User preferences with signal-based reactivity
-- **LoggingService**: Hierarchical logging with per-service control, runtime level adjustment, and automatic release mode optimization
-- **30+ Optional Services**: As specified in the framework docs (auth, analytics, etc.)
+### Core Services (9 Services)
 
-### Responsive Layout Strategy
-The framework automatically adapts based on screen size:
-- **Mobile (<600px)**: Bottom tabs (≤5 items) or drawer (>5 items)
-- **Tablet (600-900px)**: Side navigation rail
-- **Desktop (>900px)**: Full sidebar with toggle functionality
+All registered through GetIt dependency injection:
 
-### State Management Patterns
-1. **Signals (Primary)**: Use for reactive state that needs UI updates - NO CODE GENERATION REQUIRED
-2. **Service State**: Maintain service-level state in singleton services
+```dart
+// Access anywhere in app
+final db = getIt<DatabaseService>();
+final auth = getIt<AuthenticationService>();
+final prefs = getIt<PreferencesService>();
+```
+
+**Available Services**:
+- `NavigationService` - GoRouter navigation management
+- `DatabaseService` - InstantDB NoSQL with real-time sync (zero code generation!)
+- `AuthenticationService` - JWT tokens, biometric support, magic links
+- `PreferencesService` - Reactive SharedPreferences with Signals
+- `NetworkService` - Dio HTTP client with offline queue and retry
+- `FileStorageService` - Local and cloud file management
+- `LoggingService` - Hierarchical logging with per-service control
+- `CloudflareService` - Cloudflare Workers integration (R2, AI Gateway)
+- `WindowStateService` - Desktop window state persistence (multi-monitor)
+- `AppShellSettingsStore` - User preferences with automatic persistence
+
+### Adaptive UI System
+
+**Three UI Systems**:
+- **Material**: Google Material Design 3
+- **Cupertino**: Native iOS components and styling
+- **ForUI**: Modern, minimal design system
+
+**30+ Adaptive Components** via abstract factory pattern:
+```dart
+final ui = getAdaptiveFactory(context);
+
+// Same API across all UI systems
+ui.button(label: 'Click Me', onPressed: () {});
+ui.textField(label: 'Name', onChanged: (v) {});
+ui.scaffold(appBar: ui.appBar(title: const Text('Title')));
+```
+
+Components automatically adapt to current UI system (Material/Cupertino/ForUI).
+
+### Responsive Navigation
+
+Automatically adapts based on screen size and route count:
+
+- **Mobile (<600px)**:
+  - ≤5 visible routes: Bottom navigation tabs
+  - >5 visible routes: Drawer with hamburger menu
+- **Tablet (600-1200px)**: Side navigation rail
+- **Desktop (>1200px)**: Full sidebar with collapse/expand
+
+**Hidden Routes**: Use `showInNavigation: false` to create routes accessible via code but not shown in navigation UI (great for workflows, camera screens, checkout flows).
+
+### Plugin System
+
+Four plugin types for extensibility:
+- **Service Plugins**: Add business logic and data access
+- **Widget Plugins**: Provide custom UI components
+- **Theme Plugins**: Create complete custom UI systems
+- **Workflow Plugins**: Implement automation and processing
+
+Plugins can be auto-discovered from dependencies or manually registered.
 
 ## Development Patterns
 
-### Adding New Features
-1. Create service in `core/services/` if needed
-2. Register service in GetIt container during app initialization
-3. Use adaptive components from `adaptive/` for UI consistency
-4. Follow existing patterns for state management (Signals-first)
-5. Add hierarchical logging using `createServiceLogger('ServiceName')` for better debugging
+### Screen Architecture
 
-### Screen Architecture Patterns
-**IMPORTANT**: Screens should NOT use `ui.scaffold()` unless they need special scaffold behavior:
-
-- **✅ Correct**: Return content directly (ListView, Column, etc.) - AppShell provides the scaffold wrapper
-- **❌ Incorrect**: Wrap content in `ui.scaffold()` - creates nested scaffolds and breaks navigation
+**IMPORTANT**: Screens should NOT use `ui.scaffold()` unless they need special scaffold behavior.
 
 ```dart
 // ✅ CORRECT - Screen returns content directly
@@ -117,14 +217,14 @@ class MyScreen extends StatelessWidget {
     final ui = getAdaptiveFactory(context);
     return ListView(
       children: [
-        ui.pageTitle('My Screen'),  // Works correctly in all UI systems
+        ui.pageTitle('My Screen'),  // Auto-adapts across UI systems
         // ... content
       ],
     );
   }
 }
 
-// ❌ INCORRECT - Creates nested scaffold
+// ❌ INCORRECT - Creates nested scaffolds
 class BadScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final ui = getAdaptiveFactory(context);
@@ -138,7 +238,7 @@ class BadScreen extends StatelessWidget {
 class SpecialScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final ui = getAdaptiveFactory(context);
-    return ui.sliverScaffold(  // OK - needs special sliver layout
+    return ui.sliverScaffold(  // OK for sliver layouts
       largeTitle: const Text('Title'),
       slivers: [/* slivers */],
     );
@@ -146,21 +246,57 @@ class SpecialScreen extends StatelessWidget {
 }
 ```
 
-This ensures `ui.pageTitle()` works correctly - returning empty content in Cupertino mode and styled headers in Material/ForUI modes.
+AppShell provides the scaffold wrapper automatically. Screens return content only.
 
-### Testing Approach
-- Unit tests for services and business logic
-- Widget tests for UI components with adaptive behavior
-- Integration tests for complete user flows
+### State Management with Signals
+
+**Zero code generation required!**
+
+```dart
+// Create reactive state
+final counter = signal(0);
+final user = signal<User?>(null);
+
+// Computed values
+final doubledCounter = computed(() => counter.value * 2);
+
+// Watch for changes in UI (auto-rebuild)
+Watch((context) => Text('Count: ${counter.value}'))
+
+// Effects for side effects
+effect(() {
+  print('Counter changed to: ${counter.value}');
+});
+```
+
+### Service Registration
+
+```dart
+// 1. Create service
+class MyService {
+  static MyService? _instance;
+  static MyService get instance => _instance ??= MyService._();
+  MyService._();
+
+  void doSomething() { /* ... */ }
+}
+
+// 2. Register in GetIt (during app initialization)
+getIt.registerSingleton<MyService>(MyService.instance);
+
+// 3. Use anywhere
+getIt<MyService>().doSomething();
+```
 
 ### Logging Patterns
-The framework uses hierarchical logging for better organization and control:
+
+Hierarchical logging with per-service control:
 
 ```dart
 // Service-level logging (recommended)
 class MyService {
   static final Logger _logger = createServiceLogger('MyService');
-  
+
   Future<void> performAction() async {
     _logger.fine('Starting action...');
     try {
@@ -179,11 +315,7 @@ AppShellLogger.w('Warning message');
 AppShellLogger.e('Error occurred');
 ```
 
-**Benefits:**
-- Per-service log filtering and level control
-- Automatic service name prefixing in log output
-- Runtime level adjustment through settings UI
-- Performance optimization in release builds
+**Benefits**: Per-service filtering, automatic prefixing, runtime level adjustment, release mode optimization.
 
 ## Important Conventions
 
@@ -200,393 +332,100 @@ AppShellLogger.e('Error occurred');
 - Screens: `*_screen.dart`
 
 ### Platform-Specific Code
-Use conditional imports for web-specific features:
 ```dart
 import 'stub.dart' if (dart.library.html) 'web_specific.dart';
 ```
 
-## Framework Capabilities
+## Key Features
 
-The framework aims to provide:
-- **5-minute app creation**: Single function call to create fully-featured app
-- **30+ built-in services**: Authentication, analytics, storage, etc.
-- **Offline-first architecture**: Local database with cloud sync
-- **InstantDB integration**: Built-in real-time backend with authentication
-- **Wizard navigation**: Step-by-step onboarding flows
-- **Service inspector**: Debug panel for runtime service inspection
+### ✅ Implemented Features
 
-## Current Implementation Status
-
-### Phase 1: Core Foundation ✅ COMPLETED
-- Core app shell structure with zero-configuration setup
-- Service-oriented architecture with GetIt dependency injection  
-- NavigationService, LoggingService, AppShellSettingsStore
+**Core Framework**:
+- Zero-configuration app setup with `runShellApp()`
+- Service-oriented architecture with GetIt DI
 - Responsive navigation (bottom tabs → rail → sidebar)
-- **Fixed Navigation Threshold Logic**: Correctly counts only visible routes (≤5 for bottom tabs)
-- **Enhanced Hidden Routes**: Routes accessible via code but not shown in navigation
-- Signals-based reactive state management
+- Hidden routes support (`showInNavigation: false`)
+- Automatic settings persistence via SharedPreferences
 
-### Phase 2: Adaptive UI System ✅ COMPLETED  
-- **Complete UI System Switching**: Entire app dynamically switches between Material, Cupertino, and ForUI
-- **Material/Cupertino Integration**: CupertinoApp.router for iOS mode, MaterialApp.router for others
-- **Adaptive Component Library**: Abstract factory pattern with platform-specific implementations
-- **Navigation Adaptation**: App bars, navigation rails, sidebars all adapt to chosen UI system
-- **Localization Support**: Proper Material/Cupertino localization delegates for mixed widget usage
-- **Context-Safe Dialogs**: Fixed navigation errors when switching UI systems mid-interaction
+**Adaptive UI**:
+- Complete Material/Cupertino/ForUI switching at runtime
+- 30+ adaptive components with consistent API
+- Platform-aware transitions (iOS sliding, Material fades)
+- Large title support (iOS collapsing headers)
+- Context-safe dialogs and navigation
 
-### Phase 3: Advanced Services ✅ COMPLETED
-- **DatabaseService**: NoSQL document database with InstantDB (no code generation!), reactive queries, real-time sync
-- **NetworkService**: HTTP client with Dio, offline queueing, retry logic, connectivity monitoring
-- **AuthenticationService**: Complete auth flow with JWT-style tokens, biometric support
-- **PreferencesService**: Enhanced SharedPreferences with reactive signals, type-safe access
+**Services**:
+- DatabaseService: InstantDB real-time NoSQL (zero code generation!)
+- AuthenticationService: Magic links, biometric, JWT tokens
+- NetworkService: Dio with offline queue and retry
+- WindowStateService: Desktop multi-monitor state persistence
+- Service Inspector: Real-time debugging UI
 
-### Phase 4: Extended Adaptive Components ✅ COMPLETED
-- **30+ Adaptive Widgets**: Complete component library across all three UI systems
-- **High-Priority Button Components**: All requested button methods fully implemented
-  - **buttonWithIcon()**: Primary action buttons with icon + text (FilledButton.icon in Material, CupertinoButton with Row in Cupertino, FButton with Icon in ForUI)
-  - **outlinedButton()**: Secondary action buttons with less emphasis (OutlinedButton in Material, custom bordered CupertinoButton in Cupertino, FButton.outline in ForUI)
-  - **outlinedButtonWithIcon()**: Secondary buttons with icon context (OutlinedButton.icon in Material, custom implementation in Cupertino, FButton.outline with Icon in ForUI)
-- **Essential UI Components**: All core components with platform-specific implementations
-  - **divider()**: Platform-appropriate dividers (Divider in Material, custom Container in Cupertino, Divider with ForUI styling)
-  - **circularProgressIndicator()**: Loading spinners (CircularProgressIndicator in Material, CupertinoActivityIndicator in Cupertino, custom implementation in ForUI)
-  - **linearProgressIndicator()**: Progress bars (LinearProgressIndicator in Material, custom implementation in Cupertino, progress bars in ForUI)
-  - **chip()**: Tag/category widgets (Chip in Material, custom rounded container in Cupertino, custom chip implementation in ForUI)
-  - **badge()**: Notification indicators (Badge in Material, custom positioned widget in Cupertino, custom badge in ForUI)
-- **Critical Gesture & Menu Components**: Essential components that prevent runtime exceptions
-  - **popupMenuButton<T>()**: Platform-adaptive popup menus (Material PopupMenuButton, Cupertino ActionSheet, ForUI styled popup)
-  - **inkWell()**: Platform-adaptive gesture wrapper that prevents "No Material widget found" errors
-  - **AdaptivePopupMenuItem<T>**: Model class for popup menu items with support for icons, destructive styling, and disabled states
-- **Enhanced Date/Time Pickers**: Distinct visual styling across all UI systems
-  - **Material**: Blue theme with heavy elevation (24px) and rounded corners (16px)
-  - **ForUI**: Flat design with sharp corners (4px), light gray backgrounds, zinc color palette
-  - **Cupertino**: Native iOS modal pickers with proper fallbacks for unsupported components
-- **Extended Components**: Range sliders, chips, tab bars, segmented controls, progress indicators
-- **Platform-Specific Styling**: Each UI system has distinct visual characteristics and proper theming
-- **iOS Settings Style**: Proper grouped lists with system gray backgrounds for Cupertino mode
-- **Fixed Stack Overflow**: Resolved recursive call issue in Cupertino date range picker
-- **Large Title Support**: Native iOS large title behavior with adaptive fallbacks
-  - **appBar(largeTitle: true)**: Enables iOS CupertinoSliverNavigationBar with collapsing large titles
-  - **pageTitle()**: Platform-appropriate page headers (SizedBox.shrink() in Cupertino, prominent headers in Material/ForUI)
-  - **sliverScaffold()**: Complete sliver-based scaffold with automatic large title integration
+**Plugin System**:
+- 4 plugin types (Service, Widget, Theme, Workflow)
+- Auto-discovery from dependencies
+- Health monitoring and lifecycle management
+- Example plugins included (Analytics, Charts)
 
-### Phase 5: Plugin System ✅ COMPLETED
-- **Plugin Architecture**: Extensible framework with 4 plugin types (Service, Widget, Theme, Workflow)
-- **Plugin Manager**: Lifecycle management, dependency resolution, health monitoring
-- **Auto-Discovery**: Automatic plugin discovery from package dependencies
-- **Example Plugins**: AnalyticsPlugin (service), ChartWidgetPlugin (widgets)
-- **Service Inspector Integration**: Real-time monitoring and debugging of all plugins
-- **Cross-Platform Support**: Plugins work across all UI systems (Material, Cupertino, ForUI)
-- **Zero Configuration**: Plugins can be auto-discovered or manually registered
+**Desktop Support**:
+- Window state persistence across restarts
+- Multi-monitor awareness (including negative coordinates)
+- Platform-specific window management
 
-### Not Yet Implemented
-- Enhanced InstantDB features (advanced queries, presence, etc.)
-- Additional optional services from specification (30+ services planned)
-- Performance monitoring and analytics services
+### 🚧 Not Yet Implemented
+
+- Enhanced InstantDB features (advanced queries, presence)
+- Additional optional services (30+ planned)
+- Performance monitoring service
 - Push notification service
 
-## Flutter Configuration
+## Critical Dependencies
 
-- **SDK**: ^3.6.0
-- **Min Flutter**: >=3.16.0
-- **Material Design**: Version 3 enabled
-- **Platforms**: Android, iOS, Web, Windows, macOS, Linux
-
-## Key Dependencies
-
-Core framework dependencies that should not be changed without careful consideration:
-- `flutter_hooks: ^0.20.5` - Hook-based state management
-- `go_router: ^14.2.3` - Navigation
-- `get_it: ^8.0.0` - Dependency injection
-- `signals: ^6.0.2` - Primary state management (NO CODE GENERATION!)
-- `instantdb_flutter: ^0.2.1` - Real-time database with authentication (NO CODE GENERATION!)
-- `shared_preferences: ^2.3.1` - Local storage
-
-## 🎯 Currently Working Features (All Verified and Tested)
-
-### ✅ App Shell Core
-- **Zero-configuration setup**: Single function call creates complete app structure
-- **Responsive navigation**: Automatically adapts between bottom tabs, navigation rail, and sidebar
-- **Service architecture**: GetIt-based dependency injection with core services
-- **Desktop-aware layouts**: Proper handling of macOS/Windows/Linux window chrome
-
-### ✅ Desktop Platform Support
-- **Window State Persistence**: Automatic saving and restoration of window position, size, and monitor
-  - Multi-monitor aware with support for negative coordinates
-  - Intelligent display detection using window center point
-  - Configurable through user settings
-- **Platform-specific window management**: Works seamlessly on macOS, Windows, and Linux
-- **Responsive to display changes**: Validates window visibility when displays change
-
-### ✅ Adaptive UI System  
-- **Complete UI switching**: Entire app switches between Material, Cupertino, and ForUI design systems
-- **30+ Adaptive components**: Complete widget library with extended components
-- **Context-safe interactions**: Dialogs and navigation work seamlessly during UI system changes
-- **Platform consistency**: Each UI system uses appropriate platform conventions
-- **iOS Settings Style**: Proper grouped lists with CupertinoListSection for authentic iOS appearance
-- **Desktop SafeArea handling**: Cupertino UI properly handles macOS title bar positioning
-- **Mobile drawer navigation**: Automatic drawer with hamburger menu for >5 routes on mobile
-- **Extended Components**: Date/time pickers, range sliders, chips, progress indicators, tab bars
-- **Reactive UI System Switching**: Fixed race conditions with immediate, synchronous state updates - UI consistently updates when switching between Material, Cupertino, and ForUI
-- **Theme Toggle Button**: App bar theme toggle properly switches between light and dark modes, respecting system preferences
-
-### ✅ Advanced Services
-- **DatabaseService**: InstantDB-powered NoSQL with reactive queries and real-time synchronization (zero code generation!)
-  - **v0.7.19 Update**: Enhanced datalog parsing with flexible attribute mapping
-  - **Diagnostic Tools**: New `diagnoseDatalogParsing()` method for debugging
-  - **Collection-Specific Mappings**: Support for schema-specific attribute IDs
-  - **See DATALOG_PARSING_GUIDE.md** for troubleshooting datalog format issues
-- **NetworkService**: Dio HTTP client with offline queue and automatic retry
-- **AuthenticationService**: JWT tokens, biometric auth, complete user management
-- **PreferencesService**: Type-safe reactive preferences with Signals integration
-- **WindowStateService**: Desktop window position, size, and monitor persistence with multi-monitor support
-  - Automatically saves and restores window geometry across app restarts
-  - Handles multi-monitor setups including negative coordinates (left monitors)
-  - Uses window center for accurate display detection
-  - Configurable through Settings with "Remember window state" option
-- **Settings Persistence**: All user preferences automatically persist across app restarts using SharedPreferences with reactive effects
-- **Service Inspector**: Real-time debugging UI showing all service and plugin health, status, and interactive testing capabilities
-
-### ✅ Example App Demonstrations
-- **Home**: Welcome screen with framework overview
-- **Dashboard**: Responsive layout with adaptive widgets  
-- **Settings**: Complete settings management with theme/UI switching
-- **Profile**: User profile screen demonstrating adaptive forms
-- **Adaptive UI**: Live UI system switching demo with component showcase (Material, Cupertino, ForUI)
-- **Services Demo**: Interactive testing of all Phase 3 services (database, network, auth)
-- **Plugin Demo**: Showcase of plugin capabilities with analytics tracking and chart widgets
-- **Service Inspector**: Real-time debugging and monitoring of all registered services and plugins with health status
-- **Components**: Comprehensive demo of extended adaptive components including date pickers, file uploads, charts
-- **Buttons**: Dedicated demo of high-priority button components (buttonWithIcon, outlinedButton, outlinedButtonWithIcon) with interactive examples and usage code
-- **Popup & InkWell**: Interactive demonstration of popup menus and gesture wrappers across all UI systems with real-time feedback
-- **10 Total Routes**: Demonstrates automatic switch from bottom tabs to drawer navigation on mobile
-
-### ✅ Responsive Behavior
-- **Mobile (<600px)**: Bottom navigation (≤5 routes) or drawer navigation (>5 routes) with hamburger menu
-- **Tablet (600-1200px)**: Side navigation rail with collapsible labels  
-- **Desktop (>1200px)**: Full sidebar with collapse/expand functionality
-- **Cross-UI compatibility**: All navigation modes work consistently across Material, Cupertino, and ForUI
-
-## Settings Persistence
-
-The Flutter App Shell provides automatic settings persistence out of the box:
-
-### ✅ Automatic Persistence
-All settings are automatically saved to SharedPreferences using reactive effects:
-- **Theme Mode**: Light/Dark/System theme preferences
-- **UI System**: Material/Cupertino/ForUI selection  
-- **Navigation**: Sidebar collapsed state, navigation labels visibility
-- **Developer**: Debug mode, log level settings
-- **Appearance**: Text scale factor and other UI preferences
-
-### ✅ Implementation Details
-The `AppShellSettingsStore` uses a three-phase initialization:
-1. **Initialize signals** with default values (no effects yet)
-2. **Load saved values** from SharedPreferences (overwrites defaults)
-3. **Setup reactive effects** to persist future changes
-
-This ensures settings persist correctly across app restarts and hot reloads.
-
-### ✅ Usage Example
-```dart
-final settingsStore = getIt<AppShellSettingsStore>();
-
-// Settings automatically persist when changed
-settingsStore.uiSystem.value = 'cupertino';  // Saves immediately
-settingsStore.themeMode.value = ThemeMode.dark;  // Saves immediately
-
-// UI reactively updates using Watch()
-Watch((context) {
-  final theme = settingsStore.themeMode.value;
-  return Text('Current theme: $theme');
-});
+**Do not change without careful consideration**:
+```yaml
+flutter_hooks: ^0.20.5        # Hook-based state management
+go_router: ^14.2.3            # Navigation
+get_it: ^8.0.0                # Dependency injection
+signals: ^6.0.2               # Primary state (NO CODE GENERATION!)
+instantdb_flutter: ^0.2.1     # Real-time DB (NO CODE GENERATION!)
+shared_preferences: ^2.3.1    # Local storage
 ```
 
-## Service Inspector
+**Flutter Requirements**:
+- SDK: ^3.6.0
+- Min Flutter: >=3.16.0
+- Material Design 3 enabled
+- Platforms: Android, iOS, Web, Windows, macOS, Linux
 
-The Flutter App Shell includes a powerful **Service Inspector** for debugging and monitoring:
+## Navigation System
 
-### ✅ Real-time Service Monitoring
-Visual dashboard showing all registered services with live status indicators:
-- **Navigation Service**: Current route, navigation testing
-- **Settings Store**: Live settings values with interactive viewer
-- **Preferences Service**: Storage statistics and test operations  
-- **Database Service**: CRUD testing, connection status, document browser
-- **Network Service**: HTTP testing, connection status, queue monitoring
-- **Authentication Service**: Auth state, login testing, token details
+### Platform-Aware Transitions
 
-### ✅ Interactive Testing Capabilities
-Each service card provides action buttons for testing:
-- **One-click service testing** with automatic logging
-- **Live status updates** using reactive signals
-- **Detailed service information** in modal dialogs
-- **Error handling and reporting** for failed operations
+- **Cupertino**: iOS-style sliding transitions
+- **Material**: Material Design fade/scale animations
+- **ForUI**: Clean Material-style transitions
 
-### ✅ Developer-Friendly Features
-- **Responsive grid layout** adapts to screen size (1-4 columns)
-- **Adaptive UI integration** - works in Material, Cupertino, and ForUI modes
-- **Real-time refresh** capability to update all service statuses
-- **Color-coded status indicators** (green=healthy, orange=initializing, red=error)
+**Tab navigation**: No animations (instant switching)
+**Nested navigation**: Platform-appropriate animations
 
-### ✅ Access the Service Inspector
-Navigate to the "Inspector" tab in the example app to explore all service capabilities. Perfect for:
-- Development and debugging
-- Understanding service architecture
-- Testing service integrations
-- Monitoring app health in real-time
+### Back Button Detection
 
-## Development Tips
-
-1. Always check the comprehensive specification in `docs/flutter_app_shell_spec.md` for framework design decisions
-2. Use the adaptive component pattern for any new UI elements (30+ components available)
-3. Register all services through GetIt for proper dependency management
-4. Follow the Signal-first approach for state management
-5. Test on multiple screen sizes to ensure responsive behavior works correctly
-6. Use the "Adaptive UI" screen in the example app to test UI system switching
-7. **Settings persist automatically** - no manual save/load code needed
-8. Use the Service Inspector for real-time debugging of all services
-9. Test UI switching between Material, Cupertino, and ForUI to ensure all components adapt properly
-10. **Test navigation across all UI systems** to verify platform-appropriate transitions
-11. **Use the Navigation Demo screen** to verify back button behavior and transition animations
-12. **Verify iOS sliding transitions** work properly in Cupertino mode
-13. **Check tab switching has no animations** (correct behavior for main navigation)
-14. **Use InstantDB Test Screen** (`/instantdb-test`) to verify database queries and debug issues
-    - Access via science icon (🔬) in app toolbar
-    - Features Copy Logs button for easy debugging
-    - Tests findWhere, watchWhere, and cache pollution
-- Never launch the app yourself. Ask the user to do it. And if we want to hot reload, ask the user to do that as well.
-
-## Navigation System & Transitions
-
-The Flutter App Shell features a sophisticated navigation system with platform-aware transitions that provide authentic user experiences across all UI systems.
-
-### ✅ Platform-Aware Transitions
-
-The framework automatically provides appropriate transitions based on the current UI system:
-
-- **🍎 Cupertino Mode**: iOS-style sliding transitions (slide in from right, slide out to left)
-- **🤖 Material Mode**: Material Design transitions (fade/scale animations)
-- **🎨 ForUI Mode**: Clean Material-style transitions for consistency
-
-### ✅ Smart Transition Strategy
-
-**Tab Navigation** (No Animations):
-- Switching between main routes uses `NoTransitionPage`
-- Instant transitions between Home, Dashboard, Settings, etc.
-- Follows standard mobile UX patterns (iOS/Android)
-
-**Nested Navigation** (Platform Transitions):
-- Detail screens, pushed routes use platform-appropriate animations
-- Cupertino mode provides authentic iOS sliding experience
-- Material/ForUI modes use their respective transition styles
-
-### ✅ Advanced Back Button Detection
-
-The framework uses a dual approach for reliable back button detection:
-
+Dual approach for reliability:
 ```dart
-// Primary: GoRouter's canPop() detection
+// Primary: GoRouter canPop
 final canPop = GoRouter.of(context).canPop();
 
-// Fallback: Path-based nested route detection
+// Fallback: Path-based detection
 final pathSegments = currentPath.split('/').where((s) => s.isNotEmpty).toList();
 final isNestedRoute = pathSegments.length > 1;
 
-// Combined logic for robust detection
+// Combined logic
 final shouldShowBackButton = canPop || isNestedRoute;
 ```
 
-**Why the dual approach?**
-- `GoRouter.canPop()` sometimes returns false in ShellRoute contexts
-- Path-based detection ensures back buttons appear on nested routes
-- Works reliably across all UI systems and routing scenarios
+**Why?** GoRouter's `canPop()` sometimes returns false in ShellRoute contexts. Path-based detection ensures back buttons appear on nested routes.
 
-### ✅ Cupertino-Specific Back Button Handling
-
-For iOS authenticity, Cupertino mode uses explicit back button creation:
-
-```dart
-// Explicit iOS-style back button with proper navigation
-leading = ui.iconButton(
-  icon: const Icon(Icons.arrow_back_ios),
-  onPressed: () {
-    if (GoRouter.of(context).canPop()) {
-      GoRouter.of(context).pop();
-    } else {
-      // Fallback: navigate to parent route
-      final parentPath = '/${pathSegments.sublist(0, pathSegments.length - 1).join('/')}';
-      GoRouter.of(context).go(parentPath);
-    }
-  },
-);
-```
-
-### ✅ Navigation Demo
-
-The example app includes a comprehensive **Navigation Demo** screen demonstrating:
-
-- **Push Navigation**: Test iOS sliding transitions and back button behavior
-- **Deep Navigation**: Multi-level navigation with consistent back button appearance  
-- **Navigation State Analysis**: Real-time display of canPop(), path segments, and transition logic
-- **Cross-Platform Testing**: Works across Material, Cupertino, and ForUI modes
-
-### ✅ Implementation Details
-
-**Route Configuration**:
-```dart
-// Main routes: No transitions (tab switching)
-pageBuilder: (context, state) => _buildPlatformAwarePage(
-  state: state,
-  child: route.builder(context, state),
-  isNestedRoute: false,
-),
-
-// Nested routes: Platform-aware transitions
-pageBuilder: (context, state) => _buildPlatformAwarePage(
-  state: state, 
-  child: subRoute.builder(context, state),
-  isNestedRoute: true,
-),
-```
-
-**Platform Detection**:
-```dart
-switch (uiSystem) {
-  case 'cupertino':
-    return CupertinoPage(key: state.pageKey, child: child);
-  case 'material':
-    return MaterialPage(key: state.pageKey, child: child);
-  case 'forui':
-  default:
-    return MaterialPage(key: state.pageKey, child: child);
-}
-```
-
-## Navigation Threshold Logic & Hidden Routes
-
-The Flutter App Shell includes sophisticated navigation threshold logic and hidden routes functionality that was recently enhanced to fix critical bugs and improve usability.
-
-### ✅ Fixed Navigation Threshold Logic
-
-**Problem**: Apps were showing drawer navigation instead of bottom tabs because the logic was counting ALL routes (including hidden ones) instead of only visible routes.
-
-**Solution**: Updated logic in `app_shell.dart:45-49` to correctly count only visible routes:
-
-```dart
-// ✅ CORRECT: Only counts routes that appear in navigation
-final visibleRoutes = routes.where((route) => route.showInNavigation).toList();
-final useBottomNav = !isWideScreen && visibleRoutes.length <= 5;
-final useMobileDrawer = !isWideScreen && visibleRoutes.length > 5;
-```
-
-**Before (buggy)**:
-```dart
-// ❌ INCORRECT: Counted all routes including hidden ones  
-final useBottomNav = !isWideScreen && routes.length <= 5;
-```
-
-### ✅ Enhanced Hidden Routes Support
-
-Hidden routes allow you to create workflow screens, camera interfaces, checkout flows, and other screens that should be accessible via code but not appear in navigation:
+### Hidden Routes Example
 
 ```dart
 AppRoute(
@@ -594,149 +433,182 @@ AppRoute(
   path: '/camera',
   icon: Icons.camera,
   builder: (context, state) => const CameraScreen(),
-  showInNavigation: false, // Hidden from navigation UI
+  showInNavigation: false,  // Hidden from navigation UI
 ),
 
 // Still accessible via code:
 onPressed: () => context.push('/camera'),
 ```
 
-**Use Cases**:
-- Camera/photo capture screens
-- Checkout and payment flows  
-- Onboarding and wizard steps
-- Modal workflows
-- Detail screens that shouldn't appear as main navigation
+**Use cases**: Camera screens, checkout flows, onboarding, modal workflows, detail screens.
 
-### ✅ AppShellAction Navigation Improvements
+## Testing
 
-Enhanced `AppShellAction` with three navigation patterns:
-
-```dart
-// 1. Declarative route navigation (simplest)
-AppShellAction.route(
-  icon: Icons.settings,
-  tooltip: 'Settings',
-  route: '/settings',
-)
-
-// 2. Context-aware navigation (flexible)
-AppShellAction.navigate(
-  icon: Icons.person,
-  tooltip: 'Profile', 
-  onNavigate: (context) => context.go('/profile'),
-)
-
-// 3. Traditional callback (backward compatible)
-AppShellAction.callback(
-  icon: Icons.notifications,
-  tooltip: 'Notifications',
-  onPressed: () => showNotifications(),
-)
+### Running Tests
+```bash
+just test                     # All tests
+just test-package             # Package only
+just test-example             # Example only
+flutter test path/to/test     # Specific test file
 ```
 
-### ✅ Responsive Navigation Demo
+### Test Patterns
+```dart
+// Service testing
+void main() {
+  late DatabaseService databaseService;
 
-Created comprehensive demo screen at `/responsive-navigation` showing:
-- Real-time navigation type analysis
-- Screen width and breakpoint detection
-- Interactive hidden routes demo
-- Navigation threshold logic explanation
+  setUp(() {
+    databaseService = DatabaseService.forTesting();
+  });
+
+  test('should save and retrieve user', () async {
+    final user = User(id: '1', name: 'Test');
+    await databaseService.saveUser(user);
+
+    final retrieved = await databaseService.getUser('1');
+    expect(retrieved, equals(user));
+  });
+}
+
+// Widget testing with adaptive UI
+testWidgets('should render material button in material mode', (tester) async {
+  await tester.pumpWidget(
+    TestApp(
+      uiSystem: 'material',
+      child: MyWidget(),
+    ),
+  );
+
+  expect(find.byType(MaterialButton), findsOneWidget);
+  expect(find.byType(CupertinoButton), findsNothing);
+});
+```
+
+## Debugging Tools
+
+### Service Inspector
+
+Navigate to `/inspector` in example app for real-time debugging:
+- Visual dashboard with service health indicators
+- One-click testing for all services
+- Live status updates using Signals
+- Interactive service information dialogs
+
+### InstantDB Test Screen
+
+Navigate to `/instantdb-test` (via science icon 🔬):
+- Test findWhere, watchWhere queries
+- Diagnose cache pollution issues
+- Copy logs for debugging
+- Real-time query monitoring
+
+### Datalog Investigation
+
+Navigate to `/datalog-investigation` for InstantDB debugging:
+- Test datalog parsing
+- Collection-specific attribute mapping
+- See `DATALOG_PARSING_GUIDE.md` for details
 
 ## Recent Updates
 
-### 🎉 v0.7.23 - Complete Signals Fix & UI Improvements (Latest)
-- ✅ **Fixed all reactive cycle issues** - Removed problematic effects from watchCollection/watchWhere
-- ✅ **Fixed ScaffoldMessenger error** - Now uses adaptive UI system for cross-platform compatibility
-- ✅ **Enhanced InstantDB test screen** - Added Copy Logs button and comprehensive diagnostics
-- ✅ **Improved signal patterns** - Proper use of computed(), untracked(), and batch() throughout
+### v0.7.24 (Latest) - Outlined Button Width Fix
+- ✅ Fixed outlined buttons not respecting parent width constraints
+- ✅ Buttons now expand to fill available width consistently across all UI systems
+- ✅ Resolved visual inconsistency when mixing filled and outlined buttons
 
-### 📦 v0.7.22 - InstantDB Validation Fix
-- Fixed critical bug where findWhere/watchWhere generated malformed queries
-- Queries now use direct values instead of $eq wrapping (matches read method)
+### v0.7.23 - Complete Signals Fix & UI Improvements
+- ✅ Fixed all reactive cycle issues (proper use of `untracked()`, `batch()`)
+- ✅ Fixed ScaffoldMessenger error (uses adaptive UI system)
+- ✅ Enhanced InstantDB test screen (Copy Logs button)
+
+### v0.7.22 - InstantDB Validation Fix
+- Fixed findWhere/watchWhere malformed queries
 - Eliminated cache pollution and validation errors
 
-### 🎉 v0.7.19 - Enhanced Datalog Parsing
-- **Fixed Critical Bug**: DatabaseService now correctly parses InstantDB datalog format
-- **Flexible Attribute Mapping**: Support for schema-specific and collection-specific attribute IDs
-- **Diagnostic Tools**: New `diagnoseDatalogParsing()` method for debugging parsing issues
-- **Investigation Screen**: Enhanced `/datalog-investigation` route for testing
-- **Documentation**: Added comprehensive DATALOG_PARSING_GUIDE.md
+### v0.7.19 - Enhanced Datalog Parsing
+- Fixed DatabaseService datalog parsing
+- Added `diagnoseDatalogParsing()` method
+- Flexible attribute mapping support
 
-### 📦 InstantDB Flutter v0.2.4 Integration (Latest)
-The project now uses InstantDB Flutter v0.2.4 which completes the datalog conversion fix trilogy:
+### InstantDB Flutter v0.2.4 Integration
+- Fixed entities cached under wrong collection name
+- Proper entity type detection and cache key resolution
+- See https://pub.dev/packages/instantdb_flutter/versions/0.2.4
 
-#### v0.2.4 - Fix Entity Type Resolution
-- ✅ **Fixed entities being cached under wrong collection name** - Queries for 'conversations' no longer return 0 documents
-- ✅ **Proper entity type detection** - Extracts query entity type from response data['q'] field
-- ✅ **Correct cache key resolution** - Entities cached under their query type instead of defaulting to 'todos'
-- ✅ **Smart grouping with proper fallback chain** - Type propagation through entire conversion pipeline
+## Development Tips
 
-#### Previous Fixes (v0.2.3)
-- ✅ Fixed race condition in query execution
-- ✅ Comprehensive logging throughout datalog conversion
-- ✅ Queries now return cached data immediately (no more "0 documents" issue)
-- ✅ Proper datalog-to-collection format conversion
+1. **Never launch the app yourself** - Ask the user to run it and hot reload
+2. Check `docs/` for comprehensive framework documentation
+3. Use adaptive component pattern for all UI (30+ components available)
+4. Register services through GetIt for proper DI
+5. Follow Signals-first for state management (zero code generation!)
+6. Test on multiple screen sizes for responsive behavior
+7. Settings persist automatically - no manual save/load needed
+8. Use Service Inspector for real-time debugging
+9. Use InstantDB Test Screen for database debugging
+10. Test navigation across all three UI systems
 
-Published to pub.dev at https://pub.dev/packages/instantdb_flutter/versions/0.2.4
+## Documentation
 
-### 🔧 v0.7.16-v0.7.18 Updates
-- Upgraded InstantDB from v0.1.1 to v0.2.1
-- Added datalog investigation tools
-- Applied comprehensive code formatting
-- Fixed nullable callback type errors
+- **Main README**: `README.md` - Quick start and overview
+- **Documentation Hub**: `docs/README.md` - Complete documentation index
+- **Architecture**: `docs/architecture.md` - Framework design principles
+- **Plugin System**: `docs/plugin-system.md` - Extensibility guide
+- **AI-Friendly Docs**: `llms.txt`, `llms-full.txt` - Generated via `just generate-llms`
+- **Environment Guide**: `.env.example` - Configuration template
+- **Datalog Guide**: `DATALOG_PARSING_GUIDE.md` - InstantDB debugging
 
-## Large Title Features
+## Cloudflare Workers
 
-The Flutter App Shell now includes comprehensive large title support that provides native iOS behavior while adapting gracefully to Material and ForUI design systems.
+The project includes Cloudflare Workers for backend functionality:
 
-### Usage Examples
+**Structure**:
+- `workers/dart-api-worker/` - Dart API worker (compile to JS)
+- `workers/ts-auth-shim/` - TypeScript authentication shim
 
-#### 1. Large Title AppBar
-```dart
-// Enable iOS large title behavior
-ui.scaffold(
-  appBar: ui.appBar(
-    title: const Text('Settings'),
-    largeTitle: true,  // Enable iOS large title
-  ),
-  body: // your content
-)
+**Key Commands**:
+```bash
+just setup-cloudflare        # Initial setup
+just secrets-cloudflare      # Configure basic secrets
+just secrets-ai-gateway      # Configure AI Gateway
+just dev-dart-worker         # Local Dart worker development
+just dev-ts-shim             # Local TS shim development
+just deploy-cloudflare       # Deploy both workers
 ```
 
-#### 2. Page Title Helper
-```dart
-// Material/ForUI: Shows prominent header
-// Cupertino: Returns SizedBox.shrink() (iOS uses nav bar titles)
-ui.pageTitle('Settings')
-```
+**Required Secrets**:
+- `SESSION_JWT_SECRET` - JWT signing secret
+- `INSTANT_APP_ID` - InstantDB app ID
+- `R2_*` - R2 storage credentials (account, keys, bucket)
+- `CF_API_TOKEN` - Cloudflare API token
+- Optional: `AI_GATEWAY_ID`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
 
-#### 3. Sliver Scaffold with Large Title
-```dart
-ui.sliverScaffold(
-  largeTitle: const Text('Settings'),
-  actions: [
-    ui.iconButton(
-      icon: const Icon(Icons.info),
-      onPressed: () => showInfo(),
-    ),
-  ],
-  slivers: [
-    SliverToBoxAdapter(
-      child: ui.pageTitle('Settings'),  // For non-iOS platforms
-    ),
-    // Your content slivers here
-  ],
-)
-```
+## User Preferences
 
-### Platform Behavior
+**For web/Node.js tooling in this project**: Use `bun` instead of `npm`.
 
-- **iOS (Cupertino)**: Uses `CupertinoSliverNavigationBar` for native large title experience with automatic collapsing
-- **Material**: Uses `SliverAppBar` with `FlexibleSpaceBar` for equivalent collapsing header behavior
-- **ForUI**: Similar to Material but with ForUI's clean, flat design aesthetic
-- **pageTitle()**: Returns appropriate headers for Material/ForUI, empty widget for Cupertino (since iOS uses navigation bar titles)
+## Example App Routes
 
-### Demo Screen
+The example app demonstrates all features with 20+ routes:
 
-See the "Large Title" screen in the example app for interactive demonstrations of all three features across different UI systems.
+**Main Routes** (visible in navigation):
+- `/` - Home with framework overview
+- `/dashboard` - Responsive layout demo
+- `/settings` - Platform-adaptive settings
+- `/profile` - Adaptive forms
+- `/adaptive` - Live UI system switching
+- `/services` - Interactive service testing
+- `/inspector` - Real-time service debugging
+- `/wizard` - Wizard navigation demo
+- `/cloud-sync` - InstantDB real-time sync
+- Plus more...
+
+**Hidden Routes** (accessible via code only):
+- `/onboarding` - Fullscreen onboarding flow
+- `/responsive-navigation` - Navigation threshold demo
+- `/datalog-investigation` - InstantDB debugging
+- `/instantdb-test` - Query testing tool
+- Plus navigation sub-routes...
+
+Use hidden routes for workflows, modals, and screens that shouldn't appear in main navigation.

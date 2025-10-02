@@ -416,6 +416,7 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
   }) {
     return Container(
       key: key,
+      width: double.infinity,
       height: _buttonHeight,
       child: OutlinedButton(
         onPressed: onPressed,
@@ -462,6 +463,7 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
   }) {
     return Container(
       key: key,
+      width: double.infinity,
       height: _buttonHeight,
       child: OutlinedButton.icon(
         onPressed: onPressed,

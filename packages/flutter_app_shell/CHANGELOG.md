@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.24 - 2025-10-02
+
+### Fixed
+- **🐛 Outlined Button Width Constraints**: Fixed outlined buttons not respecting parent width constraints
+  - `outlinedButton()` and `outlinedButtonWithIcon()` in CupertinoWidgetFactory now expand to fill available width
+  - Added `width: double.infinity` to Container wrappers
+  - Added proper text/icon centering (Center widget and MainAxisAlignment.center)
+  - Fixed same issue in ForUIWidgetFactory for consistency across all UI systems
+  - Buttons wrapped in `SizedBox(width: double.infinity)` now display with uniform width
+  - Resolves visual inconsistency when mixing filled and outlined buttons in layouts
+
 ## 0.7.14 - 2025-09-07
 
 ### Fixed
