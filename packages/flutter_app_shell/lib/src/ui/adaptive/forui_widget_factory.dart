@@ -326,6 +326,7 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
 
     return Container(
       key: key,
+      width: double.infinity,
       height: _buttonHeight,
       child: ElevatedButton(
         onPressed: onPressed,
@@ -371,6 +372,7 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
   }) {
     return Container(
       key: key,
+      width: double.infinity,
       height: _buttonHeight,
       child: ElevatedButton.icon(
         onPressed: onPressed,

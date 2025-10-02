@@ -328,10 +328,13 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
     final buttonChild = child ?? (label != null ? Text(label) : null);
     assert(buttonChild != null, 'Either label or child must be provided');
 
-    return CupertinoButton.filled(
-      key: key,
-      onPressed: onPressed,
-      child: buttonChild!,
+    return SizedBox(
+      width: double.infinity,
+      child: CupertinoButton.filled(
+        key: key,
+        onPressed: onPressed,
+        child: buttonChild!,
+      ),
     );
   }
 
@@ -343,16 +346,20 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
     required VoidCallback onPressed,
     ButtonStyle? style,
   }) {
-    return CupertinoButton.filled(
-      key: key,
-      onPressed: onPressed,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          icon,
-          const SizedBox(width: 8),
-          Text(label),
-        ],
+    return SizedBox(
+      width: double.infinity,
+      child: CupertinoButton.filled(
+        key: key,
+        onPressed: onPressed,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            const SizedBox(width: 8),
+            Text(label),
+          ],
+        ),
       ),
     );
   }

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.25 - 2025-10-02
+
+### Fixed
+- **🐛 Filled Button Width Constraints**: Completed button width constraint fixes across all UI systems
+  - Fixed `button()` and `buttonWithIcon()` in CupertinoWidgetFactory to respect parent width constraints
+  - Wrapped CupertinoButton.filled in `SizedBox(width: double.infinity)` for consistent expansion
+  - Added `MainAxisAlignment.center` to buttonWithIcon for proper icon/text centering
+  - Fixed `button()` and `buttonWithIcon()` in ForUIWidgetFactory by adding `width: double.infinity`
+  - All button types (filled, outlined, with/without icons) now have consistent widths across Material, Cupertino, and ForUI
+  - Completes the button width fix trilogy started in v0.7.24
+
 ## 0.7.24 - 2025-10-02
 
 ### Fixed

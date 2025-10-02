@@ -512,7 +512,13 @@ Navigate to `/datalog-investigation` for InstantDB debugging:
 
 ## Recent Updates
 
-### v0.7.24 (Latest) - Outlined Button Width Fix
+### v0.7.25 (Latest) - Filled Button Width Fix (Complete)
+- ✅ Fixed filled buttons not respecting parent width constraints
+- ✅ All button types (filled, outlined, with/without icons) now have consistent widths
+- ✅ Applies to CupertinoWidgetFactory and ForUIWidgetFactory
+- ✅ Completes button width constraint fixes across all three UI systems
+
+### v0.7.24 - Outlined Button Width Fix
 - ✅ Fixed outlined buttons not respecting parent width constraints
 - ✅ Buttons now expand to fill available width consistently across all UI systems
 - ✅ Resolved visual inconsistency when mixing filled and outlined buttons
