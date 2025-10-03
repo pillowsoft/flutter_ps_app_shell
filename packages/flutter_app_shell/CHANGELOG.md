@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.28 - 2025-10-03
+
+### Fixed
+- **🐛 System UI Overlay Black Bars**: Fixed black bars appearing in status bar and home indicator areas across all three UI systems
+  - **Root Cause**: Scaffold implementations didn't configure system UI overlay styling, causing iOS/Android system regions to display black instead of matching scaffold background
+  - **Solution**: Wrapped all scaffold returns with `AnnotatedRegion<SystemUiOverlayStyle>` to match system UI colors to scaffold backgrounds
+  - **Affected Files**: `cupertino_widget_factory.dart`, `material_widget_factory.dart`, `forui_widget_factory.dart`
+  - **Impact**: Status bar and navigation bar areas now properly match scaffold background colors with correct icon brightness across Cupertino, Material, and ForUI
+  - Reported in bug analysis showing black system UI regions on light-colored scaffolds
+
+
 ## 0.7.27 - 2025-10-02
 
 ### Fixed
