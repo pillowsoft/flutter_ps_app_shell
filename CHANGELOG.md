@@ -5,6 +5,15 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-10-03
+
+### Fixed
+- **Back Button on Initial Launch**: Fixed back button incorrectly appearing on home page during initial app launch. Home page detection now handles empty string from GoRouter initial state.
+
+### Technical Details
+- Updated `isHomePage` logic to handle initial state: `isHomePage = currentPath == '/' || currentPath.isEmpty`
+- On initial app launch, `routerState.uri.path` may return empty string before full GoRouter initialization
+
 ## [1.0.3] - 2025-10-03
 
 ### Fixed

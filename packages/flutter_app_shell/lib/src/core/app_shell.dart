@@ -176,7 +176,8 @@ class AppShell extends StatelessWidget {
 
     // Special case: When navigation is hidden (programmatic navigation mode),
     // show back button on all non-home routes to prevent users getting stuck
-    final isHomePage = currentPath == '/';
+    // Note: On initial app launch, currentPath may be empty string before GoRouter initializes
+    final isHomePage = currentPath == '/' || currentPath.isEmpty;
     final needsBackForHiddenNav = visibleRoutes.isEmpty && !isHomePage;
 
     // Never show back button on home page, even if canPop is true
