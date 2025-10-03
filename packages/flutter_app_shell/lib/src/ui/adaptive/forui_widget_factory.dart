@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material
     show showDatePicker, showTimePicker, showDateRangePicker;
+import 'package:flutter/services.dart';
 import 'adaptive_widget_factory.dart';
 import 'components/adaptive_dialog_models.dart';
 import '../../core/app_route.dart';
@@ -33,14 +34,24 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
     Widget? bottomNavBar,
     Color? backgroundColor,
   }) {
-    return Scaffold(
-      key: key,
-      appBar: appBar as PreferredSizeWidget?,
-      drawer: drawer,
-      body: body,
-      bottomNavigationBar: bottomNavBar,
-      backgroundColor: backgroundColor ?? _primaryLight,
-      drawerScrimColor: _primaryColor.withValues(alpha: 0.5),
+    final effectiveBackgroundColor = backgroundColor ?? _primaryLight;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness:
+            Brightness.dark, // Dark icons on light ForUI background
+        systemNavigationBarColor: effectiveBackgroundColor,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        key: key,
+        appBar: appBar as PreferredSizeWidget?,
+        drawer: drawer,
+        body: body,
+        bottomNavigationBar: bottomNavBar,
+        backgroundColor: effectiveBackgroundColor,
+        drawerScrimColor: _primaryColor.withValues(alpha: 0.5),
+      ),
     );
   }
 

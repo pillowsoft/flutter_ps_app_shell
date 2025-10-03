@@ -67,7 +67,10 @@ import 'package:flutter/material.dart'
         showModalBottomSheet,
         showDatePicker,
         showTimePicker,
-        showDateRangePicker;
+        showDateRangePicker,
+        AnnotatedRegion,
+        Brightness;
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'adaptive_widget_factory.dart';
 import 'components/adaptive_dialog_models.dart';
 import '../../core/app_route.dart';
@@ -84,13 +87,22 @@ class MaterialWidgetFactory extends AdaptiveWidgetFactory {
     Widget? bottomNavBar,
     Color? backgroundColor,
   }) {
-    return material.Scaffold(
-      key: key,
-      appBar: appBar as material.PreferredSizeWidget?,
-      drawer: drawer,
-      body: body,
-      bottomNavigationBar: bottomNavBar,
-      backgroundColor: backgroundColor,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness:
+            Brightness.dark, // Dark icons on light Material background
+        systemNavigationBarColor: backgroundColor ?? Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: material.Scaffold(
+        key: key,
+        appBar: appBar as material.PreferredSizeWidget?,
+        drawer: drawer,
+        body: body,
+        bottomNavigationBar: bottomNavBar,
+        backgroundColor: backgroundColor,
+      ),
     );
   }
 

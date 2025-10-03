@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart' as material show showDateRangePicker;
 import 'package:flutter/material.dart'
     show
@@ -116,16 +117,27 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
     // This ensures apps with few routes get bottom tabs instead of drawer fallback
     if (bottomNavBar != null) {
       // Use CupertinoPageScaffold with bottom navigation
-      return CupertinoPageScaffold(
-        key: key,
-        navigationBar: appBar as ObstructingPreferredSizeWidget?,
-        backgroundColor:
-            backgroundColor ?? CupertinoColors.systemGroupedBackground,
-        child: Column(
-          children: [
-            Expanded(child: wrappedBody),
-            bottomNavBar,
-          ],
+      final effectiveBackgroundColor =
+          backgroundColor ?? CupertinoColors.systemGroupedBackground;
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarBrightness: Brightness.light, // For iOS: light = dark icons
+          statusBarIconBrightness:
+              Brightness.dark, // For Android: dark icons on light bg
+          systemNavigationBarColor: effectiveBackgroundColor,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: CupertinoPageScaffold(
+          key: key,
+          navigationBar: appBar as ObstructingPreferredSizeWidget?,
+          backgroundColor: effectiveBackgroundColor,
+          child: Column(
+            children: [
+              Expanded(child: wrappedBody),
+              bottomNavBar,
+            ],
+          ),
         ),
       );
     }
@@ -146,12 +158,23 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
       );
     }
 
-    return CupertinoPageScaffold(
-      key: key,
-      navigationBar: appBar as ObstructingPreferredSizeWidget?,
-      backgroundColor:
-          backgroundColor ?? CupertinoColors.systemGroupedBackground,
-      child: wrappedBody,
+    final effectiveBackgroundColor =
+        backgroundColor ?? CupertinoColors.systemGroupedBackground;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.light, // For iOS: light = dark icons
+        statusBarIconBrightness:
+            Brightness.dark, // For Android: dark icons on light bg
+        systemNavigationBarColor: effectiveBackgroundColor,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: CupertinoPageScaffold(
+        key: key,
+        navigationBar: appBar as ObstructingPreferredSizeWidget?,
+        backgroundColor: effectiveBackgroundColor,
+        child: wrappedBody,
+      ),
     );
   }
 
