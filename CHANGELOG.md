@@ -5,6 +5,18 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-10-03
+
+### Fixed
+- **Back Button on Home Page**: Fixed back button incorrectly appearing on home page (`/`) even when it shouldn't. Back button now explicitly excluded from home page.
+- **Back Button Navigation to Home**: Fixed back button not working when clicked on Settings (or other top-level routes) in hidden navigation mode. Back button now correctly navigates to home page (`/`) when navigation is hidden and user is on a top-level route.
+
+### Technical Details
+- Changed `isNotHomePage` to `isHomePage` for clearer logic: `isHomePage = currentPath == '/'`
+- Added explicit exclusion of home page: `shouldShowBackButton = !isHomePage && (...)`
+- Added fallback navigation to home when `visibleRoutes.isEmpty` and on top-level route
+- All UI systems (Material, Cupertino, ForUI) now use explicit back button with custom handler when navigation is hidden
+
 ## [1.0.2] - 2025-10-03
 
 ### Fixed

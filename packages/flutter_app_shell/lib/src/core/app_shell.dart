@@ -176,11 +176,12 @@ class AppShell extends StatelessWidget {
 
     // Special case: When navigation is hidden (programmatic navigation mode),
     // show back button on all non-home routes to prevent users getting stuck
-    final isNotHomePage = currentPath != '/' && currentPath.isNotEmpty;
-    final needsBackForHiddenNav = visibleRoutes.isEmpty && isNotHomePage;
+    final isHomePage = currentPath == '/';
+    final needsBackForHiddenNav = visibleRoutes.isEmpty && !isHomePage;
 
+    // Never show back button on home page, even if canPop is true
     final shouldShowBackButton =
-        canPop || isNestedRoute || needsBackForHiddenNav;
+        !isHomePage && (canPop || isNestedRoute || needsBackForHiddenNav);
 
     AppShellLogger.i(
         'AppShell._buildAppBar: Navigation state - canPop=$canPop, currentPath="$currentPath", pathSegments=$pathSegments, isNestedRoute=$isNestedRoute, shouldShowBackButton=$shouldShowBackButton');
@@ -194,32 +195,45 @@ class AppShell extends StatelessWidget {
       AppShellLogger.i(
           'AppShell._buildAppBar: Using back button - canPop=$canPop, isNestedRoute=$isNestedRoute');
 
-      // For Cupertino, we need to explicitly create a back button when using ShellRoute
-      // because automaticallyImplyLeading doesn't work reliably in this context
-      if (ui.runtimeType.toString() == 'CupertinoWidgetFactory') {
+      // Create explicit back button handler
+      void handleBackNavigation() {
+        if (GoRouter.of(context).canPop()) {
+          GoRouter.of(context).pop();
+        } else {
+          // Fallback: navigate back to parent route or home
+          if (pathSegments.length > 1) {
+            final parentPathSegments = List<String>.from(pathSegments);
+            parentPathSegments.removeLast();
+            final parentPath = '/${parentPathSegments.join('/')}';
+            AppShellLogger.i(
+                'AppShell._buildAppBar: Fallback navigation to parent: $parentPath');
+            GoRouter.of(context).go(parentPath);
+          } else if (visibleRoutes.isEmpty) {
+            // Hidden navigation mode: navigate to home page
+            AppShellLogger.i(
+                'AppShell._buildAppBar: Hidden navigation mode - navigating to home');
+            GoRouter.of(context).go('/');
+          }
+        }
+      }
+
+      // When navigation is hidden, always use explicit back button with custom handler
+      // Otherwise, behavior depends on UI system
+      if (visibleRoutes.isEmpty ||
+          ui.runtimeType.toString() == 'CupertinoWidgetFactory') {
+        // Explicit back button for hidden navigation or Cupertino
+        final icon = ui.runtimeType.toString() == 'CupertinoWidgetFactory'
+            ? const Icon(Icons.arrow_back_ios)
+            : const Icon(Icons.arrow_back);
         leading = ui.iconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            if (GoRouter.of(context).canPop()) {
-              GoRouter.of(context).pop();
-            } else {
-              // Fallback: navigate back to parent route
-              if (pathSegments.length > 1) {
-                final parentPathSegments = List<String>.from(pathSegments);
-                parentPathSegments.removeLast();
-                final parentPath = '/${parentPathSegments.join('/')}';
-                AppShellLogger.i(
-                    'AppShell._buildAppBar: Fallback navigation to parent: $parentPath');
-                GoRouter.of(context).go(parentPath);
-              }
-            }
-          },
+          icon: icon,
+          onPressed: handleBackNavigation,
         );
         automaticallyImplyLeading = false;
         AppShellLogger.i(
-            'AppShell._buildAppBar: Using explicit Cupertino back button');
+            'AppShell._buildAppBar: Using explicit back button (${ui.runtimeType}, hiddenNav=${visibleRoutes.isEmpty})');
       } else {
-        // Material and ForUI can use automatic back button
+        // Material and ForUI can use automatic back button when navigation is visible
         leading = null;
         automaticallyImplyLeading = true;
         AppShellLogger.i(
