@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.29 - 2025-10-03
+
+### Fixed
+- **🐛 iOS Home Indicator Black Bar (v0.7.28 Fix)**: Corrected v0.7.28 fix which didn't work on iOS
+  - **Root Cause**: `systemNavigationBarColor` is "Only honored in Android versions O and greater" - completely ignored on iOS
+  - **iOS Reality**: Home indicator color auto-adapts based on background color beneath it, cannot be directly styled
+  - **Solution**:
+    - Split `SystemUiOverlayStyle` into platform-specific configurations (iOS vs Android)
+    - Removed iOS-incompatible `systemNavigationBarColor` properties for iOS
+    - Wrapped `CupertinoPageScaffold` with `Container` to ensure background extends behind home indicator area
+  - **Impact**:
+    - iOS home indicator area now properly shows scaffold background color
+    - Android navigation bar continues working correctly with v0.7.28 fix
+    - Status bar styling works correctly on both platforms
+  - Reported by developer: "v0.7.28 fix doesn't work for iOS because systemNavigationBarColor is Android-only"
+
+
 ## 0.7.28 - 2025-10-03
 
 ### Fixed
