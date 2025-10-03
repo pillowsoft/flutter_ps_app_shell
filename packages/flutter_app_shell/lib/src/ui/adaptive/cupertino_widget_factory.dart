@@ -119,24 +119,40 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
       // Use CupertinoPageScaffold with bottom navigation
       final effectiveBackgroundColor =
           backgroundColor ?? CupertinoColors.systemGroupedBackground;
+
+      // Platform-specific SystemUiOverlayStyle
+      // Note: systemNavigationBarColor only works on Android
+      // iOS home indicator color auto-adapts based on background beneath it
+      final overlayStyle = defaultTargetPlatform == TargetPlatform.iOS
+          ? const SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarBrightness: Brightness.light, // iOS: light = dark icons
+              statusBarIconBrightness: Brightness.dark,
+            )
+          : SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarBrightness: Brightness.light,
+              statusBarIconBrightness: Brightness.dark,
+              systemNavigationBarColor:
+                  effectiveBackgroundColor, // Android only
+              systemNavigationBarIconBrightness: Brightness.dark,
+            );
+
       return AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarBrightness: Brightness.light, // For iOS: light = dark icons
-          statusBarIconBrightness:
-              Brightness.dark, // For Android: dark icons on light bg
-          systemNavigationBarColor: effectiveBackgroundColor,
-          systemNavigationBarIconBrightness: Brightness.dark,
-        ),
-        child: CupertinoPageScaffold(
-          key: key,
-          navigationBar: appBar as ObstructingPreferredSizeWidget?,
-          backgroundColor: effectiveBackgroundColor,
-          child: Column(
-            children: [
-              Expanded(child: wrappedBody),
-              bottomNavBar,
-            ],
+        value: overlayStyle,
+        // Wrap with Container to ensure background extends behind home indicator on iOS
+        child: Container(
+          color: effectiveBackgroundColor,
+          child: CupertinoPageScaffold(
+            key: key,
+            navigationBar: appBar as ObstructingPreferredSizeWidget?,
+            backgroundColor: effectiveBackgroundColor,
+            child: Column(
+              children: [
+                Expanded(child: wrappedBody),
+                bottomNavBar,
+              ],
+            ),
           ),
         ),
       );
@@ -160,20 +176,35 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
 
     final effectiveBackgroundColor =
         backgroundColor ?? CupertinoColors.systemGroupedBackground;
+
+    // Platform-specific SystemUiOverlayStyle
+    // Note: systemNavigationBarColor only works on Android
+    // iOS home indicator color auto-adapts based on background beneath it
+    final overlayStyle = defaultTargetPlatform == TargetPlatform.iOS
+        ? const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarBrightness: Brightness.light, // iOS: light = dark icons
+            statusBarIconBrightness: Brightness.dark,
+          )
+        : SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarBrightness: Brightness.light,
+            statusBarIconBrightness: Brightness.dark,
+            systemNavigationBarColor: effectiveBackgroundColor, // Android only
+            systemNavigationBarIconBrightness: Brightness.dark,
+          );
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.light, // For iOS: light = dark icons
-        statusBarIconBrightness:
-            Brightness.dark, // For Android: dark icons on light bg
-        systemNavigationBarColor: effectiveBackgroundColor,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: CupertinoPageScaffold(
-        key: key,
-        navigationBar: appBar as ObstructingPreferredSizeWidget?,
-        backgroundColor: effectiveBackgroundColor,
-        child: wrappedBody,
+      value: overlayStyle,
+      // Wrap with Container to ensure background extends behind home indicator on iOS
+      child: Container(
+        color: effectiveBackgroundColor,
+        child: CupertinoPageScaffold(
+          key: key,
+          navigationBar: appBar as ObstructingPreferredSizeWidget?,
+          backgroundColor: effectiveBackgroundColor,
+          child: wrappedBody,
+        ),
       ),
     );
   }
