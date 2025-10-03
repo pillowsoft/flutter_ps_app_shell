@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.7.31 - 2025-10-03
+
+### Fixed
+- **🐛 CupertinoPageScaffold Content Sliding Under Navigation Bar (v0.7.30 Regression)**: Fixed content sliding under navigation bar instead of appearing below it
+  - **Root Cause**: v0.7.30 wrapped `CupertinoPageScaffold` in `Container` to extend background into safe areas, but this prevented scaffold's automatic content positioning logic from working
+  - **Widget Hierarchy Problem (v0.7.30)**:
+    ```
+    Container (wrapper) ← Takes over layout control
+      └─ CupertinoPageScaffold ← Can't add padding for nav bar
+          └─ Content ← Slides under nav bar
+    ```
+  - **Solution**:
+    - Moved `Container` **inside** `CupertinoPageScaffold` child instead of wrapping it
+    - Added `SafeArea` with selective insets:
+      - `top: false` - Navigation bar handles top spacing
+      - `bottom: false` - Allow background extension to home indicator
+      - `left/right: true` - Keep horizontal safe areas
+    - Set scaffold `backgroundColor: Colors.transparent` (Container handles color)
+  - **Widget Hierarchy (v0.7.31)**:
+    ```
+    CupertinoPageScaffold (controls layout) ✅
+      └─ Container (background color) ✅
+          └─ SafeArea (selective insets) ✅
+              └─ Content (properly positioned)
+    ```
+  - **Changes**:
+    - Modified `cupertino_widget_factory.dart` lines 141-161 (with bottom navigation)
+    - Modified `cupertino_widget_factory.dart` lines 200-215 (without bottom navigation)
+  - **Impact**:
+    - ✅ Navigation bar content positioning fixed (content appears below nav bar)
+    - ✅ Home indicator background extension preserved (v0.7.30 fix maintained)
+    - ✅ Status bar styling preserved (v0.7.28/29 fixes maintained)
+  - Reported by developer: "Container wrapper prevents CupertinoPageScaffold from positioning content below navigation bar"
+
+
 ## 0.7.30 - 2025-10-03
 
 ### Fixed
