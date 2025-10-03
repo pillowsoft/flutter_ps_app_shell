@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.9.0 - 2025-10-03
+
+### Breaking Changes
+
+- **🔄 BREAKING: Renamed `hideDrawer` to `hideNavigation`**: Parameter name now accurately reflects functionality
+  - **Old Parameter**: `hideDrawer: bool` (misleading name - hides ALL navigation UI, not just drawers)
+  - **New Parameter**: `hideNavigation: bool` (accurate name - describes actual behavior)
+  - **What It Controls**: Hides ALL navigation UI elements across all platforms:
+    - ✅ Bottom tab bar (iPhone/mobile ≤5 routes)
+    - ✅ Mobile drawer (iPhone/mobile >5 routes)
+    - ✅ Navigation rail (iPad/tablet 600-1200px)
+    - ✅ Desktop sidebar (Desktop >1200px)
+    - ✅ Drawer/menu buttons in app bar
+  - **What It Preserves**:
+    - ✅ GoRouter routing functionality (all programmatic navigation still works)
+    - ✅ `context.go()`, `context.push()`, `context.pop()` methods
+    - ✅ Back button functionality
+    - ✅ App bar with title and actions
+  - **Migration Guide**:
+    ```dart
+    // Before (v0.8.x)
+    AppConfig(
+      title: 'My App',
+      routes: routes,
+      hideDrawer: true,  // ❌ Old parameter name
+    )
+
+    // After (v0.9.0)
+    AppConfig(
+      title: 'My App',
+      routes: routes,
+      hideNavigation: true,  // ✅ New parameter name
+    )
+    ```
+  - **Use Case**: Apps with fully programmatic navigation (no visible tabs/sidebars/drawers)
+  - **Files Changed**:
+    - `app_config.dart:8, 20` - Renamed parameter
+    - `app_shell.dart:21, 31, 71, 89, 106, 116, 163, 218, 224, 230` - All references updated
+    - `app_shell_runner.dart:382` - Parameter pass-through updated
+  - **Breaking Change Reason**: The old name `hideDrawer` was misleading and caused confusion. The parameter hides ALL navigation UI (tabs, rails, sidebars, drawers), not just drawers. The new name accurately describes what it does.
+
 ## 0.8.0 - 2025-10-03
 
 ### Added

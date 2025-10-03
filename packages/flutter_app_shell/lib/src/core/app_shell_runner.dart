@@ -379,7 +379,7 @@ void runShellApp(
               title: appConfig.title,
               currentRouteTitle:
                   null, // Let AppShell determine the title dynamically
-              hideDrawer: appConfig.hideDrawer,
+              hideNavigation: appConfig.hideNavigation,
               actions: appConfig.actions,
               showThemeToggle: appConfig.showThemeToggle,
               child: child,

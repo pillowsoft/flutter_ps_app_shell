@@ -5,7 +5,7 @@ import 'app_shell_action.dart';
 class AppConfig {
   final List<AppRoute> routes;
   final String title;
-  final bool hideDrawer;
+  final bool hideNavigation;
   final List<AppShellAction> actions;
   final ThemeData Function(ThemeData)? themeExtensions;
   final Widget? splashScreen;
@@ -17,7 +17,7 @@ class AppConfig {
   AppConfig({
     required this.routes,
     required this.title,
-    this.hideDrawer = false,
+    this.hideNavigation = false,
     this.actions = const [],
     this.themeExtensions,
     this.splashScreen,

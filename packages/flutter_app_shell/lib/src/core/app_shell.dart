@@ -18,7 +18,7 @@ class AppShell extends StatelessWidget {
   final Widget child;
   final List<AppRoute> routes;
   final String title;
-  final bool hideDrawer;
+  final bool hideNavigation;
   final List<AppShellAction> actions;
   final String? currentRouteTitle;
   final bool showThemeToggle;
@@ -28,7 +28,7 @@ class AppShell extends StatelessWidget {
     required this.child,
     required this.routes,
     required this.title,
-    this.hideDrawer = false,
+    this.hideNavigation = false,
     this.actions = const [],
     this.currentRouteTitle,
     this.showThemeToggle = true,
@@ -68,7 +68,7 @@ class AppShell extends StatelessWidget {
       final needsDesktopPadding = isDesktop && ui.needsDesktopPadding();
 
       // Build the drawer for mobile navigation when needed
-      final drawer = useMobileDrawer && !hideDrawer
+      final drawer = useMobileDrawer && !hideNavigation
           ? Drawer(
               child: Builder(
                 builder: (drawerContext) => DrawerContent(
@@ -86,7 +86,7 @@ class AppShell extends StatelessWidget {
           : null;
 
       // Create bottom navigation if needed
-      final bottomNavBar = useBottomNav && !hideDrawer
+      final bottomNavBar = useBottomNav && !hideNavigation
           ? _buildBottomNavigation(context, ui, visibleRoutes)
           : null;
 
@@ -103,7 +103,7 @@ class AppShell extends StatelessWidget {
         bottomNavBar: bottomNavBar,
         body: Row(
           children: [
-            if (useSidebar && !hideDrawer) ...[
+            if (useSidebar && !hideNavigation) ...[
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: sidebarCollapsed ? 72 : 250,
@@ -113,7 +113,7 @@ class AppShell extends StatelessWidget {
                 width: 1.0,
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
               ),
-            ] else if (useRail && !hideDrawer) ...[
+            ] else if (useRail && !hideNavigation) ...[
               _buildNavigationRail(context, ui),
               const VerticalDivider(thickness: 1, width: 1),
             ],
@@ -160,7 +160,7 @@ class AppShell extends StatelessWidget {
 
     final screenWidth = MediaQuery.of(context).size.width;
     AppShellLogger.i(
-        'AppShell._buildAppBar: screenWidth=$screenWidth, isWideScreen=$isWideScreen, useMobileDrawer=$useMobileDrawer, useBottomNav=$useBottomNav, hideDrawer=$hideDrawer');
+        'AppShell._buildAppBar: screenWidth=$screenWidth, isWideScreen=$isWideScreen, useMobileDrawer=$useMobileDrawer, useBottomNav=$useBottomNav, hideNavigation=$hideNavigation');
 
     // EXTRACT BACK NAVIGATION LOGIC - Independent of navigation mode
     final router = GoRouter.of(context);
@@ -215,19 +215,21 @@ class AppShell extends StatelessWidget {
         AppShellLogger.i(
             'AppShell._buildAppBar: Using automatic ${ui.runtimeType} back button');
       }
-    } else if (useMobileDrawer && !hideDrawer && ui.shouldAddDrawerButton()) {
+    } else if (useMobileDrawer &&
+        !hideNavigation &&
+        ui.shouldAddDrawerButton()) {
       // Mobile drawer mode without back navigation - show drawer button
       AppShellLogger.i(
           'AppShell._buildAppBar: Mobile drawer mode - using custom drawer button (${ui.runtimeType})');
       leading = ui.drawerButton(context);
       automaticallyImplyLeading = false;
-    } else if (useMobileDrawer && !hideDrawer) {
+    } else if (useMobileDrawer && !hideNavigation) {
       // Mobile drawer mode - Material/ForUI handle drawer automatically
       AppShellLogger.i(
           'AppShell._buildAppBar: Mobile drawer mode - using framework drawer button (${ui.runtimeType})');
       leading = null;
       automaticallyImplyLeading = true;
-    } else if (screenWidth > 1200 && !hideDrawer) {
+    } else if (screenWidth > 1200 && !hideNavigation) {
       // Desktop sidebar toggle remains unchanged
       AppShellLogger.i('AppShell._buildAppBar: Desktop sidebar toggle mode');
       leading = ui.iconButton(

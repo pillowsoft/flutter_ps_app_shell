@@ -194,6 +194,34 @@ Automatically adapts based on screen size and route count:
 
 **Hidden Routes**: Use `showInNavigation: false` to create routes accessible via code but not shown in navigation UI (great for workflows, camera screens, checkout flows).
 
+### Hiding All Navigation UI
+
+For apps with fully programmatic navigation, use `hideNavigation` to hide ALL navigation UI while preserving GoRouter functionality:
+
+```dart
+runShellApp(
+  appConfig: AppConfig(
+    title: 'My App',
+    routes: routes,
+    hideNavigation: true,  // 👈 Hides all navigation UI
+  ),
+);
+```
+
+**What It Hides**:
+- ✅ Bottom tab bar (mobile)
+- ✅ Mobile drawer & hamburger menu
+- ✅ Navigation rail (tablet)
+- ✅ Desktop sidebar & menu button
+
+**What It Preserves**:
+- ✅ GoRouter routing (`context.go()`, `context.push()`, etc.)
+- ✅ Back button functionality
+- ✅ App bar with title and actions
+- ✅ All programmatic navigation
+
+**Use Cases**: Apps where navigation is entirely code-driven (wizard flows, kiosk apps, custom navigation patterns).
+
 ### Plugin System
 
 Four plugin types for extensibility:
@@ -512,7 +540,23 @@ Navigate to `/datalog-investigation` for InstantDB debugging:
 
 ## Recent Updates
 
-### v0.7.27 (Latest) - Button Padding Consistency Fix
+### v0.9.0 (Latest) - Breaking Change: hideDrawer → hideNavigation
+- **🔄 BREAKING CHANGE**: Renamed `hideDrawer` to `hideNavigation` for clarity
+- ✅ Parameter name now accurately reflects functionality
+- ✅ Hides ALL navigation UI (bottom tabs, drawer, rail, sidebar) while preserving GoRouter
+- ✅ Migration: Change `hideDrawer: true` → `hideNavigation: true` in AppConfig
+- 📚 See CHANGELOG.md for detailed migration guide
+
+### v0.8.0 - Theme Toggle Control
+- ✅ Added `showThemeToggle` parameter to AppConfig
+- ✅ Control visibility of DarkModeToggleButton in app bar
+- ✅ Perfect for apps with Settings-based theme switching
+
+### v0.7.31 - CupertinoPageScaffold Fix
+- ✅ Fixed content sliding under navigation bar (v0.7.30 regression)
+- ✅ Moved Container inside scaffold with selective SafeArea
+
+### v0.7.27 - Button Padding Consistency Fix
 - ✅ Fixed padding inconsistency between filled and outlined buttons
 - ✅ Added missing `padding: EdgeInsets.zero` to `outlinedButton()`
 - ✅ All button types now have uniform visual padding (16px)
