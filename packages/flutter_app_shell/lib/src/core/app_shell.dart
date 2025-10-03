@@ -99,7 +99,7 @@ class AppShell extends StatelessWidget {
 
       final scaffoldContent = ui.scaffold(
         appBar: _buildAppBar(context, isWideScreen, useMobileDrawer,
-            useBottomNav: useBottomNav),
+            useBottomNav: useBottomNav, visibleRoutes: visibleRoutes),
         drawer: drawer,
         bottomNavBar: bottomNavBar,
         body: Row(
@@ -153,7 +153,7 @@ class AppShell extends StatelessWidget {
 
   Widget _buildAppBar(
       BuildContext context, bool isWideScreen, bool useMobileDrawer,
-      {bool? useBottomNav}) {
+      {bool? useBottomNav, required List<AppRoute> visibleRoutes}) {
     final settingsStore = GetIt.I<AppShellSettingsStore>();
     final ui = getAdaptiveFactory(context);
     final actions = <Widget>[
@@ -173,7 +173,14 @@ class AppShell extends StatelessWidget {
     final pathSegments =
         currentPath.split('/').where((s) => s.isNotEmpty).toList();
     final isNestedRoute = pathSegments.length > 1;
-    final shouldShowBackButton = canPop || isNestedRoute;
+
+    // Special case: When navigation is hidden (programmatic navigation mode),
+    // show back button on all non-home routes to prevent users getting stuck
+    final isNotHomePage = currentPath != '/' && currentPath.isNotEmpty;
+    final needsBackForHiddenNav = visibleRoutes.isEmpty && isNotHomePage;
+
+    final shouldShowBackButton =
+        canPop || isNestedRoute || needsBackForHiddenNav;
 
     AppShellLogger.i(
         'AppShell._buildAppBar: Navigation state - canPop=$canPop, currentPath="$currentPath", pathSegments=$pathSegments, isNestedRoute=$isNestedRoute, shouldShowBackButton=$shouldShowBackButton');
