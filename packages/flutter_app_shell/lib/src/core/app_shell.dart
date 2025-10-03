@@ -285,51 +285,68 @@ class AppShell extends StatelessWidget {
   }
 
   /// Attempts to determine the current route title based on the current path
+  /// Recursively searches through route tree including sub-routes
   String? _getCurrentRouteTitle(BuildContext context) {
     try {
       final currentPath = GoRouterState.of(context).uri.path;
       AppShellLogger.i(
           'AppShell._getCurrentRouteTitle: analyzing path="$currentPath"');
 
-      // Handle navigation demo specific routes
-      if (currentPath.startsWith('/navigation/detail/')) {
-        final level = currentPath.split('/').last;
-        final title = 'Detail Level $level';
-        AppShellLogger.i(
-            'AppShell._getCurrentRouteTitle: matched detail route -> "$title"');
-        return title;
-      } else if (currentPath.startsWith('/navigation/nested/')) {
-        final level = currentPath.split('/').last;
-        final title = 'Deep Navigation Level $level';
-        AppShellLogger.i(
-            'AppShell._getCurrentRouteTitle: matched nested route -> "$title"');
-        return title;
-      } else if (currentPath == '/navigation') {
-        AppShellLogger.i(
-            'AppShell._getCurrentRouteTitle: matched navigation root -> "Navigation Demo"');
-        return 'Navigation Demo';
+      // Recursive helper to search route tree
+      String? findRouteTitle(
+          List<AppRoute> routeList, String targetPath, String parentPath) {
+        for (final route in routeList) {
+          // Build full path for this route
+          final fullPath = route.path.startsWith('/')
+              ? route.path
+              : '$parentPath/${route.path}';
+
+          // Check for exact match (handling path parameters)
+          if (_pathMatches(fullPath, targetPath)) {
+            AppShellLogger.i(
+                'AppShell._getCurrentRouteTitle: matched route $fullPath -> "${route.title}"');
+            return route.title;
+          }
+
+          // Check sub-routes if path is under this route
+          if (route.subRoutes.isNotEmpty &&
+              targetPath.startsWith('$fullPath/')) {
+            final subRouteTitle =
+                findRouteTitle(route.subRoutes, targetPath, fullPath);
+            if (subRouteTitle != null) {
+              return subRouteTitle;
+            }
+            // If sub-route search failed but we're under this route, return parent title
+            AppShellLogger.i(
+                'AppShell._getCurrentRouteTitle: using parent title for $fullPath -> "${route.title}"');
+            return route.title;
+          }
+        }
+        return null;
       }
 
-      // Find matching route from the routes list
-      final matchingRoute = routes.firstWhere(
-        (route) => route.path == currentPath,
-        orElse: () => routes.first,
-      );
-
-      // Return the route title if we found a match and it's not the fallback
-      if (matchingRoute.path == currentPath) {
-        AppShellLogger.i(
-            'AppShell._getCurrentRouteTitle: matched route ${matchingRoute.path} -> "${matchingRoute.title}"');
-        return matchingRoute.title;
-      }
-
-      AppShellLogger.i(
-          'AppShell._getCurrentRouteTitle: no match found for path="$currentPath"');
-      return null;
+      return findRouteTitle(routes, currentPath, '');
     } catch (e) {
-      // If anything goes wrong, return null to use fallback title
+      AppShellLogger.e('AppShell._getCurrentRouteTitle: error=$e');
       return null;
     }
+  }
+
+  /// Helper to match paths with parameters like /detail/:level with /detail/1
+  bool _pathMatches(String routePath, String actualPath) {
+    final routeSegments =
+        routePath.split('/').where((s) => s.isNotEmpty).toList();
+    final actualSegments =
+        actualPath.split('/').where((s) => s.isNotEmpty).toList();
+
+    if (routeSegments.length != actualSegments.length) return false;
+
+    for (int i = 0; i < routeSegments.length; i++) {
+      if (routeSegments[i].startsWith(':')) continue; // Path parameter
+      if (routeSegments[i] != actualSegments[i]) return false;
+    }
+
+    return true;
   }
 
   Widget _buildSidebar(BuildContext context, bool collapsed) {

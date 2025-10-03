@@ -5,6 +5,24 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2025-10-03
+
+### Fixed
+- **Nested Route Titles**: Fixed App Shell not resolving titles for nested/sub-routes. The `_getCurrentRouteTitle()` method now recursively searches the route tree instead of only doing exact path matching on flat routes.
+
+### Added
+- **Path Parameter Support**: Added `_pathMatches()` helper method to match route paths with parameters (e.g., `/detail/:level` matches `/detail/1`)
+- **Parent Route Fallback**: When navigating to a sub-route path that doesn't match any sub-route exactly, the parent route's title is used as fallback
+
+### Changed
+- **Removed Hardcoded Workarounds**: Eliminated hardcoded special cases for navigation demo routes (`/navigation/detail/:level`, `/navigation/nested/:level`) in favor of general recursive solution
+
+### Technical Details
+- Replaced `_getCurrentRouteTitle()` with recursive implementation that traverses the route tree
+- Sub-routes with relative paths (e.g., `detail/:level`) are now correctly resolved against parent paths (e.g., `/navigation`)
+- Supports arbitrary nesting depth of sub-routes
+- Example: Route `/mashup` with sub-route `video-selection` correctly resolves `/mashup/video-selection` to "Video Selection" title
+
 ## [1.0.4] - 2025-10-03
 
 ### Fixed
