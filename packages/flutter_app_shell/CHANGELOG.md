@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0 - 2025-10-03
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+
 ## 0.9.0 - 2025-10-03
 
 ### Breaking Changes

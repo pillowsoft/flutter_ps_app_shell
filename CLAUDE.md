@@ -540,12 +540,13 @@ Navigate to `/datalog-investigation` for InstantDB debugging:
 
 ## Recent Updates
 
-### v0.9.0 (Latest) - Breaking Change: hideDrawer → hideNavigation
+### v1.0.0 (Latest) - Breaking Change: hideDrawer → hideNavigation
 - **🔄 BREAKING CHANGE**: Renamed `hideDrawer` to `hideNavigation` for clarity
 - ✅ Parameter name now accurately reflects functionality
 - ✅ Hides ALL navigation UI (bottom tabs, drawer, rail, sidebar) while preserving GoRouter
 - ✅ Migration: Change `hideDrawer: true` → `hideNavigation: true` in AppConfig
 - 📚 See CHANGELOG.md for detailed migration guide
+- 🎉 First stable 1.0.0 release!
 
 ### v0.8.0 - Theme Toggle Control
 - ✅ Added `showThemeToggle` parameter to AppConfig
