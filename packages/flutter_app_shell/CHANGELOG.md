@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.7.30 - 2025-10-03
+
+### Fixed
+- **🐛 SafeArea Blocking iOS Home Indicator Background (v0.7.29 Critical Fix)**: Fixed v0.7.29 which still showed black bars because SafeArea wrapper prevented Container background extension
+  - **Root Cause**: `app_shell.dart:138` wrapped ALL mobile scaffolds in SafeArea unconditionally, blocking Container (v0.7.29) from extending into safe area insets
+  - **Widget Hierarchy Problem**:
+    ```
+    SafeArea (app_shell.dart) ← Blocks extension!
+      └─ Container (background) ← Can't reach safe areas
+          └─ CupertinoPageScaffold
+    ```
+  - **Solution**:
+    - Conditionally apply SafeArea based on UI factory type
+    - CupertinoWidgetFactory: No SafeArea wrapper (let Container extend into safe areas)
+    - Material/ForUI: Keep SafeArea wrapper (they need it)
+    - CupertinoPageScaffold handles safe areas for content internally
+  - **Changes**:
+    - Added `CupertinoWidgetFactory` import to `app_shell.dart`
+    - Modified SafeArea logic to check UI factory type (lines 139-143)
+    - iOS Cupertino: Returns unwrapped scaffold (Container extends to safe areas)
+    - Material/ForUI: Returns SafeArea-wrapped scaffold (unchanged)
+  - **Impact**:
+    - iOS Cupertino: Container background finally extends into safe areas ✅
+    - Android Cupertino: Navigation bar styling preserved (v0.7.28) ✅
+    - Material/ForUI: SafeArea protection maintained ✅
+  - Reported by developer: "SafeArea wrapper prevents Container background from extending into safe areas"
+
+
 ## 0.7.29 - 2025-10-03
 
 ### Fixed
