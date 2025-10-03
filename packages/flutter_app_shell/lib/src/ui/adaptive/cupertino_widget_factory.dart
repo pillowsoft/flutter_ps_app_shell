@@ -140,18 +140,21 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
 
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: overlayStyle,
-        // Wrap with Container to ensure background extends behind home indicator on iOS
-        child: Container(
-          color: effectiveBackgroundColor,
-          child: CupertinoPageScaffold(
-            key: key,
-            navigationBar: appBar as ObstructingPreferredSizeWidget?,
-            backgroundColor: effectiveBackgroundColor,
-            child: Column(
-              children: [
-                Expanded(child: wrappedBody),
-                bottomNavBar,
-              ],
+        child: CupertinoPageScaffold(
+          key: key,
+          navigationBar: appBar as ObstructingPreferredSizeWidget?,
+          backgroundColor: Colors.transparent, // Let Container handle color
+          child: Container(
+            color: effectiveBackgroundColor,
+            child: SafeArea(
+              top: false, // Nav bar handles top spacing
+              bottom: false, // Allow extension to home indicator
+              child: Column(
+                children: [
+                  Expanded(child: wrappedBody),
+                  bottomNavBar,
+                ],
+              ),
             ),
           ),
         ),
@@ -196,14 +199,17 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
-      // Wrap with Container to ensure background extends behind home indicator on iOS
-      child: Container(
-        color: effectiveBackgroundColor,
-        child: CupertinoPageScaffold(
-          key: key,
-          navigationBar: appBar as ObstructingPreferredSizeWidget?,
-          backgroundColor: effectiveBackgroundColor,
-          child: wrappedBody,
+      child: CupertinoPageScaffold(
+        key: key,
+        navigationBar: appBar as ObstructingPreferredSizeWidget?,
+        backgroundColor: Colors.transparent, // Let Container handle color
+        child: Container(
+          color: effectiveBackgroundColor,
+          child: SafeArea(
+            top: false, // Nav bar handles top spacing
+            bottom: false, // Allow extension to home indicator
+            child: wrappedBody,
+          ),
         ),
       ),
     );
