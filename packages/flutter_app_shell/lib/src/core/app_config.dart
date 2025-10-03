@@ -12,6 +12,7 @@ class AppConfig {
   final bool enableSuggestions;
   final bool enableAnalytics;
   final String? initialRoute;
+  final bool showThemeToggle;
 
   AppConfig({
     required this.routes,
@@ -23,5 +24,6 @@ class AppConfig {
     this.enableSuggestions = false,
     this.enableAnalytics = false,
     this.initialRoute,
+    this.showThemeToggle = true,
   });
 }

@@ -381,6 +381,7 @@ void runShellApp(
                   null, // Let AppShell determine the title dynamically
               hideDrawer: appConfig.hideDrawer,
               actions: appConfig.actions,
+              showThemeToggle: appConfig.showThemeToggle,
               child: child,
             );
           },

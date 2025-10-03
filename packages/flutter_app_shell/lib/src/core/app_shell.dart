@@ -21,6 +21,7 @@ class AppShell extends StatelessWidget {
   final bool hideDrawer;
   final List<AppShellAction> actions;
   final String? currentRouteTitle;
+  final bool showThemeToggle;
 
   const AppShell({
     super.key,
@@ -30,6 +31,7 @@ class AppShell extends StatelessWidget {
     this.hideDrawer = false,
     this.actions = const [],
     this.currentRouteTitle,
+    this.showThemeToggle = true,
   });
 
   @override
@@ -153,7 +155,7 @@ class AppShell extends StatelessWidget {
     final ui = getAdaptiveFactory(context);
     final actions = <Widget>[
       ...this.actions.map((action) => ActionButton(action: action)),
-      const DarkModeToggleButton(),
+      if (showThemeToggle) const DarkModeToggleButton(),
     ];
 
     final screenWidth = MediaQuery.of(context).size.width;
