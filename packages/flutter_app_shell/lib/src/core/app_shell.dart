@@ -86,9 +86,10 @@ class AppShell extends StatelessWidget {
           : null;
 
       // Create bottom navigation if needed
-      final bottomNavBar = useBottomNav && !hideNavigation
-          ? _buildBottomNavigation(context, ui, visibleRoutes)
-          : null;
+      final bottomNavBar =
+          useBottomNav && !hideNavigation && visibleRoutes.isNotEmpty
+              ? _buildBottomNavigation(context, ui, visibleRoutes)
+              : null;
 
       // Debug logging for UI factory inputs
       AppShellLogger.i(
@@ -103,7 +104,7 @@ class AppShell extends StatelessWidget {
         bottomNavBar: bottomNavBar,
         body: Row(
           children: [
-            if (useSidebar && !hideNavigation) ...[
+            if (useSidebar && !hideNavigation && visibleRoutes.isNotEmpty) ...[
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: sidebarCollapsed ? 72 : 250,
@@ -113,7 +114,9 @@ class AppShell extends StatelessWidget {
                 width: 1.0,
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
               ),
-            ] else if (useRail && !hideNavigation) ...[
+            ] else if (useRail &&
+                !hideNavigation &&
+                visibleRoutes.isNotEmpty) ...[
               _buildNavigationRail(context, ui),
               const VerticalDivider(thickness: 1, width: 1),
             ],

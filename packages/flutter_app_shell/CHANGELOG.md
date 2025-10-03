@@ -1,18 +1,23 @@
 # Changelog
 
-## 1.0.0 - 2025-10-03
-
-### Added
-- 
-
-### Changed
-- 
+## 1.0.1 - 2025-10-03
 
 ### Fixed
-- 
 
+- **🐛 SignalEffectException when all routes have `showInNavigation: false`**: Fixed crash when using programmatic-only navigation
+  - **Root Cause**: Bottom navigation bar, sidebar, and navigation rail were being created even when `visibleRoutes` was empty (all routes hidden)
+  - **Symptom**: App crashed with `SignalEffectException` in `WatchBuilder` when trying to compute selected index with 0 navigation items
+  - **Impact**: Apps using fully programmatic navigation (no persistent tabs/drawers) could not run
+  - **Solution**: Added `visibleRoutes.isNotEmpty` safety check before creating navigation widgets
+  - **Changes**:
+    - `app_shell.dart:89` - Added `&& visibleRoutes.isNotEmpty` to bottom nav bar creation
+    - `app_shell.dart:106` - Added `&& visibleRoutes.isNotEmpty` to sidebar creation
+    - `app_shell.dart:116` - Added `&& visibleRoutes.isNotEmpty` to navigation rail creation
+  - **Use Case**: Apps with task-driven UIs that use only programmatic navigation (buttons, actions) without persistent bottom tabs or sidebars
+  - **Example**: All routes with `showInNavigation: false` now work correctly without crashes
+  - Reported by developer: "App crashes when all routes have showInNavigation: false - useBottomNav=true with visibleRoutes=0"
 
-## 0.9.0 - 2025-10-03
+## 1.0.0 - 2025-10-03
 
 ### Breaking Changes
 
