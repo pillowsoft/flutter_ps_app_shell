@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.8.0 - 2025-10-03
+
+### Added
+- **✨ Theme Toggle Control**: Added optional `showThemeToggle` parameter to `AppConfig` for controlling `DarkModeToggleButton` visibility
+  - **New Parameter**: `showThemeToggle: bool` (default: `true`)
+  - **Backwards Compatible**: Defaults to `true` to maintain existing behavior
+  - **Use Case**: Apps with Settings-based theme switching can hide redundant header theme toggle
+  - **Example**:
+    ```dart
+    AppConfig(
+      title: 'My App',
+      routes: routes,
+      showThemeToggle: false,  // Hide header theme toggle
+    )
+    ```
+  - **Changes**:
+    - Added `showThemeToggle` to `AppConfig` (app_config.dart:15)
+    - Added `showThemeToggle` to `AppShell` (app_shell.dart:24)
+    - Updated app_shell.dart:158 to conditionally render `DarkModeToggleButton`
+    - Updated app_shell_runner.dart:384 to pass `showThemeToggle` to `AppShell`
+  - **Benefits**:
+    - ✅ Full control over theme toggle placement
+    - ✅ Reduces visual clutter for apps with settings-based theme switching
+    - ✅ One-line configuration change
+    - ✅ No breaking changes (defaults to existing behavior)
+  - Requested by developer for Vizi app to eliminate redundant theme controls
+
+
 ## 0.7.31 - 2025-10-03
 
 ### Fixed
