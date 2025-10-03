@@ -11,6 +11,7 @@ import '../ui/components/action_button.dart';
 import '../ui/components/dark_mode_toggle_button.dart';
 import '../ui/adaptive/adaptive_widgets.dart';
 import '../ui/adaptive/adaptive_widget_factory.dart';
+import '../ui/adaptive/cupertino_widget_factory.dart';
 import '../utils/logger.dart';
 
 class AppShell extends StatelessWidget {
@@ -134,8 +135,13 @@ class AppShell extends StatelessWidget {
         // Material/ForUI don't need SafeArea on desktop
         return scaffoldContent;
       } else {
-        // On mobile, all UI systems benefit from SafeArea
-        return SafeArea(child: scaffoldContent);
+        // Cupertino handles safe areas via CupertinoPageScaffold + Container wrapper
+        // Material/ForUI need explicit SafeArea
+        if (ui is CupertinoWidgetFactory) {
+          return scaffoldContent;
+        } else {
+          return SafeArea(child: scaffoldContent);
+        }
       }
     });
   }
