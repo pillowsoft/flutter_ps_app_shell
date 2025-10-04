@@ -266,7 +266,10 @@ class AppShell extends StatelessWidget {
       AppShellLogger.i(
           'AppShell._buildAppBar: Default mode (no custom leading)');
       leading = null;
-      automaticallyImplyLeading = true;
+      // Never auto-imply leading on home page, even if canPop() returns true
+      // This prevents back button from appearing on fresh app launch when GoRouter
+      // might have internal navigation state that makes canPop() return true
+      automaticallyImplyLeading = !isHomePage;
     }
 
     // Determine title - use currentRouteTitle, or try to get from current route, or fallback to app title

@@ -5,6 +5,17 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2025-10-04
+
+### Fixed
+- **Back Button on Initial Launch**: Fixed back button incorrectly appearing on home page during fresh app launch. The framework's `automaticallyImplyLeading` now correctly set to `false` on home page, preventing the AppBar/NavigationBar from auto-generating a back button even when GoRouter's internal state makes `canPop()` return `true`.
+
+### Technical Details
+- Changed default mode `automaticallyImplyLeading` from `true` to `!isHomePage` (line 272 in app_shell.dart)
+- Prevents framework from using its own back button logic when on home page
+- Home page detection unchanged: `isHomePage = currentPath == '/' || currentPath.isEmpty`
+- Fix specifically addresses ShellRoute initial navigation state issue where `canPop()` returns `true` on first frame
+
 ## [1.0.7] - 2025-10-03
 
 ### Fixed
