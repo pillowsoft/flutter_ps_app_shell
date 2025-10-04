@@ -5,6 +5,19 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2025-10-03
+
+### Fixed
+- **Cupertino Theme Updates**: Fixed CupertinoApp not updating UI when theme mode changes. Added `ValueKey` based on brightness to force proper widget rebuilds when switching between light/dark/system modes.
+- **Theme Persistence**: Fixed SharedPreferences persistence effects by adding proper error handling to async operations. Effects now capture values before saving and log any persistence failures.
+
+### Technical Details
+- Compute `currentBrightness` once at top of Watch block for consistent dependency tracking
+- Added `key: ValueKey('cupertino_$currentBrightness')` to CupertinoApp.router to force rebuild when brightness changes
+- Use brightness value computed in Watch body instead of calling `getCurrentBrightness()` in CupertinoThemeData constructor
+- All SharedPreferences effects now use `.catchError()` to handle and log any persistence failures
+- Effects capture signal values before async operations to ensure proper reactivity
+
 ## [1.0.6] - 2025-10-03
 
 ### Fixed

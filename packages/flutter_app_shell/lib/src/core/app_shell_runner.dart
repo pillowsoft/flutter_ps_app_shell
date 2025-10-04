@@ -436,6 +436,10 @@ void runShellApp(
         // Get the appropriate UI factory and use it to create the app
         final uiSystem = settingsStore.uiSystem.value;
 
+        // Get current brightness - computed once here to ensure Watch tracks themeMode dependency
+        // and to use as key for forcing CupertinoApp rebuilds
+        final currentBrightness = settingsStore.getCurrentBrightness(context);
+
         // Clamp text scale factor to prevent extreme accessibility scaling from breaking UI
         final mediaData = MediaQuery.of(context);
         final currentScale = mediaData.textScaler.scale(1.0);
@@ -448,11 +452,12 @@ void runShellApp(
           ),
           child: uiSystem == 'cupertino'
               ? CupertinoApp.router(
+                  key: ValueKey('cupertino_$currentBrightness'),
                   routerConfig: router,
                   debugShowCheckedModeBanner: false,
                   title: appConfig.title,
                   theme: CupertinoThemeData(
-                    brightness: settingsStore.getCurrentBrightness(context),
+                    brightness: currentBrightness,
                   ),
                   // Add localizations to support Material widgets within Cupertino app
                   localizationsDelegates: const [

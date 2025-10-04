@@ -57,35 +57,60 @@ class AppShellSettingsStore {
     _logger.fine('Setting up reactive effects for persistence...');
 
     // Set up effects to persist changes
+    // Note: SharedPreferences methods return Futures but are fire-and-forget safe
+    // We add error handling to catch any persistence issues
     effect(() {
-      _logger.fine('Saving brightness: ${brightness.value.index}');
-      _prefs.setInt('brightness', brightness.value.index);
+      final value = brightness.value.index;
+      _logger.fine('Saving brightness: $value');
+      _prefs.setInt('brightness', value).catchError((e) {
+        _logger.severe('Failed to save brightness: $e');
+        return false;
+      });
     });
 
     effect(() {
-      _logger.fine('Saving themeMode: ${themeMode.value.index}');
-      _prefs.setInt('themeMode', themeMode.value.index);
+      final value = themeMode.value.index;
+      _logger.fine('Saving themeMode: $value');
+      _prefs.setInt('themeMode', value).catchError((e) {
+        _logger.severe('Failed to save themeMode: $e');
+        return false;
+      });
     });
 
     effect(() {
-      _logger.fine('Saving sidebarCollapsed: ${sidebarCollapsed.value}');
-      _prefs.setBool('sidebarCollapsed', sidebarCollapsed.value);
+      final value = sidebarCollapsed.value;
+      _logger.fine('Saving sidebarCollapsed: $value');
+      _prefs.setBool('sidebarCollapsed', value).catchError((e) {
+        _logger.severe('Failed to save sidebarCollapsed: $e');
+        return false;
+      });
     });
 
     effect(() {
-      _logger
-          .fine('Saving showNavigationLabels: ${showNavigationLabels.value}');
-      _prefs.setBool('showNavigationLabels', showNavigationLabels.value);
+      final value = showNavigationLabels.value;
+      _logger.fine('Saving showNavigationLabels: $value');
+      _prefs.setBool('showNavigationLabels', value).catchError((e) {
+        _logger.severe('Failed to save showNavigationLabels: $e');
+        return false;
+      });
     });
 
     effect(() {
-      _logger.fine('Saving debugMode: ${debugMode.value}');
-      _prefs.setBool('debugMode', debugMode.value);
+      final value = debugMode.value;
+      _logger.fine('Saving debugMode: $value');
+      _prefs.setBool('debugMode', value).catchError((e) {
+        _logger.severe('Failed to save debugMode: $e');
+        return false;
+      });
     });
 
     effect(() {
-      _logger.fine('Saving logLevel: ${logLevel.value}');
-      _prefs.setString('logLevel', logLevel.value);
+      final value = logLevel.value;
+      _logger.fine('Saving logLevel: $value');
+      _prefs.setString('logLevel', value).catchError((e) {
+        _logger.severe('Failed to save logLevel: $e');
+        return false;
+      });
     });
 
     // Connect logLevel signal to LoggingService
@@ -100,13 +125,21 @@ class AppShellSettingsStore {
     });
 
     effect(() {
-      _logger.fine('Saving uiSystem: ${uiSystem.value}');
-      _prefs.setString('uiSystem', uiSystem.value);
+      final value = uiSystem.value;
+      _logger.fine('Saving uiSystem: $value');
+      _prefs.setString('uiSystem', value).catchError((e) {
+        _logger.severe('Failed to save uiSystem: $e');
+        return false;
+      });
     });
 
     effect(() {
-      _logger.fine('Saving textScaleFactor: ${textScaleFactor.value}');
-      _prefs.setDouble('textScaleFactor', textScaleFactor.value);
+      final value = textScaleFactor.value;
+      _logger.fine('Saving textScaleFactor: $value');
+      _prefs.setDouble('textScaleFactor', value).catchError((e) {
+        _logger.severe('Failed to save textScaleFactor: $e');
+        return false;
+      });
     });
   }
 
