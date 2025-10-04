@@ -5,6 +5,20 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2025-10-03
+
+### Fixed
+- **Dark Mode Detection on Physical Devices**: Fixed CupertinoApp not responding to theme mode changes on physical iOS devices. The `getCurrentBrightness()` method now properly creates a signal dependency by reading `themeMode.value`, ensuring the Watch rebuilds when theme changes.
+
+### Added
+- **Text Scale Factor Clamping**: Added `maxTextScaleFactor` parameter to `AppConfig` (defaults to 1.3) to prevent extreme iOS Accessibility 'Larger Text' settings (up to 310%) from making the app unusable. The app now wraps in MediaQuery to clamp textScaleFactor between 1.0 and the configured maximum.
+
+### Technical Details
+- Added `maxTextScaleFactor: 1.3` parameter to `AppConfig` class
+- Wrapped CupertinoApp/MaterialApp in MediaQuery to apply text scale clamping
+- Fixed signal reactivity in `getCurrentBrightness()` by explicitly reading `themeMode.value` before switch statement
+- Text scale clamping applies to all UI systems (Material, Cupertino, ForUI)
+
 ## [1.0.5] - 2025-10-03
 
 ### Fixed

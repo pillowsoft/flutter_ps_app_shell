@@ -436,33 +436,40 @@ void runShellApp(
         // Get the appropriate UI factory and use it to create the app
         final uiSystem = settingsStore.uiSystem.value;
 
-        // Use the adaptive factory to create the themed app
-        if (uiSystem == 'cupertino') {
-          return CupertinoApp.router(
-            routerConfig: router,
-            debugShowCheckedModeBanner: false,
-            title: appConfig.title,
-            theme: CupertinoThemeData(
-              brightness: settingsStore.getCurrentBrightness(context),
-            ),
-            // Add localizations to support Material widgets within Cupertino app
-            localizationsDelegates: const [
-              DefaultMaterialLocalizations.delegate,
-              DefaultCupertinoLocalizations.delegate,
-              DefaultWidgetsLocalizations.delegate,
-            ],
-          );
-        } else {
-          // Material and ForUI use MaterialApp.router
-          return MaterialApp.router(
-            routerConfig: router,
-            debugShowCheckedModeBanner: false,
-            title: appConfig.title,
-            theme: theme,
-            darkTheme: darkTheme,
-            themeMode: settingsStore.themeMode.value,
-          );
-        }
+        // Clamp text scale factor to prevent extreme accessibility scaling from breaking UI
+        final mediaData = MediaQuery.of(context);
+        final currentScale = mediaData.textScaler.scale(1.0);
+        final clampedScale = currentScale.clamp(1.0, appConfig.maxTextScaleFactor);
+
+        // Wrap app in MediaQuery to apply text scale clamping
+        return MediaQuery(
+          data: mediaData.copyWith(
+            textScaler: TextScaler.linear(clampedScale),
+          ),
+          child: uiSystem == 'cupertino'
+              ? CupertinoApp.router(
+                  routerConfig: router,
+                  debugShowCheckedModeBanner: false,
+                  title: appConfig.title,
+                  theme: CupertinoThemeData(
+                    brightness: settingsStore.getCurrentBrightness(context),
+                  ),
+                  // Add localizations to support Material widgets within Cupertino app
+                  localizationsDelegates: const [
+                    DefaultMaterialLocalizations.delegate,
+                    DefaultCupertinoLocalizations.delegate,
+                    DefaultWidgetsLocalizations.delegate,
+                  ],
+                )
+              : MaterialApp.router(
+                  routerConfig: router,
+                  debugShowCheckedModeBanner: false,
+                  title: appConfig.title,
+                  theme: theme,
+                  darkTheme: darkTheme,
+                  themeMode: settingsStore.themeMode.value,
+                ),
+        );
       },
     ),
   );

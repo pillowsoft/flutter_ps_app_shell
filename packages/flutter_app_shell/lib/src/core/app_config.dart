@@ -13,6 +13,7 @@ class AppConfig {
   final bool enableAnalytics;
   final String? initialRoute;
   final bool showThemeToggle;
+  final double maxTextScaleFactor;
 
   AppConfig({
     required this.routes,
@@ -25,5 +26,6 @@ class AppConfig {
     this.enableAnalytics = false,
     this.initialRoute,
     this.showThemeToggle = true,
+    this.maxTextScaleFactor = 1.3,
   });
 }

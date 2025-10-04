@@ -207,7 +207,11 @@ class AppShellSettingsStore {
 
   // Get current theme based on theme mode and system brightness
   Brightness getCurrentBrightness(BuildContext context) {
-    switch (themeMode.value) {
+    // Access themeMode.value to create signal dependency for Watch to track
+    // This ensures the UI rebuilds when theme mode changes
+    final mode = themeMode.value;
+
+    switch (mode) {
       case ThemeMode.system:
         return MediaQuery.of(context).platformBrightness;
       case ThemeMode.light:
