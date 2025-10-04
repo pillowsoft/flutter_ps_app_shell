@@ -14,6 +14,7 @@ class AppConfig {
   final String? initialRoute;
   final bool showThemeToggle;
   final double maxTextScaleFactor;
+  final String? homeRoute;
 
   AppConfig({
     required this.routes,
@@ -27,5 +28,6 @@ class AppConfig {
     this.initialRoute,
     this.showThemeToggle = true,
     this.maxTextScaleFactor = 1.3,
+    this.homeRoute,
   });
 }

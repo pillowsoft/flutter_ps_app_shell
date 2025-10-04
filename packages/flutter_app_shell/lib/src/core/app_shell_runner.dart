@@ -382,6 +382,7 @@ void runShellApp(
               hideNavigation: appConfig.hideNavigation,
               actions: appConfig.actions,
               showThemeToggle: appConfig.showThemeToggle,
+              homeRoute: appConfig.homeRoute,
               child: child,
             );
           },

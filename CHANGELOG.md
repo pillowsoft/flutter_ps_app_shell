@@ -5,6 +5,33 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2025-10-04
+
+### Fixed
+- **Configurable Home Route**: Fixed v1.0.8's home page back button fix not working for apps that use non-root paths as home (e.g., `/home` instead of `/`). Added `homeRoute` parameter to `AppConfig` to allow apps to define their home page path.
+
+### Added
+- **`homeRoute` parameter in AppConfig**: Optional parameter to specify the home route path (defaults to `/` if not provided)
+- Home page detection now checks: `currentPath == homeRoute || currentPath == '/' || currentPath.isEmpty`
+
+### Technical Details
+- Added `homeRoute` field to `AppConfig` class (app_config.dart)
+- Added `homeRoute` parameter to `AppShell` widget (app_shell.dart)
+- Updated `isHomePage` logic to use configurable home path: `final configuredHomePath = homeRoute ?? '/'`
+- Maintains backward compatibility - apps without `homeRoute` still use `/` as default
+- Properly passed from AppConfig → AppShell in app_shell_runner.dart
+
+### Migration Guide
+For apps using non-root home routes (e.g., after onboarding flows):
+```dart
+AppConfig(
+  title: 'My App',
+  routes: [...],
+  homeRoute: '/home',  // Specify your actual home route
+  initialRoute: '/onboarding',  // Optional: different initial route
+)
+```
+
 ## [1.0.8] - 2025-10-04
 
 ### Fixed

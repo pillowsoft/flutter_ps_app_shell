@@ -22,6 +22,7 @@ class AppShell extends StatelessWidget {
   final List<AppShellAction> actions;
   final String? currentRouteTitle;
   final bool showThemeToggle;
+  final String? homeRoute;
 
   const AppShell({
     super.key,
@@ -32,6 +33,7 @@ class AppShell extends StatelessWidget {
     this.actions = const [],
     this.currentRouteTitle,
     this.showThemeToggle = true,
+    this.homeRoute,
   });
 
   @override
@@ -177,7 +179,11 @@ class AppShell extends StatelessWidget {
     // Special case: When navigation is hidden (programmatic navigation mode),
     // show back button on all non-home routes to prevent users getting stuck
     // Note: On initial app launch, currentPath may be empty string before GoRouter initializes
-    final isHomePage = currentPath == '/' || currentPath.isEmpty;
+    // Home page can be configured via AppConfig.homeRoute, defaults to '/'
+    final configuredHomePath = homeRoute ?? '/';
+    final isHomePage = currentPath == configuredHomePath ||
+                       currentPath == '/' ||
+                       currentPath.isEmpty;
     final needsBackForHiddenNav = visibleRoutes.isEmpty && !isHomePage;
 
     // Never show back button on home page, even if canPop is true
