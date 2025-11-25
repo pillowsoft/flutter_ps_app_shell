@@ -47,8 +47,14 @@ class DatabaseService {
   final realtimeUpdates = signal<int>(0);
 
   /// Initialize the database service
-  /// [appId] can be empty for local-only mode, or provide InstantDB app ID for cloud sync
+  ///
+  /// [appId] can be empty for local-only mode, or provide InstantDB app ID for cloud sync.
+  /// When empty, a stable database name ('local-only-app-shell') is used to ensure data
+  /// persists between app restarts and to avoid creating orphaned database files.
+  ///
   /// [enableSync] controls whether real-time sync is enabled (ignored in local-only mode)
+  ///
+  /// [verboseLogging] enables detailed InstantDB logging for debugging
   Future<void> initialize({
     String appId = '',
     bool enableSync = true,
@@ -61,8 +67,10 @@ class DatabaseService {
       _logger.info('Initializing database service...');
 
       // Use local-only mode if no app ID provided
+      // IMPORTANT: Use a stable database name to avoid creating orphaned databases
+      // on every startup. See bug report: "App Shell Creates Orphaned Databases on Every Startup"
       final effectiveAppId = appId.isEmpty
-          ? 'local-only-${DateTime.now().millisecondsSinceEpoch}'
+          ? 'local-only-app-shell'
           : appId;
       final isLocalOnly = appId.isEmpty;
 

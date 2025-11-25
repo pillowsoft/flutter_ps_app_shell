@@ -5,6 +5,32 @@ All notable changes to the Flutter PS App Shell project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.10] - 2025-11-25
+
+### Fixed
+- **Orphaned Database Files**: Fixed critical bug where DatabaseService created a new SQLite database file on every app startup in local-only mode. Previously, when `INSTANTDB_APP_ID` was not configured, the service generated unique database names using timestamps (`local-only-1756842576674.db`), causing:
+  - Orphaned database files accumulating in `~/Documents/`
+  - 10+ second startup delays after multiple app restarts
+  - No data persistence between app runs in local-only mode
+
+### Changed
+- Local-only database name is now stable (`local-only-app-shell`) instead of timestamp-based
+- Data now persists between app restarts in local-only mode
+- Improved `initialize()` documentation to clarify local-only behavior
+
+### Technical Details
+- Changed line 64-67 in `database_service.dart`:
+  - **Before**: `'local-only-${DateTime.now().millisecondsSinceEpoch}'`
+  - **After**: `'local-only-app-shell'`
+- Added clarifying comments and improved docstring for the `initialize()` method
+
+### Migration Notes
+- If you have existing orphaned database files from previous versions, you can safely delete them:
+  ```bash
+  rm ~/Documents/local-only-*.db*
+  ```
+- No code changes required in consuming apps - the fix is automatic
+
 ## [1.0.9] - 2025-10-04
 
 ### Fixed

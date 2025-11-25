@@ -540,7 +540,14 @@ Navigate to `/datalog-investigation` for InstantDB debugging:
 
 ## Recent Updates
 
-### v1.0.0 (Latest) - Breaking Change: hideDrawer → hideNavigation
+### v1.0.10 (Latest) - Orphaned Database Fix
+- 🐛 **CRITICAL FIX**: DatabaseService no longer creates orphaned database files on every startup
+- ✅ Local-only mode now uses stable database name (`local-only-app-shell`)
+- ✅ Data persists between app restarts in local-only mode
+- ✅ Eliminates 10+ second startup delays from accumulated orphaned files
+- 🧹 Safe to delete old orphaned files: `rm ~/Documents/local-only-*.db*`
+
+### v1.0.0 - Breaking Change: hideDrawer → hideNavigation
 - **🔄 BREAKING CHANGE**: Renamed `hideDrawer` to `hideNavigation` for clarity
 - ✅ Parameter name now accurately reflects functionality
 - ✅ Hides ALL navigation UI (bottom tabs, drawer, rail, sidebar) while preserving GoRouter
