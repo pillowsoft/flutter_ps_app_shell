@@ -418,113 +418,111 @@ class _ErrorHandlingDemoScreenState extends State<ErrorHandlingDemoScreen>
   }
 
   void _showGlobalErrorDialog() {
-    showDialog(
+    final ui = getAdaptiveFactory(context);
+    ui.showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.error, color: Colors.red, size: 48),
-        title: const Text('Critical Error'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'A critical error has occurred that requires immediate attention.',
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'Error Code: CRIT_001\n'
-                'Component: Core System\n'
-                'Timestamp: 2024-01-15 14:30:22',
-                style: TextStyle(fontFamily: 'monospace'),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Dismiss'),
+      icon: const Icon(Icons.error, color: Colors.red, size: 48),
+      title: const Text('Critical Error'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'A critical error has occurred that requires immediate attention.',
           ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showErrorReportDialog();
-            },
-            child: const Text('Report Error'),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Text(
+              'Error Code: CRIT_001\n'
+              'Component: Core System\n'
+              'Timestamp: 2024-01-15 14:30:22',
+              style: TextStyle(fontFamily: 'monospace'),
+            ),
           ),
         ],
       ),
+      actions: [
+        ui.textButton(
+          label: 'Dismiss',
+          onPressed: () => Navigator.pop(context),
+        ),
+        ui.button(
+          label: 'Report Error',
+          onPressed: () {
+            Navigator.pop(context);
+            _showErrorReportDialog();
+          },
+        ),
+      ],
     );
   }
 
   void _showErrorReportDialog() {
     final reportController = TextEditingController();
+    final ui = getAdaptiveFactory(context);
 
-    showDialog(
+    ui.showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error Report'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-                'Please describe what you were doing when the error occurred:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: reportController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Describe the steps that led to this error...',
-                border: OutlineInputBorder(),
-              ),
+      title: const Text('Error Report'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+              'Please describe what you were doing when the error occurred:'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: reportController,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              hintText: 'Describe the steps that led to this error...',
+              border: OutlineInputBorder(),
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'The following information will be included:',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '• Device information\n'
-                    '• App version\n'
-                    '• Error logs\n'
-                    '• No personal data',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
           ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _sendErrorReport(reportController.text);
-            },
-            child: const Text('Send Report'),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'The following information will be included:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '• Device information\n'
+                  '• App version\n'
+                  '• Error logs\n'
+                  '• No personal data',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
           ),
         ],
       ),
+      actions: [
+        ui.textButton(
+          label: 'Cancel',
+          onPressed: () => Navigator.pop(context),
+        ),
+        ui.button(
+          label: 'Send Report',
+          onPressed: () {
+            Navigator.pop(context);
+            _sendErrorReport(reportController.text);
+          },
+        ),
+      ],
     );
   }
 
