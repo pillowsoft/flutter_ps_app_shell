@@ -136,22 +136,14 @@ class _TaskFormScreenState extends State<TaskFormScreen>
   Future<bool> _onWillPop() async {
     if (!_hasChanges) return true;
 
-    final result = await showDialog<bool>(
+    final ui = getAdaptiveFactory(context);
+    final result = await ui.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Discard Changes?'),
-        content: const Text(
-            'You have unsaved changes. Are you sure you want to leave?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Discard'),
-          ),
-        ],
+      title: 'Discard Changes?',
+      message: 'You have unsaved changes. Are you sure you want to leave?',
+      confirmText: 'Discard',
+      cancelText: 'Cancel',
+      isDestructive: true,
       ),
     );
 
@@ -375,9 +367,10 @@ class _TaskFormScreenState extends State<TaskFormScreen>
       return;
     }
 
-    showDialog(
+    final ui = getAdaptiveFactory(context);
+    ui.showDialog(
       context: context,
-      builder: (context) => _ReminderDialog(
+      content: _ReminderDialog(
         dueDate: _dueDate!,
         onAdd: (reminder) {
           setState(() {
@@ -391,38 +384,37 @@ class _TaskFormScreenState extends State<TaskFormScreen>
 
   void _addAssignee() {
     final controller = TextEditingController();
+    final ui = getAdaptiveFactory(context);
 
-    showDialog(
+    ui.showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Assignee'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Name or Email',
-            hintText: 'john.doe@example.com',
-          ),
-          autofocus: true,
+      title: const Text('Add Assignee'),
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(
+          labelText: 'Name or Email',
+          hintText: 'john.doe@example.com',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                setState(() {
-                  _assignees.add(controller.text.trim());
-                  _hasChanges = true;
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
+        autofocus: true,
       ),
+      actions: [
+        ui.textButton(
+          label: 'Cancel',
+          onPressed: () => Navigator.pop(context),
+        ),
+        ui.button(
+          label: 'Add',
+          onPressed: () {
+            if (controller.text.trim().isNotEmpty) {
+              setState(() {
+                _assignees.add(controller.text.trim());
+                _hasChanges = true;
+              });
+              Navigator.pop(context);
+            }
+          },
+        ),
+      ],
     );
   }
 

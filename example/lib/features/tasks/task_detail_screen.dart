@@ -121,23 +121,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
   }
 
   Future<void> _deleteTask() async {
-    final confirm = await showDialog<bool>(
+    final ui = getAdaptiveFactory(context);
+    final confirm = await ui.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Task'),
-        content:
-            Text('Are you sure you want to delete "${_currentTask.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete "${_currentTask.title}"?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDestructive: true,
     );
 
     if (confirm == true) {
