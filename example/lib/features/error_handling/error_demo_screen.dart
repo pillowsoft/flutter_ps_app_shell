@@ -400,20 +400,12 @@ class _ErrorHandlingDemoScreenState extends State<ErrorHandlingDemoScreen>
   }
 
   void _showSuccessMessage(ErrorDemo demo) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Text(
-                '${demo.title} succeeded after ${_retryCount} ${_retryCount == 1 ? 'retry' : 'retries'}'),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-      ),
+    final ui = getAdaptiveFactory(context);
+    ui.showSnackBar(
+      context,
+      '${demo.title} succeeded after ${_retryCount} ${_retryCount == 1 ? 'retry' : 'retries'}',
+      backgroundColor: Colors.green,
+      duration: const Duration(seconds: 3),
     );
   }
 
@@ -530,18 +522,11 @@ class _ErrorHandlingDemoScreenState extends State<ErrorHandlingDemoScreen>
     // Simulate sending error report
     await Future.delayed(const Duration(seconds: 2));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text('Error report sent successfully. Thank you!'),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
+    final ui = getAdaptiveFactory(context);
+    ui.showSnackBar(
+      context,
+      'Error report sent successfully. Thank you!',
+      backgroundColor: Colors.green,
     );
   }
 
@@ -902,13 +887,11 @@ class _ErrorHandlingDemoScreenState extends State<ErrorHandlingDemoScreen>
           }
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text(_isOffline ? 'Switched to offline mode' : 'Back online'),
-            backgroundColor: _isOffline ? Colors.orange : Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
+        final ui = getAdaptiveFactory(context);
+        ui.showSnackBar(
+          context,
+          _isOffline ? 'Switched to offline mode' : 'Back online',
+          backgroundColor: _isOffline ? Colors.orange : Colors.green,
         );
         break;
 
@@ -920,14 +903,13 @@ class _ErrorHandlingDemoScreenState extends State<ErrorHandlingDemoScreen>
           }
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_hasSlowConnection
-                ? 'Simulating slow connection'
-                : 'Connection speed normal'),
-            backgroundColor: _hasSlowConnection ? Colors.orange : Colors.blue,
-            behavior: SnackBarBehavior.floating,
-          ),
+        final ui = getAdaptiveFactory(context);
+        ui.showSnackBar(
+          context,
+          _hasSlowConnection
+              ? 'Simulating slow connection'
+              : 'Connection speed normal',
+          backgroundColor: _hasSlowConnection ? Colors.orange : Colors.blue,
         );
         break;
 

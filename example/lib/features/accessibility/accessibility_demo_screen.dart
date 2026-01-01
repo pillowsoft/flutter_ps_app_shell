@@ -152,12 +152,11 @@ class _AccessibilityDemoScreenState extends State<AccessibilityDemoScreen>
     if (_formKey.currentState!.validate()) {
       _announceToScreenReader('Form submitted successfully');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Thank you for your feedback, ${_nameController.text}!'),
-          duration: const Duration(seconds: 3),
-        ),
+      final ui = getAdaptiveFactory(context);
+      ui.showSnackBar(
+        context,
+        'Thank you for your feedback, ${_nameController.text}!',
+        duration: const Duration(seconds: 3),
       );
 
       // Clear form

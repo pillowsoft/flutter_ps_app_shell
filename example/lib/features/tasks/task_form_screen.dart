@@ -300,12 +300,11 @@ class _TaskFormScreenState extends State<TaskFormScreen>
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : null,
-        behavior: SnackBarBehavior.floating,
-      ),
+    final ui = getAdaptiveFactory(context);
+    ui.showSnackBar(
+      context,
+      message,
+      backgroundColor: isError ? Colors.red : null,
     );
   }
 

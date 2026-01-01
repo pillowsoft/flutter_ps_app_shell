@@ -140,12 +140,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    final ui = getAdaptiveFactory(context);
+    ui.showSnackBar(context, message);
   }
 
   @override
