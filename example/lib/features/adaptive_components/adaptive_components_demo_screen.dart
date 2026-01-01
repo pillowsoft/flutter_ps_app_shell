@@ -1304,7 +1304,8 @@ class _AdaptiveComponentsDemoScreenState
   }
 
   void _showAdaptiveBottomSheet(BuildContext context, ThemeData theme) {
-    showModalBottomSheet(
+    final ui = getAdaptiveFactory(context);
+    ui.showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => DraggableScrollableSheet(

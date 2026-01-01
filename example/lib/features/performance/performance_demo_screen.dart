@@ -1003,7 +1003,8 @@ class _PerformanceDemoScreenState extends State<PerformanceDemoScreen>
   }
 
   void _showItemDetails(PerformanceItem item) {
-    showModalBottomSheet(
+    final ui = getAdaptiveFactory(context);
+    ui.showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => DraggableScrollableSheet(

@@ -612,11 +612,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _showComingSoonSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Coming soon! This feature is in development.'),
-        duration: Duration(seconds: 2),
-      ),
+    final ui = getAdaptiveFactory(context);
+    ui.showSnackBar(
+      context,
+      'Coming soon! This feature is in development.',
+      duration: const Duration(seconds: 2),
     );
   }
 }
