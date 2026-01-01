@@ -3,7 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:logging/logging.dart';
 import 'package:signals/signals.dart';
 import '../interfaces/service_plugin.dart';
-import '../../utils/logging_utils.dart';
+import '../../utils/logger.dart';
 
 /// Example Analytics Service Plugin
 /// Demonstrates how to create a service plugin that provides analytics capabilities

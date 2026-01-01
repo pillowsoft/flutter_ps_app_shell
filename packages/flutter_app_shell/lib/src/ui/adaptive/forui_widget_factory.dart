@@ -629,12 +629,12 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
       context: context,
       isScrollControlled: isScrollControlled,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(12),
           ),
-          border: Border(
+          border: const Border(
             top: BorderSide(color: _borderColor, width: 1),
             left: BorderSide(color: _borderColor, width: 1),
             right: BorderSide(color: _borderColor, width: 1),
@@ -2462,10 +2462,10 @@ class ForUIWidgetFactory extends AdaptiveWidgetFactory {
     return showModalBottomSheet<T>(
       context: context,
       builder: (sheetContext) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-          border: Border(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+          border: const Border(
             top: BorderSide(color: _borderColor, width: 1),
             left: BorderSide(color: _borderColor, width: 1),
             right: BorderSide(color: _borderColor, width: 1),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import '../interfaces/widget_plugin.dart';
-import '../../utils/logging_utils.dart';
+import '../../utils/logger.dart';
 
 /// Example Chart Widget Extension Plugin
 /// Demonstrates how to create a widget plugin that provides adaptive chart components
@@ -199,7 +199,7 @@ class _ChartContainer extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -210,7 +210,7 @@ class _ChartContainer extends StatelessWidget {
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
             width: 0.5,
           ),
         );
@@ -219,7 +219,7 @@ class _ChartContainer extends StatelessWidget {
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withValues(alpha: 0.3),
             width: 1,
           ),
         );
@@ -275,7 +275,7 @@ class _LineChartWidget extends StatelessWidget {
     // For now, show a placeholder
     return Container(
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: Colors.blue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Center(
@@ -285,13 +285,13 @@ class _LineChartWidget extends StatelessWidget {
             Icon(
               Icons.show_chart,
               size: 48,
-              color: Colors.blue.withOpacity(0.5),
+              color: Colors.blue.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 8),
             Text(
               'Line Chart',
               style: TextStyle(
-                color: Colors.blue.withOpacity(0.7),
+                color: Colors.blue.withValues(alpha: 0.7),
               ),
             ),
             if (data.isNotEmpty) ...[
@@ -300,7 +300,7 @@ class _LineChartWidget extends StatelessWidget {
                 '${data.length} data points',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.blue.withOpacity(0.5),
+                  color: Colors.blue.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -329,7 +329,7 @@ class _BarChartWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Center(
@@ -339,13 +339,13 @@ class _BarChartWidget extends StatelessWidget {
             Icon(
               Icons.bar_chart,
               size: 48,
-              color: Colors.green.withOpacity(0.5),
+              color: Colors.green.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 8),
             Text(
               'Bar Chart',
               style: TextStyle(
-                color: Colors.green.withOpacity(0.7),
+                color: Colors.green.withValues(alpha: 0.7),
               ),
             ),
             if (data.isNotEmpty) ...[
@@ -354,7 +354,7 @@ class _BarChartWidget extends StatelessWidget {
                 '${data.length} bars',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.green.withOpacity(0.5),
+                  color: Colors.green.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -383,7 +383,7 @@ class _PieChartWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: Colors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Center(
@@ -393,13 +393,13 @@ class _PieChartWidget extends StatelessWidget {
             Icon(
               Icons.pie_chart,
               size: 48,
-              color: Colors.orange.withOpacity(0.5),
+              color: Colors.orange.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 8),
             Text(
               'Pie Chart',
               style: TextStyle(
-                color: Colors.orange.withOpacity(0.7),
+                color: Colors.orange.withValues(alpha: 0.7),
               ),
             ),
             if (data.isNotEmpty) ...[
@@ -408,7 +408,7 @@ class _PieChartWidget extends StatelessWidget {
                 '${data.length} segments',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.orange.withOpacity(0.5),
+                  color: Colors.orange.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -438,7 +438,7 @@ class _SparklineWidget extends StatelessWidget {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Center(
@@ -448,14 +448,14 @@ class _SparklineWidget extends StatelessWidget {
             Icon(
               Icons.trending_up,
               size: 20,
-              color: color.withOpacity(0.5),
+              color: color.withValues(alpha: 0.5),
             ),
             const SizedBox(width: 8),
             Text(
               'Sparkline (${data.length} points)',
               style: TextStyle(
                 fontSize: 12,
-                color: color.withOpacity(0.7),
+                color: color.withValues(alpha: 0.7),
               ),
             ),
           ],

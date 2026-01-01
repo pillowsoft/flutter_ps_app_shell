@@ -141,11 +141,21 @@ class CloudflareService {
       throw CloudflareException('User not authenticated with InstantDB');
     }
 
-    // TODO: Get refresh token from InstantDB service
-    // This requires extending the AuthenticationService to expose refresh tokens
-    // For now, we'll simulate this
+    // LIMITATION: Refresh token not yet exposed by AuthenticationService
+    //
+    // The InstantDB authentication flow provides refresh tokens that should be
+    // used here to obtain session JWTs from the Cloudflare auth shim. However,
+    // the current AuthenticationService implementation does not expose these
+    // refresh tokens through its public API.
+    //
+    // Required changes to enable full functionality:
+    // 1. Update AuthenticationService to store and expose the refresh token
+    // 2. Add a getter: String? get refreshToken => _refreshToken;
+    // 3. Update this code to use: _authService!.refreshToken
+    //
+    // Current workaround: Using a placeholder token (authentication will fail)
     final refreshToken =
-        'instant-refresh-token'; // This would come from AuthenticationService
+        'instant-refresh-token'; // Placeholder - replace with _authService!.refreshToken
 
     try {
       final response = await http

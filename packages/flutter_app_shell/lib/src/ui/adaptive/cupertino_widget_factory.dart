@@ -988,7 +988,7 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
           activeTrackColor: activeColor ?? CupertinoColors.activeBlue,
           inactiveTrackColor: inactiveColor ?? CupertinoColors.systemGrey4,
           thumbColor: CupertinoColors.white,
-          overlayColor: CupertinoColors.activeBlue.withOpacity(0.1),
+          overlayColor: CupertinoColors.activeBlue.withValues(alpha: 0.1),
         ),
       ),
       child: RangeSlider(
@@ -1863,7 +1863,7 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: CupertinoColors.black.withOpacity(0.2),
+                  color: CupertinoColors.black.withValues(alpha: 0.2),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
