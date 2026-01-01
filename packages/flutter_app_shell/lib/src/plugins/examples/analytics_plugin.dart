@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'package:get_it/get_it.dart';
+import 'package:logging/logging.dart';
 import 'package:signals/signals.dart';
 import '../interfaces/service_plugin.dart';
+import '../../utils/logging_utils.dart';
 
 /// Example Analytics Service Plugin
 /// Demonstrates how to create a service plugin that provides analytics capabilities
 class AnalyticsPlugin extends BaseServicePlugin
     with BackgroundServiceMixin, PersistentServiceMixin {
+  static final Logger _logger = createServiceLogger('AnalyticsPlugin');
+
   @override
   String get id => 'com.example.analytics';
 
@@ -105,14 +109,14 @@ class AnalyticsPlugin extends BaseServicePlugin
       'lastSessionId': _analyticsService.currentSessionId,
     };
     // In a real implementation, save to SharedPreferences or database
-    print('Saving analytics state: $state');
+    _logger.fine('Saving analytics state: $state');
   }
 
   @override
   Future<void> loadState() async {
     // Load analytics state from persistent storage
     // In a real implementation, load from SharedPreferences or database
-    print('Loading analytics state...');
+    _logger.fine('Loading analytics state...');
   }
 
   @override
@@ -123,6 +127,8 @@ class AnalyticsPlugin extends BaseServicePlugin
 
 /// Analytics Service provided by the plugin
 class AnalyticsService {
+  static final Logger _logger = createServiceLogger('AnalyticsService');
+
   final Map<String, dynamic> _configuration;
   final List<AnalyticsEvent> _eventQueue = [];
   Timer? _flushTimer;
@@ -183,7 +189,7 @@ class AnalyticsService {
 
     // Log in debug mode
     if (_configuration['debugMode'] == true) {
-      print('[Analytics] Event: $eventName, Parameters: $parameters');
+      _logger.fine('Event: $eventName, Parameters: $parameters');
     }
   }
 
@@ -234,9 +240,9 @@ class AnalyticsService {
     try {
       // In a real implementation, send to analytics backend
       if (_configuration['debugMode'] == true) {
-        print('[Analytics] Flushing ${eventsToSend.length} events');
+        _logger.fine('Flushing ${eventsToSend.length} events');
         for (final event in eventsToSend) {
-          print('  - ${event.name} at ${event.timestamp}');
+          _logger.fine('  - ${event.name} at ${event.timestamp}');
         }
       }
 
@@ -246,7 +252,7 @@ class AnalyticsService {
       // On error, add events back to queue
       _eventQueue.insertAll(0, eventsToSend);
       _eventQueueSize.value = _eventQueue.length;
-      print('[Analytics] Failed to flush events: $e');
+      _logger.warning('Failed to flush events: $e');
     }
   }
 

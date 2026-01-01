@@ -48,9 +48,20 @@ export 'src/ui/adaptive/forui_widget_factory.dart';
 
 // Wizard system exports
 export 'src/wizard/wizard.dart';
+export 'src/wizard/wizard_models.dart';
+export 'src/wizard/wizard_controller.dart';
 
 // Plugin system exports
 export 'src/plugins/plugins.dart';
+export 'src/plugins/core/plugin_manager.dart';
+export 'src/plugins/interfaces/base_plugin.dart';
+export 'src/plugins/interfaces/service_plugin.dart';
+export 'src/plugins/interfaces/widget_plugin.dart';
+export 'src/plugins/interfaces/theme_plugin.dart';
+export 'src/plugins/interfaces/workflow_plugin.dart';
+
+// Adaptive dialog models
+export 'src/ui/adaptive/adaptive_dialog_models.dart';
 
 // Re-export commonly used packages
 export 'package:go_router/go_router.dart';

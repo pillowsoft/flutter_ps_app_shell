@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import '../interfaces/widget_plugin.dart';
+import '../../utils/logging_utils.dart';
 
 /// Example Chart Widget Extension Plugin
 /// Demonstrates how to create a widget plugin that provides adaptive chart components
 class ChartWidgetPlugin extends BaseWidgetExtensionPlugin {
+  static final Logger _logger = createServiceLogger('ChartWidgetPlugin');
+
   @override
   String get id => 'com.example.charts';
 
@@ -43,13 +47,13 @@ class ChartWidgetPlugin extends BaseWidgetExtensionPlugin {
   Future<void> registerWidgets() async {
     // In a real implementation, register with the adaptive factory system
     // For now, this is a placeholder
-    print('[ChartWidgetPlugin] Registering chart widgets');
+    _logger.fine('Registering chart widgets');
   }
 
   @override
   Future<void> unregisterWidgets() async {
     // In a real implementation, unregister from the adaptive factory system
-    print('[ChartWidgetPlugin] Unregistering chart widgets');
+    _logger.fine('Unregistering chart widgets');
   }
 
   /// Build a line chart widget

@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 
 class NavigationService {
   late GoRouter _router;
+  bool _isInitialized = false;
 
   // Dialog awareness
   bool _hasActiveDialog = false;
@@ -11,7 +12,18 @@ class NavigationService {
   final List<VoidCallback> _beforeNavigateCallbacks = [];
   final List<BuildContext> _contextStack = [];
 
-  GoRouter get router => _router;
+  GoRouter get router {
+    _ensureInitialized();
+    return _router;
+  }
+
+  void _ensureInitialized() {
+    if (!_isInitialized) {
+      throw StateError(
+        'NavigationService not initialized. Call setRouter() first.',
+      );
+    }
+  }
 
   /// Whether a dialog is currently active
   bool get hasActiveDialog => _hasActiveDialog;
@@ -21,6 +33,7 @@ class NavigationService {
 
   void setRouter(GoRouter router) {
     _router = router;
+    _isInitialized = true;
   }
 
   /// Set whether a dialog is currently active
@@ -63,6 +76,7 @@ class NavigationService {
   }
 
   void go(String path, {Object? extra}) {
+    _ensureInitialized();
     // Notify listeners before navigation
     for (final callback in List.from(_beforeNavigateCallbacks)) {
       callback();
@@ -71,6 +85,7 @@ class NavigationService {
   }
 
   void push(String path, {Object? extra}) {
+    _ensureInitialized();
     // Notify listeners before navigation
     for (final callback in List.from(_beforeNavigateCallbacks)) {
       callback();
@@ -80,6 +95,7 @@ class NavigationService {
 
   /// Enhanced pop that can handle dialog dismissal
   void pop({bool isDialog = false}) {
+    _ensureInitialized();
     if (isDialog) {
       _hasActiveDialog = false;
     }
@@ -90,6 +106,7 @@ class NavigationService {
   }
 
   void replace(String path, {Object? extra}) {
+    _ensureInitialized();
     // Notify listeners before navigation
     for (final callback in List.from(_beforeNavigateCallbacks)) {
       callback();
@@ -98,6 +115,7 @@ class NavigationService {
   }
 
   void pushReplacement(String path, {Object? extra}) {
+    _ensureInitialized();
     // Notify listeners before navigation
     for (final callback in List.from(_beforeNavigateCallbacks)) {
       callback();
@@ -106,6 +124,7 @@ class NavigationService {
   }
 
   String get currentPath {
+    _ensureInitialized();
     final RouteMatch lastMatch =
         _router.routerDelegate.currentConfiguration.last;
     final RouteMatchList matchList = lastMatch is ImperativeRouteMatch
@@ -115,6 +134,7 @@ class NavigationService {
   }
 
   bool canPop() {
+    _ensureInitialized();
     return _router.canPop();
   }
 
