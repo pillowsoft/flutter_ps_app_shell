@@ -401,9 +401,11 @@ class _NavigationDemoScreenState extends State<NavigationDemoScreen> {
             ui.text(
                 'This modal preserves the navigation state behind it. The back button should still work as expected after closing this sheet.'),
             const SizedBox(height: 24),
-            ui.button(
-              onPressed: () => Navigator.of(context).pop(),
-              child: ui.text('Close'),
+            Builder(
+              builder: (sheetContext) => ui.button(
+                onPressed: () => Navigator.of(sheetContext).pop(),
+                child: ui.text('Close'),
+              ),
             ),
           ],
         ),
@@ -418,9 +420,11 @@ class _NavigationDemoScreenState extends State<NavigationDemoScreen> {
       content: ui.text(
           'This dialog appears over the current screen without affecting the navigation stack. Back button behavior is preserved.'),
       actions: [
-        ui.textButton(
-          label: 'Close',
-          onPressed: () => Navigator.of(context).pop(),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'Close',
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
         ),
       ],
     );

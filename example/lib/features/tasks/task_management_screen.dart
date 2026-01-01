@@ -1186,20 +1186,23 @@ class _TaskManagementScreenState extends State<TaskManagementScreen>
   }
 
   Future<void> _showStatusFilterDialog(ThemeData theme) async {
+    final ui = getAdaptiveFactory(context);
+
     final selected = await showDialog<TaskStatus>(
       context: context,
-      builder: (context) => SimpleDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Filter by Status'),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(context, null),
-            child: const Text('All Status'),
-          ),
-          ...TaskStatus.values.map((status) => SimpleDialogOption(
-                onPressed: () => Navigator.pop(context, status),
-                child: Row(
-                  children: [
-                    Container(
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('All Status'),
+                onTap: () => Navigator.pop(dialogContext, null),
+              ),
+              ...TaskStatus.values.map((status) => ListTile(
+                    leading: Container(
                       width: 12,
                       height: 12,
                       decoration: BoxDecoration(
@@ -1207,12 +1210,12 @@ class _TaskManagementScreenState extends State<TaskManagementScreen>
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(status.label),
-                  ],
-                ),
-              )),
-        ],
+                    title: Text(status.label),
+                    onTap: () => Navigator.pop(dialogContext, status),
+                  )),
+            ],
+          ),
+        ),
       ),
     );
 
@@ -1223,26 +1226,29 @@ class _TaskManagementScreenState extends State<TaskManagementScreen>
   }
 
   Future<void> _showCategoryFilterDialog(ThemeData theme) async {
+    final ui = getAdaptiveFactory(context);
+
     final selected = await showDialog<TaskCategory>(
       context: context,
-      builder: (context) => SimpleDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Filter by Category'),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(context, null),
-            child: const Text('All Categories'),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('All Categories'),
+                onTap: () => Navigator.pop(dialogContext, null),
+              ),
+              ...TaskCategory.values.map((category) => ListTile(
+                    leading: Icon(category.icon, color: category.color, size: 20),
+                    title: Text(category.label),
+                    onTap: () => Navigator.pop(dialogContext, category),
+                  )),
+            ],
           ),
-          ...TaskCategory.values.map((category) => SimpleDialogOption(
-                onPressed: () => Navigator.pop(context, category),
-                child: Row(
-                  children: [
-                    Icon(category.icon, color: category.color, size: 20),
-                    const SizedBox(width: 8),
-                    Text(category.label),
-                  ],
-                ),
-              )),
-        ],
+        ),
       ),
     );
 
@@ -1253,26 +1259,29 @@ class _TaskManagementScreenState extends State<TaskManagementScreen>
   }
 
   Future<void> _showPriorityFilterDialog(ThemeData theme) async {
+    final ui = getAdaptiveFactory(context);
+
     final selected = await showDialog<TaskPriority>(
       context: context,
-      builder: (context) => SimpleDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Filter by Priority'),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(context, null),
-            child: const Text('All Priorities'),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('All Priorities'),
+                onTap: () => Navigator.pop(dialogContext, null),
+              ),
+              ...TaskPriority.values.map((priority) => ListTile(
+                    leading: Icon(priority.icon, color: priority.color, size: 20),
+                    title: Text(priority.label),
+                    onTap: () => Navigator.pop(dialogContext, priority),
+                  )),
+            ],
           ),
-          ...TaskPriority.values.map((priority) => SimpleDialogOption(
-                onPressed: () => Navigator.pop(context, priority),
-                child: Row(
-                  children: [
-                    Icon(priority.icon, color: priority.color, size: 20),
-                    const SizedBox(width: 8),
-                    Text(priority.label),
-                  ],
-                ),
-              )),
-        ],
+        ),
       ),
     );
 

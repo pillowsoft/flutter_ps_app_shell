@@ -285,9 +285,11 @@ context.push('/camera');''',
       title: Text(title),
       content: Text(message),
       actions: [
-        ui.textButton(
-          label: 'OK',
-          onPressed: () => Navigator.of(context).pop(),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'OK',
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
         ),
       ],
     );

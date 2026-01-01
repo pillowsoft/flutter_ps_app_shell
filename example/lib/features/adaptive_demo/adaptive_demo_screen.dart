@@ -416,13 +416,17 @@ class _AdaptiveDemoScreenState extends State<AdaptiveDemoScreen> {
       title: const Text('Adaptive Dialog'),
       content: const Text('This dialog adapts to the current UI system.'),
       actions: [
-        ui.textButton(
-          label: 'Cancel',
-          onPressed: () => Navigator.of(context).pop(),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'Cancel',
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
         ),
-        ui.textButton(
-          label: 'OK',
-          onPressed: () => Navigator.of(context).pop(),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'OK',
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
         ),
       ],
     );
@@ -444,9 +448,11 @@ class _AdaptiveDemoScreenState extends State<AdaptiveDemoScreen> {
             const SizedBox(height: 16),
             const Text('This bottom sheet adapts to the current UI system.'),
             const SizedBox(height: 24),
-            ui.button(
-              label: 'Close',
-              onPressed: () => Navigator.of(context).pop(),
+            Builder(
+              builder: (sheetContext) => ui.button(
+                label: 'Close',
+                onPressed: () => Navigator.of(sheetContext).pop(),
+              ),
             ),
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],

@@ -397,21 +397,25 @@ class _TaskFormScreenState extends State<TaskFormScreen>
         autofocus: true,
       ),
       actions: [
-        ui.textButton(
-          label: 'Cancel',
-          onPressed: () => Navigator.pop(context),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'Cancel',
+            onPressed: () => Navigator.pop(dialogContext),
+          ),
         ),
-        ui.button(
-          label: 'Add',
-          onPressed: () {
-            if (controller.text.trim().isNotEmpty) {
-              setState(() {
-                _assignees.add(controller.text.trim());
-                _hasChanges = true;
-              });
-              Navigator.pop(context);
-            }
-          },
+        Builder(
+          builder: (dialogContext) => ui.button(
+            label: 'Add',
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                setState(() {
+                  _assignees.add(controller.text.trim());
+                  _hasChanges = true;
+                });
+                Navigator.pop(dialogContext);
+              }
+            },
+          ),
         ),
       ],
     );

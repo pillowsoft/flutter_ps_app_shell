@@ -113,13 +113,17 @@ class _CloudSyncDemoScreenState extends State<CloudSyncDemoScreen> {
         ],
       ),
       actions: [
-        ui.textButton(
-          label: 'Cancel',
-          onPressed: () => Navigator.of(context).pop(false),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'Cancel',
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+          ),
         ),
-        ui.button(
-          label: 'Sign In',
-          onPressed: () => Navigator.of(context).pop(true),
+        Builder(
+          builder: (dialogContext) => ui.button(
+            label: 'Sign In',
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+          ),
         ),
       ],
     );

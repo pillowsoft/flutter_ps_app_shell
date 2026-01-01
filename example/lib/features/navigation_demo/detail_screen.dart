@@ -274,17 +274,21 @@ class _DetailScreenState extends State<DetailScreen> {
         ],
       ),
       actions: [
-        ui.textButton(
-          label: 'Close Modal',
-          onPressed: () => Navigator.of(context).pop(),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'Close Modal',
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
         ),
         if (GoRouter.of(context).canPop())
-          ui.textButton(
-            label: 'Close & Go Back',
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Pop the screen
-            },
+          Builder(
+            builder: (dialogContext) => ui.textButton(
+              label: 'Close & Go Back',
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close dialog
+                Navigator.of(context).pop(); // Pop the screen
+              },
+            ),
           ),
       ],
     );

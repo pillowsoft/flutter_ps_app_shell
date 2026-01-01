@@ -439,16 +439,20 @@ class _ErrorHandlingDemoScreenState extends State<ErrorHandlingDemoScreen>
         ],
       ),
       actions: [
-        ui.textButton(
-          label: 'Dismiss',
-          onPressed: () => Navigator.pop(context),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'Dismiss',
+            onPressed: () => Navigator.pop(dialogContext),
+          ),
         ),
-        ui.button(
-          label: 'Report Error',
-          onPressed: () {
-            Navigator.pop(context);
-            _showErrorReportDialog();
-          },
+        Builder(
+          builder: (dialogContext) => ui.button(
+            label: 'Report Error',
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _showErrorReportDialog();
+            },
+          ),
         ),
       ],
     );
@@ -503,16 +507,20 @@ class _ErrorHandlingDemoScreenState extends State<ErrorHandlingDemoScreen>
         ],
       ),
       actions: [
-        ui.textButton(
-          label: 'Cancel',
-          onPressed: () => Navigator.pop(context),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'Cancel',
+            onPressed: () => Navigator.pop(dialogContext),
+          ),
         ),
-        ui.button(
-          label: 'Send Report',
-          onPressed: () {
-            Navigator.pop(context);
-            _sendErrorReport(reportController.text);
-          },
+        Builder(
+          builder: (dialogContext) => ui.button(
+            label: 'Send Report',
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _sendErrorReport(reportController.text);
+            },
+          ),
         ),
       ],
     );

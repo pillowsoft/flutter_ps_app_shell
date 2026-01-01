@@ -979,9 +979,11 @@ class _AccessibilityDemoScreenState extends State<AccessibilityDemoScreen>
         ],
       ),
       actions: [
-        ui.textButton(
-          label: 'OK',
-          onPressed: () => Navigator.pop(context),
+        Builder(
+          builder: (dialogContext) => ui.textButton(
+            label: 'OK',
+            onPressed: () => Navigator.pop(dialogContext),
+          ),
         ),
       ],
     );
