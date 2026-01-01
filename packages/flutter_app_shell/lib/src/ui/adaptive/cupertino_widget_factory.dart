@@ -390,13 +390,9 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
 
     return CupertinoButton.filled(
       key: key,
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       onPressed: onPressed,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Center(child: buttonChild!),
-      ),
+      child: buttonChild!,
     );
   }
 
@@ -410,20 +406,16 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
   }) {
     return CupertinoButton.filled(
       key: key,
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       onPressed: onPressed,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 8),
-            Text(label),
-          ],
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          icon,
+          const SizedBox(width: 8),
+          Text(label),
+        ],
       ),
     );
   }
@@ -440,17 +432,14 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
       padding: EdgeInsets.zero,
       onPressed: onPressed,
       child: Container(
-        width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           border: Border.all(color: CupertinoColors.activeBlue),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: const TextStyle(color: CupertinoColors.activeBlue),
-          ),
+        child: Text(
+          label,
+          style: const TextStyle(color: CupertinoColors.activeBlue),
         ),
       ),
     );
@@ -469,7 +458,6 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
       padding: EdgeInsets.zero,
       onPressed: onPressed,
       child: Container(
-        width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           border: Border.all(color: CupertinoColors.activeBlue),
