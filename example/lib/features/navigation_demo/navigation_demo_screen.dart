@@ -388,7 +388,7 @@ class _NavigationDemoScreenState extends State<NavigationDemoScreen> {
   }
 
   void _showBottomSheet(AdaptiveWidgetFactory ui) {
-    showModalBottomSheet(
+    ui.showModalBottomSheet(
       context: context,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24.0),
@@ -412,19 +412,17 @@ class _NavigationDemoScreenState extends State<NavigationDemoScreen> {
   }
 
   void _showDialog(AdaptiveWidgetFactory ui) {
-    showDialog(
+    ui.showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: ui.text('Navigation Dialog'),
-        content: ui.text(
-            'This dialog appears over the current screen without affecting the navigation stack. Back button behavior is preserved.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: ui.text('Close'),
-          ),
-        ],
-      ),
+      title: ui.text('Navigation Dialog'),
+      content: ui.text(
+          'This dialog appears over the current screen without affecting the navigation stack. Back button behavior is preserved.'),
+      actions: [
+        ui.textButton(
+          label: 'Close',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 }

@@ -257,38 +257,36 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _showModalDemo(AdaptiveWidgetFactory ui) {
-    showDialog(
+    ui.showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: ui.text('Modal at Level ${widget.level}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ui.text('This modal appears over the current navigation level.'),
-            const SizedBox(height: 8),
-            ui.text('Notice that:'),
-            const SizedBox(height: 4),
-            ui.text('• Back button behavior is preserved'),
-            ui.text('• Navigation stack remains intact'),
-            ui.text('• Modal has its own close action'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: ui.text('Close Modal'),
-          ),
-          if (GoRouter.of(context).canPop())
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(); // Pop the screen
-              },
-              child: ui.text('Close & Go Back'),
-            ),
+      title: ui.text('Modal at Level ${widget.level}'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ui.text('This modal appears over the current navigation level.'),
+          const SizedBox(height: 8),
+          ui.text('Notice that:'),
+          const SizedBox(height: 4),
+          ui.text('• Back button behavior is preserved'),
+          ui.text('• Navigation stack remains intact'),
+          ui.text('• Modal has its own close action'),
         ],
       ),
+      actions: [
+        ui.textButton(
+          label: 'Close Modal',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        if (GoRouter.of(context).canPop())
+          ui.textButton(
+            label: 'Close & Go Back',
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Pop the screen
+            },
+          ),
+      ],
     );
   }
 }

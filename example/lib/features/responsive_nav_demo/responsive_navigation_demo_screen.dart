@@ -279,18 +279,17 @@ context.push('/camera');''',
   }
 
   void _showTestInfo(BuildContext context, String title, String message) {
-    showDialog(
+    final ui = getAdaptiveFactory(context);
+    ui.showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        ui.textButton(
+          label: 'OK',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 
