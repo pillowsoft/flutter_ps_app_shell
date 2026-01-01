@@ -85,44 +85,43 @@ class _CloudSyncDemoScreenState extends State<CloudSyncDemoScreen> {
   Future<void> _signIn() async {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+    final ui = getAdaptiveFactory(context);
 
-    final result = await showDialog<bool>(
+    final result = await ui.showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign In'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'user@example.com',
-              ),
-              keyboardType: TextInputType.emailAddress,
+      title: const Text('Sign In'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: emailController,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              hintText: 'user@example.com',
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                hintText: '••••••',
-              ),
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            keyboardType: TextInputType.emailAddress,
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sign In'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: passwordController,
+            decoration: const InputDecoration(
+              labelText: 'Password',
+              hintText: '••••••',
+            ),
+            obscureText: true,
           ),
         ],
       ),
+      actions: [
+        ui.textButton(
+          label: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        ui.button(
+          label: 'Sign In',
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
 
     if (result == true) {

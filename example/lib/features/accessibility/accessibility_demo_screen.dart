@@ -958,34 +958,33 @@ class _AccessibilityDemoScreenState extends State<AccessibilityDemoScreen>
   }
 
   void _showTextSizeDialog() {
-    showDialog(
+    final ui = getAdaptiveFactory(context);
+    ui.showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Text Size'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Current size: ${(_textScale * 100).toInt()}%'),
-            const SizedBox(height: 16),
-            Slider(
-              value: _textScale,
-              min: 0.8,
-              max: 2.0,
-              divisions: 12,
-              label: '${(_textScale * 100).toInt()}%',
-              onChanged: (value) {
-                setState(() => _textScale = value);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+      title: const Text('Text Size'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Current size: ${(_textScale * 100).toInt()}%'),
+          const SizedBox(height: 16),
+          Slider(
+            value: _textScale,
+            min: 0.8,
+            max: 2.0,
+            divisions: 12,
+            label: '${(_textScale * 100).toInt()}%',
+            onChanged: (value) {
+              setState(() => _textScale = value);
+            },
           ),
         ],
       ),
+      actions: [
+        ui.textButton(
+          label: 'OK',
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
     );
   }
 
