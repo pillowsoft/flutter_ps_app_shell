@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
+import 'package:signals/signals.dart';
 import '../../state/app_shell_settings_store.dart';
 
 /// Enum representing different adaptive platforms
@@ -26,7 +27,7 @@ class AdaptiveStyleProvider {
   String get uiSystem {
     if (_overrideUiSystem != null) return _overrideUiSystem!;
     final settingsStore = GetIt.I<AppShellSettingsStore>();
-    return settingsStore.uiSystem.value;
+    return untracked(() => settingsStore.uiSystem.value);
   }
 
   /// Get the current platform as AdaptivePlatform enum

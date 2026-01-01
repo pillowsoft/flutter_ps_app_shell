@@ -424,11 +424,14 @@ class WindowStateService with WindowListener {
       final min = await windowManager.isMinimized();
       final full = await windowManager.isFullScreen();
 
-      windowPosition.value = pos;
-      windowSize.value = size;
-      isMaximized.value = max;
-      isMinimized.value = min;
-      isFullScreen.value = full;
+      // Batch all 5 signal updates to avoid multiple effect/computed re-runs
+      batch(() {
+        windowPosition.value = pos;
+        windowSize.value = size;
+        isMaximized.value = max;
+        isMinimized.value = min;
+        isFullScreen.value = full;
+      });
 
       _logger.fine(
           'Updated current state - Pos: $pos, Size: $size, Max: $max, Full: $full');
@@ -452,8 +455,11 @@ class WindowStateService with WindowListener {
 
         _logger.fine('Updating window state - Position: $pos, Size: $size');
 
-        windowPosition.value = pos;
-        windowSize.value = size;
+        // Batch the 2 signal updates to avoid multiple effect/computed re-runs
+        batch(() {
+          windowPosition.value = pos;
+          windowSize.value = size;
+        });
       }
 
       _debouncedSave();
