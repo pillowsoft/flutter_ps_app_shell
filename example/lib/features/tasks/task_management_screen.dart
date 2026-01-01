@@ -240,22 +240,14 @@ class _TaskManagementScreenState extends State<TaskManagementScreen>
   }
 
   Future<void> _deleteTask(Task task) async {
-    final confirm = await showDialog<bool>(
+    final ui = getAdaptiveFactory(context);
+    final confirm = await ui.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Task'),
-        content: Text('Are you sure you want to delete "${task.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete "${task.title}"?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDestructive: true,
     );
 
     if (confirm == true) {
@@ -267,22 +259,14 @@ class _TaskManagementScreenState extends State<TaskManagementScreen>
   Future<void> _bulkDelete() async {
     if (_selectedTaskIds.isEmpty) return;
 
-    final confirm = await showDialog<bool>(
+    final ui = getAdaptiveFactory(context);
+    final confirm = await ui.showConfirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Tasks'),
-        content: Text('Delete ${_selectedTaskIds.length} selected tasks?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete Tasks',
+      message: 'Delete ${_selectedTaskIds.length} selected tasks?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDestructive: true,
     );
 
     if (confirm == true) {
@@ -774,23 +758,16 @@ class _TaskManagementScreenState extends State<TaskManagementScreen>
           await _updateTaskStatus(task, TaskStatus.done);
           return false;
         } else {
-          return await showDialog<bool>(
+          final ui = getAdaptiveFactory(context);
+          return await ui.showConfirmationDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Delete Task'),
-              content: Text('Delete "${task.title}"?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Delete'),
-                ),
-              ],
-            ),
-          );
+            title: 'Delete Task',
+            message: 'Delete "${task.title}"?',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            isDestructive: true,
+          ) ??
+              false;
         }
       },
       onDismissed: (_) => _deleteTask(task),
