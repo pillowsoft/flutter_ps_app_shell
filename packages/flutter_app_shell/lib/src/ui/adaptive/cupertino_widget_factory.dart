@@ -545,7 +545,24 @@ class CupertinoWidgetFactory extends AdaptiveWidgetFactory {
   }) {
     return showCupertinoModalPopup<T>(
       context: context,
-      builder: builder,
+      builder: (context) {
+        final theme = CupertinoTheme.of(context);
+        final backgroundColor = theme.scaffoldBackgroundColor ??
+            CupertinoColors.systemBackground.resolveFrom(context);
+
+        return Container(
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(12),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: builder(context),
+          ),
+        );
+      },
     );
   }
 
