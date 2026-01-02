@@ -485,7 +485,7 @@ class AuthenticationService {
   }
 
   Future<void> _restoreAuthState() async {
-    // Restore local auth state
+    // Try to restore from local token-based auth first
     final token = _prefs.getString(_keyAuthToken).value;
     final userDataString = _prefs.getString(_keyUserData).value;
 
@@ -498,10 +498,40 @@ class AuthenticationService {
         isAuthenticated.value = true;
 
         _logger.info('Restored local authentication state for: ${user.email}');
+        return; // Successfully restored
       } catch (e, stackTrace) {
         _logger.severe('Failed to restore auth state', e, stackTrace);
         await _clearAuthData();
       }
+    }
+
+    // Also check for InstantDB session (e.g., after magic link authentication)
+    // Magic link auth only stores user data, not tokens, so we need to check
+    // if InstantDB has an active session and restore from there
+    try {
+      final dbService = DatabaseService.instance;
+      if (dbService.isInitialized) {
+        final instantUser = dbService.db.auth.currentUser.value;
+        if (instantUser != null) {
+          final user = AuthUser(
+            id: instantUser.id,
+            email: instantUser.email,
+            name: _extractNameFromEmail(instantUser.email),
+            avatarUrl: null,
+          );
+
+          currentUser.value = user;
+          isAuthenticated.value = true;
+
+          // Store user data for future reference
+          await _storeUserData(user);
+
+          _logger.info(
+              'Restored InstantDB authentication state for: ${user.email}');
+        }
+      }
+    } catch (e, stackTrace) {
+      _logger.warning('Failed to restore InstantDB auth state', e, stackTrace);
     }
   }
 

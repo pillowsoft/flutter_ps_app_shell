@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.1.1 - 2026-01-01
+
+### Fixed
+
+- **🐛 CRITICAL: InstantDB session not restored on app restart**: Fixed authentication state not persisting after magic link sign-in
+  - **Root Cause**: `_restoreAuthState()` only checked for local token-based auth, not InstantDB sessions
+  - **Symptom**: Users had to re-authenticate every time they restarted the app after magic link sign-in
+  - **Impact**: Magic link authentication now persists across app restarts - users stay signed in
+  - **Files Changed**:
+    - `authentication_service.dart:487-536` - Added InstantDB session check to `_restoreAuthState()`
+  - **How It Works**:
+    1. First tries to restore from local tokens (password/biometric auth)
+    2. If no local tokens, checks DatabaseService for active InstantDB session
+    3. If InstantDB session exists, restores user data and marks as authenticated
+    4. Stores user data for future reference
+  - **Technical Details**:
+    - Magic link auth only stores user data via `_storeUserData()`, not tokens
+    - Local token auth stores both tokens and user data via `_storeAuthData()`
+    - InstantDB maintains its own session independently
+    - Now both auth methods are properly restored on app restart
+  - Reported by user experiencing re-authentication on every app restart
+
 ## 1.1.0 - 2026-01-01
 
 ### Added
