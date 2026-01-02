@@ -33,9 +33,8 @@ class DatabaseService {
   final connectionStatus =
       signal<DatabaseConnectionStatus>(DatabaseConnectionStatus.disconnected);
 
-  /// Signal for authentication status
-  final authenticationStatus =
-      signal<AuthenticationStatus>(AuthenticationStatus.unauthenticated);
+  /// Signal for authentication status (computed from InstantDB auth state)
+  late final Computed<AuthenticationStatus> authenticationStatus;
 
   /// Signal for real-time sync status
   final syncStatus = signal<SyncStatus>(SyncStatus.disconnected);
@@ -69,9 +68,7 @@ class DatabaseService {
       // Use local-only mode if no app ID provided
       // IMPORTANT: Use a stable database name to avoid creating orphaned databases
       // on every startup. See bug report: "App Shell Creates Orphaned Databases on Every Startup"
-      final effectiveAppId = appId.isEmpty
-          ? 'local-only-app-shell'
-          : appId;
+      final effectiveAppId = appId.isEmpty ? 'local-only-app-shell' : appId;
       final isLocalOnly = appId.isEmpty;
 
       _appId = effectiveAppId;
@@ -85,6 +82,15 @@ class DatabaseService {
           verboseLogging: verboseLogging,
         ),
       );
+
+      // Initialize authentication status as computed signal
+      // This derives from InstantDB's auth state and prevents reactive cycles
+      authenticationStatus = computed(() {
+        final user = _db?.auth.currentUser.value;
+        return user != null
+            ? AuthenticationStatus.authenticated
+            : AuthenticationStatus.unauthenticated;
+      });
 
       // Authentication is available via _db.auth
 
@@ -114,7 +120,7 @@ class DatabaseService {
         _appId = null;
 
         connectionStatus.value = DatabaseConnectionStatus.disconnected;
-        authenticationStatus.value = AuthenticationStatus.unauthenticated;
+        // authenticationStatus is computed, so it updates automatically when _db is null
         syncStatus.value = SyncStatus.disconnected;
 
         _logger.info('Database service closed');
@@ -187,14 +193,11 @@ class DatabaseService {
 
   /// Set up status monitoring for connection and auth state
   void _setupStatusMonitoring() {
-    // Monitor authentication status
+    // Monitor authentication status for logging (using untracked to avoid cycles)
     effect(() {
       final user = _db?.auth.currentUser.value;
       if (user != null) {
-        authenticationStatus.value = AuthenticationStatus.authenticated;
-        _logger.fine('User authenticated: ${user.email}');
-      } else {
-        authenticationStatus.value = AuthenticationStatus.unauthenticated;
+        untracked(() => _logger.fine('User authenticated: ${user.email}'));
       }
     });
 
@@ -412,7 +415,7 @@ class DatabaseService {
     try {
       // Transform where clause to use InstantDB operators
       final transformedWhere = _transformWhereClause(where);
-      
+
       final query = <String, dynamic>{
         collection: <String, dynamic>{
           '\$': <String, dynamic>{
@@ -523,11 +526,12 @@ class DatabaseService {
   Computed<List<Map<String, dynamic>>> watchWhere(
       String collection, Map<String, dynamic> where) {
     _ensureInitialized();
-    _logger.fine('watchWhere called for collection: $collection with where: $where');
+    _logger.fine(
+        'watchWhere called for collection: $collection with where: $where');
 
     // Transform where clause to use InstantDB operators
     final transformedWhere = _transformWhereClause(where);
-    
+
     final query = <String, dynamic>{
       collection: <String, dynamic>{
         '\$': <String, dynamic>{
@@ -571,7 +575,7 @@ class DatabaseService {
     // Note: Removed the effect that was causing cycles
     // The realtimeUpdates counter was creating a reactive dependency cycle
     // when accessing transformedSignal.value inside an effect
-    
+
     return transformedSignal;
   }
 
@@ -632,7 +636,7 @@ class DatabaseService {
   /// Returns detailed information about the parsing process
   Future<Map<String, dynamic>> diagnoseDatalogParsing(String collection) async {
     _ensureInitialized();
-    
+
     final diagnosis = <String, dynamic>{
       'collection': collection,
       'timestamp': DateTime.now().toIso8601String(),
@@ -647,37 +651,37 @@ class DatabaseService {
       // Get the attribute mappings for this collection
       final mappings = _getAttributeMappings(collection);
       diagnosis['attributeMappings'] = mappings;
-      
+
       // Run a query to get datalog format
       final query = {collection: {}};
       final result = await _db!.queryOnce(query);
-      
+
       diagnosis['queryResult'] = {
         'hasData': result.hasData,
         'hasError': result.hasError,
         'error': result.error?.toString(),
       };
-      
+
       if (result.hasData && result.data != null) {
         final data = result.data!;
-        
+
         // Check format
         if (data['datalog-result'] != null) {
           diagnosis['format'] = 'datalog';
           final datalogResult = data['datalog-result'] as Map;
           final joinRows = datalogResult['join-rows'] as List?;
-          
+
           diagnosis['joinRowCount'] = joinRows?.length ?? 0;
-          
+
           if (joinRows != null && joinRows.isNotEmpty) {
             // Analyze attribute IDs in the data
             final foundAttributeIds = <String, Map<String, dynamic>>{};
-            
+
             for (final row in joinRows) {
               if (row is List && row.length >= 4) {
                 final attributeId = row[1] as String;
                 final value = row[2];
-                
+
                 if (!foundAttributeIds.containsKey(attributeId)) {
                   foundAttributeIds[attributeId] = {
                     'sampleValue': value,
@@ -691,9 +695,9 @@ class DatabaseService {
                 }
               }
             }
-            
+
             diagnosis['foundAttributeIds'] = foundAttributeIds;
-            
+
             // Identify unmapped attributes
             final unmapped = foundAttributeIds.entries
                 .where((e) => !e.value['isMapped'])
@@ -704,13 +708,13 @@ class DatabaseService {
                       'occurrences': e.value['occurrences'],
                     })
                 .toList();
-            
+
             diagnosis['unmappedAttributes'] = unmapped;
-            
+
             // Try to parse with current mappings
             final parsedDocs = _parseDatalogResult(data, collection);
             diagnosis['parsedDocuments'] = parsedDocs.length;
-            
+
             if (parsedDocs.isNotEmpty) {
               diagnosis['sampleDocument'] = parsedDocs.first;
               diagnosis['documentFields'] = parsedDocs.first.keys.toList();
@@ -731,7 +735,7 @@ class DatabaseService {
         'stackTrace': stack.toString().split('\n').take(5).join('\n'),
       });
     }
-    
+
     return diagnosis;
   }
 
@@ -784,7 +788,7 @@ class DatabaseService {
   /// Only preserves existing operator maps
   Map<String, dynamic> _transformWhereClause(Map<String, dynamic> where) {
     final transformed = <String, dynamic>{};
-    
+
     for (final entry in where.entries) {
       if (entry.value is Map<String, dynamic>) {
         // Already has operators (e.g., {"$eq": "value"}), preserve as-is
@@ -794,7 +798,7 @@ class DatabaseService {
         transformed[entry.key] = entry.value;
       }
     }
-    
+
     return transformed;
   }
 
@@ -828,14 +832,16 @@ class DatabaseService {
     final defaultMappings = {
       'id': ['8ce3e8f1-1c42-4683-9e91-dfe8f6879e1b'],
       'title': ['82a884f7-6e0f-427d-88b6-66c550e86d98'],
-      'name': ['82a884f7-6e0f-427d-88b6-66c550e86d98'], // title/name often share IDs
+      'name': [
+        '82a884f7-6e0f-427d-88b6-66c550e86d98'
+      ], // title/name often share IDs
       'createdAt': ['90774276-102f-4963-856b-2e69315c0bfd'],
       'updatedAt': ['253a7374-4154-4cc4-b71b-5eca6f8e5db6'],
     };
 
     // Get mappings for this collection or use defaults
     final mappings = collectionMappings[collection] ?? defaultMappings;
-    
+
     // Convert from field->IDs to ID->field for efficient lookup
     final attributeMap = <String, String>{};
     mappings.forEach((fieldName, attributeIds) {
@@ -862,11 +868,12 @@ class DatabaseService {
       return [];
     }
 
-    _logger.info('🔍 Parsing datalog for collection "$collection" with ${joinRows.length} join-rows');
+    _logger.info(
+        '🔍 Parsing datalog for collection "$collection" with ${joinRows.length} join-rows');
 
     // Group rows by entity ID to reconstruct documents
     final entityMap = <String, Map<String, dynamic>>{};
-    
+
     // Track unmapped attribute IDs for debugging
     final unmappedAttributes = <String, dynamic>{};
 
@@ -898,7 +905,7 @@ class DatabaseService {
           } else {
             unmappedAttributes[attributeId]['count']++;
           }
-          
+
           // For unknown attribute IDs, try to infer based on value type
           if (value is bool && !entityMap[entityId]!.containsKey('completed')) {
             // Boolean values are likely 'completed' for todos
@@ -906,9 +913,9 @@ class DatabaseService {
           } else if (value is String && value.contains('@')) {
             // Email-like strings might be email field
             entityMap[entityId]!['email'] = value;
-          } else if (value is String && 
-                     (value.contains('T') && value.contains(':')) &&
-                     !entityMap[entityId]!.containsKey('createdAt')) {
+          } else if (value is String &&
+              (value.contains('T') && value.contains(':')) &&
+              !entityMap[entityId]!.containsKey('createdAt')) {
             // ISO date strings for createdAt if not mapped
             entityMap[entityId]!['createdAt'] = value;
           } else {
@@ -920,12 +927,14 @@ class DatabaseService {
         }
       }
     }
-    
+
     // Log unmapped attributes summary
     if (unmappedAttributes.isNotEmpty) {
-      _logger.warning('⚠️ Found ${unmappedAttributes.length} unmapped attribute IDs:');
+      _logger.warning(
+          '⚠️ Found ${unmappedAttributes.length} unmapped attribute IDs:');
       unmappedAttributes.forEach((attrId, info) {
-        _logger.warning('  - $attrId: ${info['valueType']} (${info['count']} occurrences) sample: "${info['sampleValue']}"');
+        _logger.warning(
+            '  - $attrId: ${info['valueType']} (${info['count']} occurrences) sample: "${info['sampleValue']}"');
       });
       _logger.warning('Consider adding these mappings to the attributeMap');
     }
@@ -939,7 +948,8 @@ class DatabaseService {
       return doc;
     }).toList();
 
-    _logger.info('✅ Parsed ${documents.length} documents from ${joinRows.length} join-rows');
+    _logger.info(
+        '✅ Parsed ${documents.length} documents from ${joinRows.length} join-rows');
     if (documents.isNotEmpty) {
       _logger.fine('Sample document fields: ${documents.first.keys.toList()}');
     }

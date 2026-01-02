@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.1.3 - 2026-01-02
+
+### Fixed
+
+- **🐛 CRITICAL ARCHITECTURAL FIX: SignalEffectException during magic link authentication**: Fixed reactive cycle caused by effect() writing to signals
+  - **Root Cause**: DatabaseService used `effect()` + signal writes instead of `computed()` signal pattern
+  - **The Problem Chain**:
+    1. User authenticates → `batch()` wraps signal updates in AuthenticationService
+    2. InstantDB propagates change → `_db.auth.currentUser` signal updates
+    3. DatabaseService `effect()` triggers (lines 197-205)
+    4. Effect reads `_db.auth.currentUser` and WRITES to `authenticationStatus` signal
+    5. 💥 Exception: Writing to signal inside effect during active batch violates Signals architecture
+  - **Symptom**: `SignalEffectException` thrown at line 380 INSIDE the `batch()` call during magic link verification
+  - **Impact**: Eliminates reactive cycle errors and follows Signals architectural best practices
+  - **Files Changed**:
+    - `database_service.dart` - Converted `authenticationStatus` from signal + effect to computed signal
+  - **Changes Made**:
+    1. Line 37: Changed `authenticationStatus` from regular signal to `late final Computed<AuthenticationStatus>`
+    2. Lines 88-93: Initialize as computed signal in `initialize()` method (derives from `_db.auth.currentUser`)
+    3. Lines 197-202: Replaced effect that wrote to signals with logging-only effect using `untracked()`
+    4. Line 123: Removed manual authenticationStatus update in `close()` (computed signal updates automatically)
+  - **Why This Fix Works**:
+    - `computed()` signals derive their value reactively without writing to other signals
+    - No signal mutation inside effects = no reactive cycles
+    - Authentication status automatically updates when InstantDB auth state changes
+    - Uses proper Signals architecture pattern (same as vizi repo commit 8e5ac5e9)
+  - **Technical Details**:
+    - Computed signals are read-only and derive from other signals
+    - Effect now only logs (using `untracked()` to avoid cycles)
+    - Breaking the effect → signal write pattern prevents infinite loops
+  - **Why v1.1.2 Batch Fix Wasn't Enough**:
+    - v1.1.2 fixed direct sequential signal writes in AuthenticationService
+    - But didn't address the deeper architectural issue in DatabaseService
+    - The batch() in AuthenticationService triggered DatabaseService effect
+    - That effect created nested batch scenario by writing to signals
+  - Reported by user experiencing SignalEffectException even after v1.1.2 upgrade
+
 ## 1.1.2 - 2026-01-01
 
 ### Fixed
