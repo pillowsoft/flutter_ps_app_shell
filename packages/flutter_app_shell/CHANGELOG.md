@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.1.5 - 2026-01-02
+
+### Changed
+
+- **⬆️ Upgraded InstantDB to v0.2.7**: Integrated upstream fix for SignalEffectException
+  - InstantDB v0.2.7 now includes `batch()` calls in all auth methods
+  - Primary root cause of SignalEffectException resolved at the source
+  - v1.1.4 workarounds remain in place as defensive programming
+  - Impact: More robust authentication with upstream signal batching
+  - Files Updated:
+    - `pubspec.yaml`: instantdb_flutter ^0.2.6 → git dependency (v0.2.7)
+  - InstantDB v0.2.7 Changes:
+    - Added batch() to signIn, signUp, verifyMagicCode, refreshUser, updateUser, signOut
+    - Fixed memory leaks in event ID tracking and query cache (LRU with 50-query limit)
+    - Improved type safety for comparison operators ($gt, $gte, $lt, $lte)
+    - Upgraded signals_flutter (6.0.2 → 6.3.0)
+  - Test Results:
+    - ✅ 15 tests passing
+    - ✅ No SignalEffectException errors detected
+    - ✅ Auth flows work correctly with upstream fix
+  - Note: v1.1.4 workarounds (removed logging effect, moved user data persistence, diagnostic logging) retained as defensive improvements
+
+### Dependencies
+
+- instantdb_flutter: 0.2.6 → 0.2.7 (via git)
+
 ## 1.1.4 - 2026-01-02
 
 ### Fixed
