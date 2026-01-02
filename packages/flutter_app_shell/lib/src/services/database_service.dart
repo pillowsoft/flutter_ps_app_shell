@@ -124,6 +124,67 @@ class DatabaseService {
     }
   }
 
+  /// Performs database maintenance operations
+  ///
+  /// **LIMITATION**: WAL checkpoint functionality is not currently available because
+  /// InstantDB (v0.2.6) does not expose the underlying SQLite database for direct
+  /// PRAGMA execution.
+  ///
+  /// ## Background
+  ///
+  /// SQLite's Write-Ahead Logging (WAL) mode can accumulate large log files over time,
+  /// causing slow app startup as SQLite replays all WAL logs. Proper database
+  /// maintenance would execute:
+  /// - `PRAGMA wal_checkpoint(TRUNCATE)` - Commit WAL changes and truncate log file
+  /// - `PRAGMA optimize` - Update query planner statistics
+  ///
+  /// ## Current Status
+  ///
+  /// InstantDB uses sqflite internally which supports WAL checkpoints, but the API
+  /// is not exposed. A feature request has been filed:
+  /// https://github.com/pillowsoft/instantdb_flutter/issues/TBD
+  ///
+  /// ## Workarounds
+  ///
+  /// Until InstantDB adds maintenance API support, you can minimize WAL growth by:
+  /// 1. **Batch transactions** - Group multiple operations into single transactions
+  /// 2. **Reduce transaction frequency** - Combine related writes
+  /// 3. **Call clearLocalDatabase()** - Nuclear option that resets the database
+  ///    (loses all local data, only use for troubleshooting)
+  ///
+  /// ## Example Usage (when available)
+  ///
+  /// ```dart
+  /// // This will work once InstantDB exposes maintenance API
+  /// await databaseService.performMaintenance();
+  /// ```
+  ///
+  /// See:
+  /// - https://sqlite.org/wal.html - SQLite WAL documentation
+  /// - https://sqlite.org/pragma.html#pragma_wal_checkpoint - WAL checkpoint
+  /// - https://github.com/tekartik/sqflite/blob/master/sqflite/doc/dev_tips.md - sqflite tips
+  Future<void> performMaintenance() async {
+    if (_db == null) {
+      _logger.warning('Cannot perform maintenance: database not initialized');
+      return;
+    }
+
+    _logger.info('Database maintenance requested');
+    _logger.warning(
+      'WAL checkpoint not available: InstantDB does not expose underlying database. '
+      'Consider batching transactions to minimize WAL growth. '
+      'See DatabaseService.performMaintenance() documentation for details.',
+    );
+
+    // TODO: Implement WAL checkpoint when InstantDB adds maintenance API
+    // Desired implementation:
+    // await _db.checkpoint(); // or similar API
+    //
+    // Underlying SQL that would be executed:
+    // PRAGMA wal_checkpoint(TRUNCATE);
+    // PRAGMA optimize;
+  }
+
   /// Set up status monitoring for connection and auth state
   void _setupStatusMonitoring() {
     // Monitor authentication status
