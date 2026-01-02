@@ -39,6 +39,20 @@ class AuthenticationService {
   /// Signal for biometric availability
   final biometricAvailable = signal<bool>(false);
 
+  /// Get the current refresh token value (for API authentication with backend services)
+  ///
+  /// Returns the stored refresh token or null if not authenticated.
+  /// This token can be used to authenticate with backend services like Cloudflare Workers.
+  ///
+  /// **Security Note**: Only expose this to trusted backend services, never to client-side code.
+  ///
+  /// **Note:** This is different from [refreshToken()], which is a method that refreshes
+  /// the authentication token by making an API call.
+  String? get currentRefreshToken {
+    if (!_isInitialized) return null;
+    return _prefs.getString(_keyRefreshToken).value;
+  }
+
   // Preference keys
   static const String _keyAuthToken = 'auth_token';
   static const String _keyRefreshToken = 'auth_refresh_token';

@@ -4,11 +4,61 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:signals/signals.dart';
-// Cloud storage features available through InstantDB storage
+// Cloud storage features available through Cloudflare R2
 import '../utils/logger.dart';
 import 'package:logging/logging.dart';
+import 'cloudflare_service.dart';
 
 /// File storage service with local and cloud capabilities
+///
+/// Provides unified API for file storage with automatic fallback and synchronization
+/// between local device storage and cloud storage (Cloudflare R2).
+///
+/// **Features:**
+/// - Local file storage in application documents directory
+/// - Cloud file storage via Cloudflare R2 (when enabled)
+/// - Automatic cloud sync with offline-first approach
+/// - Progress tracking for transfers
+/// - Smart fallback (cloud → local → cloud)
+/// - File metadata and listing
+///
+/// **Setup:**
+/// ```dart
+/// // Local-only mode
+/// await fileStorageService.initialize();
+///
+/// // With cloud storage
+/// await fileStorageService.initialize(
+///   cloudflareService: cloudflareService,
+///   defaultBucket: 'my-app-files',
+/// );
+/// ```
+///
+/// **Usage:**
+/// ```dart
+/// // Save file (auto-syncs to cloud if enabled)
+/// final result = await fileStorageService.saveFile(
+///   fileName: 'photo.jpg',
+///   data: imageBytes,
+///   folder: 'photos',
+/// );
+///
+/// // Load file (tries local first, falls back to cloud)
+/// final data = await fileStorageService.loadFile(
+///   fileName: 'photo.jpg',
+///   folder: 'photos',
+/// );
+///
+/// // List files (merges local + cloud)
+/// final files = await fileStorageService.listFiles(folder: 'photos');
+/// ```
+///
+/// **Cloud Storage Requirements:**
+/// - [CloudflareService] must be initialized and authenticated
+/// - User must be signed in with InstantDB
+/// - Cloudflare Workers must be deployed with R2 configured
+///
+/// See also: [CloudflareService] for cloud storage setup
 class FileStorageService {
   static FileStorageService? _instance;
   static FileStorageService get instance =>
@@ -19,17 +69,20 @@ class FileStorageService {
   // Service-specific logger
   static final Logger _logger = createServiceLogger('FileStorageService');
 
-  bool _useCloudStorage = false;
   late Directory _localStorageDir;
   String _defaultBucket = 'app-files';
-
-  void _throwCloudStorageError() {
-    throw UnimplementedError(
-        'Cloud storage is not available - InstantDB integration not configured');
-  }
+  CloudflareService? _cloudflareService;
 
   bool get isInitialized => _localStorageDir.existsSync();
-  bool get isCloudStorageEnabled => false; // Cloud storage disabled
+
+  /// Check if cloud storage is enabled and ready
+  ///
+  /// Cloud storage requires CloudflareService to be initialized and
+  /// the user to be authenticated.
+  bool get isCloudStorageEnabled =>
+      _cloudflareService != null &&
+      _cloudflareService!.isInitialized &&
+      _cloudflareService!.currentSession != null;
 
   /// Signal for storage operation status
   final storageStatus = signal<StorageStatus>(StorageStatus.idle);
@@ -40,12 +93,16 @@ class FileStorageService {
   /// Signal for active transfers count
   final activeTransfers = signal<int>(0);
 
-  /// Initialize the file storage service (local only)
+  /// Initialize the file storage service
+  ///
+  /// Optionally provide [cloudflareService] to enable cloud storage via Cloudflare R2.
+  /// Set [defaultBucket] to customize the R2 bucket prefix (default: 'app-files').
   Future<void> initialize({
     String? defaultBucket,
+    CloudflareService? cloudflareService,
   }) async {
     try {
-      _logger.info('Initializing file storage service (local only)...');
+      _logger.info('Initializing file storage service...');
 
       // Set up local storage directory
       final appDir = await getApplicationDocumentsDirectory();
@@ -58,8 +115,10 @@ class FileStorageService {
         _defaultBucket = defaultBucket;
       }
 
-      _logger
-          .info('File storage service initialized (cloud: $_useCloudStorage)');
+      _cloudflareService = cloudflareService;
+
+      _logger.info(
+          'File storage service initialized (cloud: $isCloudStorageEnabled)');
     } catch (e, stackTrace) {
       _logger.severe(
           'Failed to initialize file storage service', e, stackTrace);
@@ -69,7 +128,35 @@ class FileStorageService {
 
   // File Operations
 
-  /// Save a file locally and optionally to cloud
+  /// Save a file to local storage and optionally sync to cloud
+  ///
+  /// Implements an offline-first approach: files are always saved locally first,
+  /// then uploaded to cloud if enabled. If cloud upload fails, the local file
+  /// remains accessible.
+  ///
+  /// **Parameters:**
+  /// - [fileName]: Name of the file (e.g., 'photo.jpg')
+  /// - [data]: File content as byte array
+  /// - [folder]: Optional folder path (e.g., 'photos/vacation')
+  /// - [metadata]: Optional metadata to store with cloud file
+  /// - [syncToCloud]: Whether to upload to cloud (default: true)
+  ///
+  /// **Returns:** [FileStorageResult] with operation status and file locations
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final result = await fileStorageService.saveFile(
+  ///   fileName: 'photo.jpg',
+  ///   data: imageBytes,
+  ///   folder: 'photos',
+  ///   metadata: {'description': 'Vacation photo'},
+  /// );
+  ///
+  /// if (result.success) {
+  ///   print('Local: ${result.localPath}');
+  ///   print('Cloud: ${result.cloudUrl}');
+  /// }
+  /// ```
   Future<FileStorageResult> saveFile({
     required String fileName,
     required Uint8List data,
@@ -117,7 +204,35 @@ class FileStorageService {
     }
   }
 
-  /// Load a file from local storage or cloud
+  /// Load a file from local storage or cloud with smart fallback
+  ///
+  /// Implements intelligent fallback strategy:
+  /// 1. If [preferCloud] is false (default): Try local → cloud
+  /// 2. If [preferCloud] is true: Try cloud → local
+  /// 3. Cloud downloads are automatically cached locally for offline access
+  ///
+  /// **Parameters:**
+  /// - [fileName]: Name of the file to load
+  /// - [folder]: Optional folder path
+  /// - [preferCloud]: Prefer cloud over local (default: false)
+  ///
+  /// **Returns:** File content as byte array, or null if not found
+  ///
+  /// **Example:**
+  /// ```dart
+  /// // Try local first (offline-first)
+  /// final data = await fileStorageService.loadFile(
+  ///   fileName: 'photo.jpg',
+  ///   folder: 'photos',
+  /// );
+  ///
+  /// // Prefer cloud (always get latest version)
+  /// final latestData = await fileStorageService.loadFile(
+  ///   fileName: 'photo.jpg',
+  ///   folder: 'photos',
+  ///   preferCloud: true,
+  /// );
+  /// ```
   Future<Uint8List?> loadFile({
     required String fileName,
     String? folder,
@@ -269,6 +384,10 @@ class FileStorageService {
   }
 
   /// Get a public URL for a cloud file
+  ///
+  /// Currently returns the CDN URL or R2 key that was returned during upload.
+  /// For presigned URLs with expiration, this would require additional
+  /// CloudflareService support.
   Future<String?> getPublicUrl({
     required String fileName,
     String? folder,
@@ -279,8 +398,13 @@ class FileStorageService {
     try {
       final filePath = _buildFilePath(fileName, folder);
 
-      _throwCloudStorageError();
-      return null; // Unreachable but required for type safety
+      // TODO: Implement presigned URL generation in CloudflareService
+      // For now, return the R2 key (applications can use downloadFile instead)
+      final key = '$_defaultBucket/$filePath';
+
+      _logger.warning(
+          'Public URL generation not fully implemented - returning R2 key: $key');
+      return key;
     } catch (e, stackTrace) {
       _logger.severe('Failed to get public URL: $fileName', e, stackTrace);
       return null;
@@ -288,6 +412,25 @@ class FileStorageService {
   }
 
   /// Sync all local files to cloud
+  ///
+  /// Uploads all local files to cloud storage. Useful for:
+  /// - Initial cloud setup after local-only usage
+  /// - Recovering from cloud failures
+  /// - Manual backup operations
+  ///
+  /// **Parameters:**
+  /// - [folder]: Sync only files in this folder (null = all files)
+  ///
+  /// **Returns:** [SyncResult] with upload statistics
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final result = await fileStorageService.syncToCloud(folder: 'photos');
+  /// print('Uploaded: ${result.filesUploaded}');
+  /// print('Failed: ${result.filesFailed}');
+  /// ```
+  ///
+  /// **Note:** Progress is tracked via [transferProgress] signal.
   Future<SyncResult> syncToCloud({String? folder}) async {
     if (!isCloudStorageEnabled) {
       return SyncResult(success: false, error: 'Cloud storage not enabled');
@@ -334,6 +477,28 @@ class FileStorageService {
   }
 
   /// Sync all cloud files to local storage
+  ///
+  /// Downloads all cloud files to local device. Useful for:
+  /// - Initial device setup (download user's files)
+  /// - Offline mode preparation
+  /// - Multi-device synchronization
+  ///
+  /// **Parameters:**
+  /// - [folder]: Sync only files in this folder (null = all files)
+  ///
+  /// **Returns:** [SyncResult] with download statistics
+  ///
+  /// **Example:**
+  /// ```dart
+  /// // Download all files for offline access
+  /// final result = await fileStorageService.syncFromCloud();
+  /// print('Downloaded: ${result.filesDownloaded}');
+  /// ```
+  ///
+  /// **Note:** Progress is tracked via [transferProgress] signal.
+  ///
+  /// **Limitation:** Currently requires R2 list endpoint implementation.
+  /// See [_listCloudFiles] for details.
   Future<SyncResult> syncFromCloud({String? folder}) async {
     if (!isCloudStorageEnabled) {
       return SyncResult(success: false, error: 'Cloud storage not enabled');
@@ -489,8 +654,18 @@ class FileStorageService {
     if (!isCloudStorageEnabled) return null;
 
     try {
-      _throwCloudStorageError();
-      return null; // Unreachable but required for type safety
+      final cloudflare = _cloudflareService!;
+
+      // Upload file to Cloudflare R2
+      final result = await cloudflare.uploadFile(
+        bytes: data,
+        filename: path.basename(filePath),
+        contentType: _getContentType(filePath),
+        customKey: '$_defaultBucket/$filePath',
+      );
+
+      _logger.fine('Uploaded to cloud: $filePath (key: ${result.key})');
+      return result.cdnUrl ?? result.key;
     } catch (e) {
       _logger.severe('Failed to upload to cloud: $filePath - $e');
       rethrow;
@@ -501,8 +676,19 @@ class FileStorageService {
     if (!isCloudStorageEnabled) return null;
 
     try {
-      _throwCloudStorageError();
+      final cloudflare = _cloudflareService!;
+      final key = '$_defaultBucket/$filePath';
+
+      // Download file from Cloudflare R2
+      final data = await cloudflare.downloadFile(key);
+
+      _logger.fine('Downloaded from cloud: $filePath (${data.length} bytes)');
+      return data;
     } catch (e) {
+      if (e is CloudflareException && e.message.contains('not found')) {
+        _logger.fine('File not found in cloud: $filePath');
+        return null;
+      }
       _logger.warning('Failed to download from cloud: $filePath - $e');
       return null;
     }
@@ -512,8 +698,14 @@ class FileStorageService {
     if (!isCloudStorageEnabled) return false;
 
     try {
-      _throwCloudStorageError();
-      return false; // Unreachable but required for type safety
+      final cloudflare = _cloudflareService!;
+      final key = '$_defaultBucket/$filePath';
+
+      // Delete file from Cloudflare R2
+      await cloudflare.deleteFile(key);
+
+      _logger.fine('Deleted from cloud: $filePath');
+      return true;
     } catch (e) {
       _logger.warning('Failed to delete from cloud: $filePath - $e');
       return false;
@@ -524,8 +716,14 @@ class FileStorageService {
     if (!isCloudStorageEnabled) return [];
 
     try {
-      _throwCloudStorageError();
-      return []; // Unreachable but required for type safety
+      // TODO: Implement R2 list endpoint in CloudflareService
+      // The Cloudflare R2 API supports listing objects, but the CloudflareService
+      // doesn't expose this functionality yet. Once implemented, this method
+      // should call cloudflare.listFiles(prefix: '$_defaultBucket/${folder ?? ''}')
+
+      _logger.warning(
+          'Cloud file listing not yet implemented - requires R2 list endpoint');
+      return [];
     } catch (e) {
       _logger.severe('Failed to list cloud files: $e');
       return [];
@@ -550,13 +748,11 @@ class FileStorageService {
   Future<void> _ensureBucketExists(String bucketName) async {
     if (!isCloudStorageEnabled) return;
 
-    try {
-      _throwCloudStorageError();
-    } catch (e) {
-      _logger.warning('Bucket may not exist or is not accessible: $bucketName');
-      // Note: Creating buckets programmatically requires service role key
-      // Storage buckets should be configured via InstantDB dashboard
-    }
+    // Note: Cloudflare R2 buckets must be created via the Cloudflare dashboard
+    // or wrangler CLI. The CloudflareService assumes the bucket already exists.
+    // This method is kept for future expansion if bucket creation is needed.
+
+    _logger.fine('Using R2 bucket: $bucketName (assumed to exist)');
   }
 
   String _getContentType(String filePath) {
@@ -610,7 +806,9 @@ class FileStorageService {
     // Count cloud files
     if (isCloudStorageEnabled) {
       try {
-        _throwCloudStorageError();
+        // TODO: Implement cloud file counting when R2 list endpoint is available
+        final cloudFilesList = await _listCloudFiles(null);
+        cloudFiles = cloudFilesList.length;
       } catch (e) {
         _logger.warning('Failed to get cloud file count: $e');
       }

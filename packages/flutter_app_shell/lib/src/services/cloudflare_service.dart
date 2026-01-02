@@ -51,7 +51,12 @@ class CloudflareService {
   final connectionStatus = signal<CloudflareConnectionStatus>(
       CloudflareConnectionStatus.disconnected);
 
-  /// Current session information
+  /// Get the current session information
+  ///
+  /// Returns a [CloudflareSession] if a valid session JWT exists, null otherwise.
+  /// The session contains the JWT token, expiration time, and user ID.
+  ///
+  /// Sessions are automatically refreshed 2 minutes before expiry.
   CloudflareSession? get currentSession {
     if (_sessionJwt != null && _sessionExpiry != null) {
       return CloudflareSession(
@@ -63,7 +68,41 @@ class CloudflareService {
     return null;
   }
 
+  /// Check if there is a valid session
+  ///
+  /// This is a convenience method that checks if [currentSession] is not null.
+  bool get isSessionValid => currentSession != null;
+
   /// Initialize the Cloudflare service
+  ///
+  /// Connects to Cloudflare Workers for R2 storage, AI capabilities, and custom endpoints.
+  ///
+  /// **Required Parameters:**
+  /// - [authShimUrl]: URL of the TypeScript authentication shim worker
+  ///   (handles InstantDB token → Cloudflare session JWT conversion)
+  /// - [apiWorkerUrl]: URL of the Dart API worker
+  ///   (provides R2 storage, AI Gateway, and custom endpoints)
+  ///
+  /// **Optional Parameters:**
+  /// - [authService]: AuthenticationService instance for InstantDB authentication.
+  ///   Required for authenticated operations. If not provided, only public
+  ///   endpoints will be accessible.
+  ///
+  /// **Setup Requirements:**
+  /// 1. Deploy workers using `just deploy-cloudflare`
+  /// 2. Configure secrets using `just secrets-cloudflare`
+  /// 3. Ensure user is authenticated with InstantDB before accessing protected endpoints
+  ///
+  /// **Example:**
+  /// ```dart
+  /// await cloudflareService.initialize(
+  ///   authShimUrl: 'https://auth-shim.your-account.workers.dev',
+  ///   apiWorkerUrl: 'https://dart-api.your-account.workers.dev',
+  ///   authService: authenticationService,
+  /// );
+  /// ```
+  ///
+  /// Throws [CloudflareException] if connection test fails.
   Future<void> initialize({
     required String authShimUrl,
     required String apiWorkerUrl,
@@ -141,21 +180,11 @@ class CloudflareService {
       throw CloudflareException('User not authenticated with InstantDB');
     }
 
-    // LIMITATION: Refresh token not yet exposed by AuthenticationService
-    //
-    // The InstantDB authentication flow provides refresh tokens that should be
-    // used here to obtain session JWTs from the Cloudflare auth shim. However,
-    // the current AuthenticationService implementation does not expose these
-    // refresh tokens through its public API.
-    //
-    // Required changes to enable full functionality:
-    // 1. Update AuthenticationService to store and expose the refresh token
-    // 2. Add a getter: String? get refreshToken => _refreshToken;
-    // 3. Update this code to use: _authService!.refreshToken
-    //
-    // Current workaround: Using a placeholder token (authentication will fail)
-    final refreshToken =
-        'instant-refresh-token'; // Placeholder - replace with _authService!.refreshToken
+    final refreshToken = _authService!.currentRefreshToken;
+    if (refreshToken == null) {
+      throw CloudflareException(
+          'No refresh token available - user authentication incomplete');
+    }
 
     try {
       final response = await http
@@ -200,8 +229,36 @@ class CloudflareService {
 
   /// Upload a file to R2 storage
   ///
-  /// For files larger than [largeSizeThreshold], uses presigned URL for direct upload.
-  /// For smaller files, proxies through the worker.
+  /// Automatically chooses the most efficient upload method based on file size:
+  /// - Files ≤ [largeSizeThreshold]: Uploaded via worker proxy (faster for small files)
+  /// - Files > [largeSizeThreshold]: Direct upload using presigned URL (bypasses worker limits)
+  ///
+  /// **Parameters:**
+  /// - [bytes]: File content as byte array
+  /// - [filename]: Original filename (used for content type detection)
+  /// - [contentType]: MIME type (auto-detected from filename if not provided)
+  /// - [customKey]: Custom R2 object key (defaults to userId/timestamp.ext)
+  /// - [largeSizeThreshold]: Size threshold for presigned URL upload (default: 5MB)
+  ///
+  /// **Returns:** [CloudflareUploadResult] containing:
+  /// - `key`: R2 object key (use this for future download/delete operations)
+  /// - `url`: Public CDN URL (if configured)
+  /// - `etag`: R2 ETag for versioning
+  /// - `size`: File size in bytes
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final result = await cloudflareService.uploadFile(
+  ///   bytes: fileBytes,
+  ///   filename: 'photo.jpg',
+  ///   contentType: 'image/jpeg',
+  /// );
+  /// print('Uploaded to: ${result.key}');
+  /// ```
+  ///
+  /// **Throws:**
+  /// - [StateError] if service not initialized
+  /// - [CloudflareException] if upload fails or user not authenticated
   Future<CloudflareUploadResult> uploadFile({
     required Uint8List bytes,
     required String filename,
@@ -472,6 +529,24 @@ class CloudflareService {
   }
 
   /// Download a file from R2 storage
+  ///
+  /// Retrieves file content from R2 using the object key returned during upload.
+  ///
+  /// **Parameters:**
+  /// - [key]: R2 object key (from [uploadFile] result or custom key)
+  ///
+  /// **Returns:** File content as byte array
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final bytes = await cloudflareService.downloadFile('user-123/photo.jpg');
+  /// final file = File('downloads/photo.jpg');
+  /// await file.writeAsBytes(bytes);
+  /// ```
+  ///
+  /// **Throws:**
+  /// - [StateError] if service not initialized
+  /// - [CloudflareException] if file not found or download fails
   Future<Uint8List> downloadFile(String key) async {
     _ensureInitialized();
 
@@ -504,6 +579,22 @@ class CloudflareService {
   }
 
   /// Delete a file from R2 storage
+  ///
+  /// Permanently removes a file from R2 storage. This operation cannot be undone.
+  ///
+  /// **Parameters:**
+  /// - [key]: R2 object key of the file to delete
+  ///
+  /// **Example:**
+  /// ```dart
+  /// await cloudflareService.deleteFile('user-123/old-photo.jpg');
+  /// ```
+  ///
+  /// **Throws:**
+  /// - [StateError] if service not initialized
+  /// - [CloudflareException] if deletion fails or user not authenticated
+  ///
+  /// **Note:** Returns successfully even if the file doesn't exist (idempotent).
   Future<void> deleteFile(String key) async {
     _ensureInitialized();
 

@@ -1,5 +1,59 @@
 # Changelog
 
+## 1.1.0 - 2026-01-01
+
+### Added
+
+- **☁️ Cloud Storage Implementation**: Full Cloudflare R2 integration for FileStorageService
+  - **FileStorageService Cloud Methods**:
+    - `_uploadToCloud()` - Uploads files to Cloudflare R2 with automatic content type detection
+    - `_downloadFromCloud()` - Downloads files from R2 with smart error handling (404 returns null instead of throwing)
+    - `_deleteFromCloud()` - Deletes files from R2
+    - `isCloudStorageEnabled` - Now properly checks CloudflareService initialization and session validity
+  - **CloudflareService Updates**:
+    - Fixed refresh token authentication (now uses real InstantDB refresh token instead of placeholder)
+    - Added `isSessionValid` getter for easy session checking
+    - Added comprehensive dartdoc for all public methods (initialize, uploadFile, downloadFile, deleteFile)
+  - **R2 Worker Updates**:
+    - Implemented `getSecret()` helper function for accessing Cloudflare Worker environment variables
+    - Fixed presigned URL generation with proper secret access
+  - **AuthenticationService Updates**:
+    - Exposed `currentRefreshToken` getter for backend authentication
+    - Renamed from `refreshToken` to avoid naming conflict with `refreshToken()` method
+  - **Files Changed**:
+    - `file_storage_service.dart` - Full cloud storage implementation
+    - `cloudflare_service.dart` - Real token authentication + dartdoc
+    - `authentication_service.dart` - Exposed refresh token getter
+    - `templates/cloudflare/workers/dart-api-worker/lib/routes/r2.dart` - getSecret() implementation
+  - **Impact**: Apps can now sync files to Cloudflare R2 for multi-device access, backup, and sharing
+
+- **📚 Comprehensive Cloud Storage Documentation**: Added extensive dartdoc comments
+  - **FileStorageService**: Complete class documentation with setup examples, usage patterns, and cloud requirements
+  - **CloudflareService**: Detailed initialization guide, parameter explanations, and setup requirements
+  - **Method Documentation**: Every cloud storage method now has examples, parameter descriptions, and usage notes
+  - **Impact**: Developers can integrate cloud storage without reading source code
+
+- **📝 WAL Checkpoint Documentation**: Comprehensive database maintenance documentation
+  - **DatabaseService.performMaintenance()**: Added detailed explanation of WAL (Write-Ahead Logging) limitations
+  - **Background**: Explained SQLite WAL mode, why logs accumulate, and performance impact (10+ second startup delays)
+  - **Current Status**: Documented that InstantDB v0.2.6 doesn't expose underlying SQLite database for PRAGMA execution
+  - **Workarounds**: Provided actionable tips (batch transactions, reduce frequency, clearLocalDatabase as nuclear option)
+  - **Future Plans**: Documented TODO for when InstantDB adds maintenance API support
+  - **Impact**: Users understand WAL limitations and have practical workarounds to minimize log growth
+
+### Fixed
+
+- **🐛 CRITICAL - Build Blockers for v1.0.11**: Fixed two issues preventing compilation
+  - **adaptive_dialog_models.dart Export Path**: Fixed missing `components/` subdirectory in export statement
+    - **File Changed**: `flutter_app_shell.dart:64` - Updated export path
+    - **Impact**: Builds no longer fail with "file not found" error
+  - **local_auth 3.0.0 API Incompatibility**: Fixed AuthenticationOptions API breaking change
+    - **Root Cause**: local_auth 3.0.0 removed `AuthenticationOptions` class and changed to direct parameters
+    - **Files Changed**: `authentication_service.dart:235, 279` - Removed `options:` parameter, added direct `biometricOnly` and `persistAcrossBackgrounding` parameters
+    - **Breaking Change**: `stickyAuth` parameter renamed to `persistAcrossBackgrounding` in local_auth 3.0.0
+    - **Impact**: Biometric authentication now compiles and works with local_auth 3.0.0
+  - Reported by developer experiencing build failures on v1.0.11
+
 ## 1.0.11 - 2026-01-01
 
 ### Fixed

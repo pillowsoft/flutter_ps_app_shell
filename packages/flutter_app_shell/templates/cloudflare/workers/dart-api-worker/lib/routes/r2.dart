@@ -4,6 +4,18 @@ import '../env.dart';
 import 'auth_guard.dart';
 import '../util/r2_presign.dart';
 
+/// Helper function to get secrets from Cloudflare Worker environment
+///
+/// Throws an exception if the secret is not configured.
+String getSecret(Env env, String key) {
+  // Access the environment variable/secret using JavaScript interop
+  final value = (env as dynamic)[key] as String?;
+  if (value == null || value.isEmpty) {
+    throw Exception('Missing required secret: $key');
+  }
+  return value;
+}
+
 Future<Response> handleR2Routes(Request req, Env env, AuthContext auth) async {
   final url = URL(req.url);
 
@@ -29,11 +41,10 @@ Future<Response> handleR2Routes(Request req, Env env, AuthContext auth) async {
     final key = url.searchParams.get('key') ??
         '${auth.userId}/${DateTime.now().millisecondsSinceEpoch}.bin';
 
-    // TODO: implement getSecret to fetch actual secrets
-    final accountId = await getSecret('R2_ACCOUNT_ID');
-    final accessKey = await getSecret('R2_ACCESS_KEY_ID');
-    final secretKey = await getSecret('R2_SECRET_ACCESS_KEY');
-    final bucket = await getSecret('R2_BUCKET');
+    final accountId = getSecret(env, 'R2_ACCOUNT_ID');
+    final accessKey = getSecret(env, 'R2_ACCESS_KEY_ID');
+    final secretKey = getSecret(env, 'R2_SECRET_ACCESS_KEY');
+    final bucket = getSecret(env, 'R2_BUCKET');
 
     final presigned = presignR2PutUrl(
       accountId: accountId,
