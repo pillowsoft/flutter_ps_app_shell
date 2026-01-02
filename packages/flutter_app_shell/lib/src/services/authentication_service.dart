@@ -5,6 +5,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:instantdb_flutter/instantdb_flutter.dart';
 import 'package:logging/logging.dart';
+import 'package:signals_core/signals_core.dart' show batch;
 import 'preferences_service.dart';
 import '../utils/logger.dart';
 import 'database_service.dart';
@@ -151,8 +152,10 @@ class AuthenticationService {
       // Clear stored auth data
       await _clearAuthData();
 
-      currentUser.value = null;
-      isAuthenticated.value = false;
+      batch(() {
+        currentUser.value = null;
+        isAuthenticated.value = false;
+      });
 
       _logger.info('Sign out successful');
     } catch (e, stackTrace) {
@@ -374,8 +377,10 @@ class AuthenticationService {
       );
 
       // Store the auth state (InstantDB manages tokens internally)
-      currentUser.value = user;
-      isAuthenticated.value = true;
+      batch(() {
+        currentUser.value = user;
+        isAuthenticated.value = true;
+      });
 
       // Store user data for persistence
       await _storeUserData(user);
@@ -449,8 +454,10 @@ class AuthenticationService {
 
       await _storeAuthData(user, token, refreshToken, expiry);
 
-      currentUser.value = user;
-      isAuthenticated.value = true;
+      batch(() {
+        currentUser.value = user;
+        isAuthenticated.value = true;
+      });
 
       _logger.info('Local sign in successful for: $email');
       return AuthResult.success(user);
@@ -477,8 +484,10 @@ class AuthenticationService {
 
     await _storeAuthData(user, token, refreshToken, expiry);
 
-    currentUser.value = user;
-    isAuthenticated.value = true;
+    batch(() {
+      currentUser.value = user;
+      isAuthenticated.value = true;
+    });
 
     _logger.info('Local sign up successful for: $email');
     return AuthResult.success(user);
@@ -494,8 +503,10 @@ class AuthenticationService {
         final userData = jsonDecode(userDataString) as Map<String, dynamic>;
         final user = AuthUser.fromJson(userData);
 
-        currentUser.value = user;
-        isAuthenticated.value = true;
+        batch(() {
+          currentUser.value = user;
+          isAuthenticated.value = true;
+        });
 
         _logger.info('Restored local authentication state for: ${user.email}');
         return; // Successfully restored
@@ -520,8 +531,10 @@ class AuthenticationService {
             avatarUrl: null,
           );
 
-          currentUser.value = user;
-          isAuthenticated.value = true;
+          batch(() {
+            currentUser.value = user;
+            isAuthenticated.value = true;
+          });
 
           // Store user data for future reference
           await _storeUserData(user);

@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.1.2 - 2026-01-01
+
+### Fixed
+
+- **🐛 SignalEffectException during authentication**: Fixed reactive cycle errors during sign in/out operations
+  - **Root Cause**: Multiple signals updated sequentially without batching, causing reactive dependency cycles
+  - **Symptom**: `SignalEffectException` errors during magic link authentication, local sign in, sign up, and sign out
+  - **Impact**: All authentication methods now properly batch signal updates - no more reactive cycle errors
+  - **Files Changed**:
+    - `authentication_service.dart` - Wrapped all multi-signal updates in `batch()`
+  - **Locations Fixed** (6 total):
+    1. `signOut()` (lines 155-158) - Batch currentUser + isAuthenticated reset
+    2. `verifyMagicCode()` (lines 380-383) - Batch magic link auth completion
+    3. Local `signIn()` (lines 457-460) - Batch password auth completion
+    4. `signUpLocal()` (lines 487-490) - Batch local registration completion
+    5. `_restoreAuthState()` local (lines 506-509) - Batch local auth restoration
+    6. `_restoreAuthState()` InstantDB (lines 534-537) - Batch InstantDB restoration
+  - **Technical Details**:
+    - Added `import 'package:signals_core/signals_core.dart' show batch;`
+    - Used `show batch` to avoid ambiguous import with `signal` from instantdb_flutter
+    - Same pattern as v1.0.11 fixes for AdaptiveStyleProvider and WindowStateService
+  - Reported by user testing v1.1.1 with magic link authentication
+
 ## 1.1.1 - 2026-01-01
 
 ### Fixed
