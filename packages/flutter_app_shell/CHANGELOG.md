@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.1.6 - 2026-01-02
+
+### Changed
+
+- **⬆️ Upgraded InstantDB to v0.2.8**: Complete signal batching implementation
+  - ✅ All 14 unbatched signal updates now properly batched
+  - ✅ sync_engine.dart: 6 connection status updates (CRITICAL fix)
+  - ✅ presence.dart: 5 presence methods batched
+  - ✅ auth_manager.dart: refreshUser() and updateUser() batched
+  - ✅ query_engine.dart: Query execution batched
+  - 🎉 SignalEffectException issues fully resolved
+  - Impact: Complete elimination of reactive cycle errors across all InstantDB modules
+  - Files Updated:
+    - `pubspec.yaml`: instantdb_flutter v0.2.7 → v0.2.8 (git dependency)
+  - InstantDB v0.2.8 Changes:
+    - Added batch() to 14 previously unbatched signal updates across 5 files
+    - Fixed sync_engine connection status updates (6 critical locations)
+    - Fixed presence module signal updates (5 methods)
+    - Fixed remaining auth methods (refreshUser, updateUser)
+    - Fixed query engine result signal updates
+    - All 144 InstantDB tests passing with no API changes
+  - Test Results:
+    - ✅ 15 tests passing
+    - ✅ No SignalEffectException errors detected
+    - ✅ All auth, presence, and sync operations working correctly
+  - Note: v1.1.4 workarounds retained as defensive improvements
+
+### Dependencies
+
+- instantdb_flutter: 0.2.7 → 0.2.8 (via git)
+
 ## 1.1.5 - 2026-01-02
 
 ### Changed
