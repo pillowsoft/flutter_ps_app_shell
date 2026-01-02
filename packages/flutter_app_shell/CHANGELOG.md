@@ -1,15 +1,156 @@
 # Changelog
 
-## 1.0.6 - 2025-10-03
-
-### Added
-- 
-
-### Changed
-- 
+## 1.0.11 - 2026-01-01
 
 ### Fixed
-- 
+
+- **🐛 SignalEffectException reactive cycles**: Fixed signal dependency issues that could cause reactive cycles
+  - **Root Cause**: AdaptiveStyleProvider.uiSystem getter and WindowStateService multi-signal updates created untracked dependencies
+  - **Symptom**: SignalEffectException errors during UI system switching and window state changes
+  - **Files Changed**:
+    - `adaptive_style_provider.dart:30` - Wrapped signal read in `untracked()`
+    - `window_state_service.dart:429-435` - Wrapped 5 signal updates in `batch()`
+    - `window_state_service.dart:460-463` - Wrapped 2 signal updates in `batch()`
+  - **Impact**: Prevents crashes during UI system switching and window state changes, improves stability and performance
+  - **Investigation**: Analyzed all 6 files from user bug report, confirmed only 2 needed fixes (4 were already safe)
+  - Reported by user from older version of app shell
+
+- **🐛 Cupertino bottom sheets dark mode**: Fixed transparent background in Cupertino mode bottom sheets
+  - **Root Cause**: Hardcoded `Colors.white` background instead of using theme surface color
+  - **File Changed**: `cupertino_widget_factory.dart:1866` - Use `CupertinoColors.systemBackground.resolveFrom()`
+  - **Impact**: Bottom sheets now properly support dark mode in Cupertino UI system
+
+### Changed
+
+- **⬆️ Comprehensive dependency updates**: Updated 22 packages to latest compatible versions
+  - **Major Updates**:
+    - go_router: 14.2.3 → 17.0.1 (3 major versions!)
+    - get_it: 8.0.0 → 9.2.0
+    - signals/signals_flutter: 6.0.2 → 6.3.0
+    - instantdb_flutter: 0.2.1 → 0.2.6
+    - local_auth: 2.3.0 → 3.0.0
+    - connectivity_plus: 6.0.5 → 7.0.0
+    - awesome_flutter_extensions: 1.3.0 → 2.0.1
+    - flutter_hooks: 0.20.5 → 0.21.3
+    - flutter_lints: 5.0.0 → 6.0.0
+  - **Removed**: url_strategy (discontinued package)
+  - **Impact**: Better compatibility, bug fixes, performance improvements
+
+- **🔧 Quick Win improvements**: Fixed deprecations and improved documentation
+  - Fixed 20 deprecated `withOpacity()` calls → `withValues(alpha:)` in chart_widget_plugin.dart and cupertino_widget_factory.dart
+  - Added 9 missing Cloudflare environment variables to `.env.example` (R2 storage, AI Gateway, JWT secret)
+  - Documented CloudflareService refresh token limitation with implementation steps
+  - Fixed ForUI dark mode hardcoded colors (2 showModalBottomSheet instances)
+
+### Added
+
+- **📚 Missing public API exports**: Exposed plugin system and wizard APIs
+  - Added 11 missing exports to `flutter_app_shell.dart`
+  - Exported plugin interfaces (BasePlugin, ServicePlugin, WidgetPlugin, ThemePlugin, WorkflowPlugin)
+  - Exported plugin core (PluginManager)
+  - Exported wizard system (Wizard, WizardModels, WizardController)
+  - Exported adaptive dialog models
+
+- **✅ NavigationService initialization validation**: Added defensive checks to prevent silent failures
+  - Added `_ensureInitialized()` method that throws descriptive StateError
+  - All navigation methods (go, push, pop, replace, etc.) now validate initialization
+  - Prevents silent failures if `setRouter()` not called during app initialization
+
+
+## 1.0.10 - 2025-12-15
+
+### Fixed
+
+- **🐛 CRITICAL: Orphaned database files on every app startup**: Fixed database service creating new file each launch
+  - **Root Cause**: Local-only mode used timestamp-based database names (`local-only-${timestamp}.db`), creating new file on every startup
+  - **Symptom**: 10+ second startup delays as orphaned files accumulated, data lost between app restarts
+  - **Files Changed**: `database_service.dart` - Use stable name `local-only-app-shell`
+  - **Impact**:
+    - ✅ Data now persists between app restarts in local-only mode
+    - ✅ Eliminates 10+ second startup delays from accumulated orphaned files
+    - ✅ No more hundreds of orphaned .db files filling storage
+  - **Migration**: Safe to delete old orphaned files: `rm ~/Documents/local-only-*.db*`
+  - This was a critical bug affecting all users running in local-only mode
+
+
+## 1.0.9 - 2025-12-10
+
+### Added
+
+- **✨ Configurable home route**: Added optional `homeRoute` parameter to customize navigation home behavior
+  - **New Parameter**: `AppConfig.homeRoute` (default: first visible route's path)
+  - **Use Case**: Apps wanting specific landing page instead of first route
+  - **Example**:
+    ```dart
+    AppConfig(
+      title: 'My App',
+      routes: routes,
+      homeRoute: '/dashboard',  // Custom home instead of first route
+    )
+    ```
+  - **Impact**: More flexible navigation patterns for complex app structures
+
+### Fixed
+
+- **🐛 Back button showing on home page during initial launch**: Fixed back button incorrectly appearing on home route
+  - **Root Cause**: `canPop()` sometimes returned false in ShellRoute contexts, but path-based detection showed back button for nested-looking paths
+  - **Solution**: Added explicit home route check - never show back button on designated home route
+  - **Impact**: Clean navigation UX on app launch - no confusing back button on home page
+
+
+## 1.0.8 - 2025-12-05
+
+### Fixed
+
+- **🐛 Cupertino theme not updating when changed**: Fixed theme changes not applying in Cupertino UI system
+  - **Root Cause**: Cupertino widgets cached theme data and didn't rebuild when theme signals changed
+  - **Solution**: Added proper reactive theme rebuilding with Watch blocks
+  - **Impact**: Theme changes now immediately apply across all three UI systems (Material, Cupertino, ForUI)
+
+- **🐛 Dark mode detection issues**: Fixed brightness detection and text scale clamping
+  - **Issue 1**: Dark mode not properly detected on some platforms
+  - **Issue 2**: Text scale factor could go out of safe bounds
+  - **Solution**:
+    - Improved brightness detection logic
+    - Added text scale clamping (min: 0.8, max: 2.0)
+  - **Impact**: More reliable dark mode detection and safer text scaling
+
+
+## 1.0.7 - 2025-11-20
+
+### Changed
+
+- **🎨 Adaptive UI system conversions**: Converted example app dialogs and snackbars to use adaptive UI factories
+  - **Phase 1** (5 parts): Converted navigation demo, task screens, error demos, plugin/accessibility/cloud sync screens, adaptive components/performance/dashboard
+    - All Material-only dialogs → `ui.showDialog()` with adaptive implementations
+    - Ensures consistent UX across Material, Cupertino, and ForUI systems
+  - **Phase 3**: Converted all remaining snackbars to adaptive UI
+    - ScaffoldMessenger calls → `ui.showSnackBar()`
+    - Cupertino now shows iOS-style notifications
+  - **Phase 4**: Converted task management dialogs to adaptive UI
+    - Completion dialogs, error alerts, confirmation prompts now adaptive
+  - **Impact**: Example app now demonstrates proper adaptive UI patterns throughout
+
+### Fixed
+
+- **🐛 Dialog context bug in adaptive UI conversions**: Fixed critical context handling in dialog implementations
+  - **Root Cause**: Dialogs using wrong BuildContext, causing navigation and dismissal issues
+  - **Solution**: Ensured dialogs use correct context from builder
+  - **Impact**: All adaptive dialogs now work correctly across all three UI systems
+
+- **🐛 Infinite width constraint crash in Cupertino buttons**: Fixed layout crash when buttons had unbounded width
+  - **Root Cause**: CupertinoButton.filled doesn't handle infinite width constraints
+  - **Solution**: Added proper Container with width constraints as button child
+  - **Impact**: Buttons now work correctly in all layout scenarios
+
+
+## 1.0.6 - 2025-10-03
+
+### Fixed
+
+- **Various bug fixes and improvements** (details in git commits bdb313a through e6b266c)
+- Theme persistence and dark mode detection improvements
+- Navigation and layout fixes
 
 
 ## 1.0.5 - 2025-10-03
