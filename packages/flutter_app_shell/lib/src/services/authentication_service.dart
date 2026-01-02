@@ -232,10 +232,8 @@ class AuthenticationService {
     try {
       final authenticated = await _localAuth.authenticate(
         localizedReason: 'Enable biometric authentication for quick sign in',
-        options: const AuthenticationOptions(
-          biometricOnly: true,
-          stickyAuth: true,
-        ),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
 
       if (authenticated) {
@@ -276,10 +274,8 @@ class AuthenticationService {
     try {
       return await _localAuth.authenticate(
         localizedReason: 'Use biometric authentication to sign in',
-        options: const AuthenticationOptions(
-          biometricOnly: true,
-          stickyAuth: true,
-        ),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
     } catch (e, stackTrace) {
       _logger.severe('Biometric authentication failed', e, stackTrace);

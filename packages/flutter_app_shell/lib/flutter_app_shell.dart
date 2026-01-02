@@ -61,7 +61,7 @@ export 'src/plugins/interfaces/theme_plugin.dart';
 export 'src/plugins/interfaces/workflow_plugin.dart';
 
 // Adaptive dialog models
-export 'src/ui/adaptive/adaptive_dialog_models.dart';
+export 'src/ui/adaptive/components/adaptive_dialog_models.dart';
 
 // Re-export commonly used packages
 export 'package:go_router/go_router.dart';
