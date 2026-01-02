@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:instantdb_flutter/instantdb_flutter.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:logging/logging.dart';
@@ -193,13 +192,8 @@ class DatabaseService {
 
   /// Set up status monitoring for connection and auth state
   void _setupStatusMonitoring() {
-    // Monitor authentication status for logging (using untracked to avoid cycles)
-    effect(() {
-      final user = _db?.auth.currentUser.value;
-      if (user != null) {
-        untracked(() => _logger.fine('User authenticated: ${user.email}'));
-      }
-    });
+    // Authentication status is monitored via computed signal (lines 88-93)
+    // No effect needed here - logging can be done when auth methods are called
 
     // Update sync time periodically
     Timer.periodic(const Duration(seconds: 30), (timer) {

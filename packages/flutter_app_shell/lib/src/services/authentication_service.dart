@@ -2,10 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:flutter/services.dart';
 import 'package:instantdb_flutter/instantdb_flutter.dart';
 import 'package:logging/logging.dart';
-import 'package:signals_core/signals_core.dart' show batch;
+import 'package:signals/signals.dart' show batch;
 import 'preferences_service.dart';
 import '../utils/logger.dart';
 import 'database_service.dart';
@@ -376,14 +375,14 @@ class AuthenticationService {
         avatarUrl: null, // InstantDB user might not have avatar in basic setup
       );
 
+      // Store user data BEFORE batch to ensure persistence even if batch fails
+      await _storeUserData(user);
+
       // Store the auth state (InstantDB manages tokens internally)
       batch(() {
         currentUser.value = user;
         isAuthenticated.value = true;
       });
-
-      // Store user data for persistence
-      await _storeUserData(user);
 
       _logger.info('Magic link authentication successful for: $email');
       return AuthResult.success(user);
@@ -494,9 +493,14 @@ class AuthenticationService {
   }
 
   Future<void> _restoreAuthState() async {
+    _logger.info('Attempting to restore authentication state...');
+
     // Try to restore from local token-based auth first
     final token = _prefs.getString(_keyAuthToken).value;
     final userDataString = _prefs.getString(_keyUserData).value;
+
+    _logger.fine(
+        'Local auth check - token: ${token != null}, userData: ${userDataString != null}');
 
     if (token != null && userDataString != null && isTokenValid()) {
       try {
@@ -521,8 +525,12 @@ class AuthenticationService {
     // if InstantDB has an active session and restore from there
     try {
       final dbService = DatabaseService.instance;
+      _logger.fine('Checking InstantDB for existing session...');
+
       if (dbService.isInitialized) {
         final instantUser = dbService.db.auth.currentUser.value;
+        _logger.fine('InstantDB session check - user: ${instantUser?.email}');
+
         if (instantUser != null) {
           final user = AuthUser(
             id: instantUser.id,

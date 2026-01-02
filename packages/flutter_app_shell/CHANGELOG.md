@@ -1,5 +1,46 @@
 # Changelog
 
+## 1.1.4 - 2026-01-02
+
+### Fixed
+
+- **🐛 CRITICAL: Additional SignalEffectException workarounds for InstantDB package bug**: Fixed remaining reactive cycle issues and improved auth persistence
+  - **Primary Root Cause Identified**: InstantDB package v0.2.6 updates auth signals WITHOUT using `batch()` wrapper
+    - InstantDB's `auth_manager.dart` line 474 in `verifyMagicCode()` directly updates `_currentUser.value`
+    - No `batch()` wrapper in ANY of 7 auth methods (signIn, signUp, verifyMagicCode, etc.)
+    - This triggers immediate signal propagation BEFORE App Shell's batch() can run
+    - Results in SignalEffectException even when App Shell code is correct
+  - **Secondary Issue in App Shell**: Logging effect still created reactive dependency on InstantDB signal
+    - Even with `untracked()` around logging, the signal READ was outside `untracked()`
+    - Effect watching `_db.auth.currentUser.value` created dependency during InstantDB signal update
+  - **Impact**: Eliminates remaining reactive cycles through App Shell workarounds while InstantDB package is updated
+  - **Files Changed**:
+    - `database_service.dart` - Removed problematic logging effect (lines 197-202)
+    - `authentication_service.dart` - Moved user data persistence before batch(), added diagnostic logging
+  - **Changes Made**:
+    1. **database_service.dart**: Deleted logging effect entirely (lines 197-202)
+       - `authenticationStatus` computed signal (v1.1.3) already provides reactive behavior
+       - Effect was redundant AND created reactive dependency on InstantDB signal
+       - Logging can be done when auth methods are called instead
+    2. **authentication_service.dart**: Moved `_storeUserData()` BEFORE `batch()` in `verifyMagicCode()` (line 380)
+       - User data now persists even if batch() throws SignalEffectException
+       - Auth state survives app restarts regardless of reactive cycle errors
+    3. **authentication_service.dart**: Added debug logging to `_restoreAuthState()` (lines 497-533)
+       - Visibility into auth restoration process
+       - Helps diagnose timing or data issues
+       - Easier to debug future issues
+  - **Why This Fix Works**:
+    - Removing effect eliminates App Shell's contribution to reactive cycles
+    - Moving persistence before batch ensures no data loss during exceptions
+    - Diagnostic logging improves visibility for troubleshooting
+  - **Bug Report for InstantDB Team**: Comprehensive bug report created documenting:
+    - Root cause: Missing `batch()` wrappers in auth_manager.dart
+    - Reproduction steps and impact
+    - Recommended fix: Wrap all auth signal updates in `batch()`
+    - Additional recommendations for `untracked()` and effect cleanup
+  - **Note**: This is a workaround release while waiting for InstantDB package fix. App Shell was doing the RIGHT thing with `batch()` - InstantDB needs to catch up.
+  - Reported by user experiencing persistent SignalEffectException even after v1.1.3 upgrade
+
 ## 1.1.3 - 2026-01-02
 
 ### Fixed
