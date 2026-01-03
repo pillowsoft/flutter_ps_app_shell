@@ -1,5 +1,53 @@
 # Changelog
 
+## 2.0.5 - 2026-01-03
+
+### Added
+
+- **🎯 App-Level Service Initialization Support**
+  - Added optional `appReady` signal parameter to `AppConfig`
+  - Framework now waits for BOTH framework AND app-level services before rendering UI
+  - Prevents `SignalEffectException` when app services create effects during initialization
+  - **Files Changed**:
+    - `lib/src/core/app_config.dart`: Added `appReady` parameter with comprehensive documentation
+    - `lib/src/core/app_shell_runner.dart`: Extended initialization guard to check `appReady`
+
+### Documentation
+
+- Added detailed usage example for `appReady` signal in `AppConfig` documentation
+- Shows how to coordinate multiple service `isReady` signals
+
+### Migration
+
+**For apps experiencing SignalEffectException during initialization:**
+
+```dart
+// 1. Create an appReady signal
+final appReady = signal(false);
+
+// 2. Initialize your services and wait for them
+Future<void> initializeServices() async {
+  await chatManager.initialize();
+  await eventFlowService.initialize();
+
+  // Wait for all service isReady signals
+  await Future.doWhile(() async {
+    await Future.delayed(Duration(milliseconds: 50));
+    return !chatManager.isReady.value || !eventFlowService.isReady.value;
+  });
+
+  appReady.value = true;
+}
+
+// 3. Pass appReady to AppConfig
+runShellApp(
+  appConfig: AppConfig(
+    appReady: appReady,
+    // ...
+  ),
+);
+```
+
 ## 2.0.4 - 2026-01-03
 
 ### Changed

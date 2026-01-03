@@ -601,7 +601,24 @@ Navigate to `/datalog-investigation` for InstantDB debugging:
 
 ## Recent Updates
 
-### v1.0.10 (Latest) - Orphaned Database Fix
+### v2.0.5 (Latest) - App-Level Service Initialization
+- 🎯 **NEW**: Added `appReady` signal parameter to `AppConfig`
+- ✅ Framework now waits for BOTH framework AND app services before rendering UI
+- ✅ Prevents `SignalEffectException` when app services create effects during initialization
+- 📚 See migration guide in CHANGELOG.md for usage example
+
+### v2.0.4 - InstantDB v0.5.0 Upgrade
+- ⬆️ Upgraded to InstantDB v0.5.0 with enhanced schema management
+- ✅ Database vacuum support for storage optimization
+- ✅ Improved transaction model with error handling
+
+### v2.0.3 - Critical SignalEffectException Fix
+- 🐛 **CRITICAL FIX**: Fixed SignalEffectException in framework initialization
+- ✅ Wrapped all async signal mutations in `untracked()`/`batch()`
+- ✅ Added framework-level `isReady` signal and initialization guards
+- 📚 Created comprehensive signals best practices guide
+
+### v1.0.10 - Orphaned Database Fix
 - 🐛 **CRITICAL FIX**: DatabaseService no longer creates orphaned database files on every startup
 - ✅ Local-only mode now uses stable database name (`local-only-app-shell`)
 - ✅ Data persists between app restarts in local-only mode

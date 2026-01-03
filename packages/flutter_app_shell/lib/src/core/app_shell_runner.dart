@@ -424,8 +424,20 @@ void runShellApp(
   runApp(
     Watch(
       (context) {
-        // Wait for settings store to be ready before building reactive UI
+        // Wait for framework initialization to complete
         if (!settingsStore.isReady.value) {
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
+        }
+
+        // Wait for app-level services if appReady signal provided
+        if (appConfig.appReady != null && !appConfig.appReady!.value) {
           return const MaterialApp(
             debugShowCheckedModeBanner: false,
             home: Scaffold(
