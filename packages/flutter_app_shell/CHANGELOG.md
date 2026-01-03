@@ -1,5 +1,88 @@
 # Changelog
 
+## 2.2.0 - 2026-01-03
+
+### Bug Fixes
+
+- **🐛 CRITICAL ARCHITECTURAL FIX: Removed Watch from boot sequence**
+  - **Root cause**: v2.1.x used Watch as a boot state machine, creating reactive dependencies on `isReady` and `appReady` signals
+  - **Problem**: When signals flipped to true, Watch rebuilt DURING effect activation, causing SignalEffectException
+  - **Timing race**: Reactive rebuilds bypassed imperative sequencing, effects mid-flight when nested Watch widgets evaluated
+  - **Why v2.1.1 frame delay didn't work**: `Future.microtask` doesn't create real frame boundary, reactive rebuilds skip imperative logic
+  - **Solution**: Complete rewrite using imperative boot state machine
+  - **Impact**: Zero SignalEffectException during boot, deterministic behavior across all devices
+
+### Architecture Changes
+
+- **✨ Added `BootPhase` enum** for imperative boot sequencing
+  - Phases: `waitingFramework` → `waitingServices` → `activatingEffects` → `running`
+  - Phase transitions via `setState`, NOT reactive rebuilds
+- **♻️ Rewrote `_AppShellRunnerState` with imperative `_tick()` method**
+  - Uses `untracked()` to poll readiness signals (NO reactive dependencies)
+  - Uses `WidgetsBinding.instance.addPostFrameCallback` for REAL frame boundary (not `Future.microtask`)
+  - Watch.builder only introduced AFTER boot completes (`_phase == BootPhase.running`)
+- **📝 Added comprehensive inline documentation** explaining imperative boot pattern
+
+### Technical Details
+
+**Key Rules Followed** (per Signals-in-Flutter best practices):
+- ✅ No Watch that reads readiness/boot flags → polled with `untracked()`
+- ✅ No effect activation from inside reactive builds → called in imperative `_tick()`
+- ✅ First Watch after postFrameCallback boundary → guarantees frame completion
+- ✅ Navigation logic out of boot Watch → starts only after running phase
+
+**What Changed**:
+```dart
+// ❌ v2.1.x - Watch wraps entire boot (WRONG)
+return Watch((context) {
+  if (!isReady.value) return LoadingScreen();  // Reactive dependency!
+  if (!appReady.value) return LoadingScreen();  // Reactive dependency!
+  onEffectsActivate();  // Inside reactive build!
+  return AppShell(...);  // Effects mid-flight!
+});
+
+// ✅ v2.2.0 - Imperative boot, Watch only after running (CORRECT)
+Future<void> _tick() async {
+  while (untracked(() => !isReady.value)) { ... }  // No reactive dependency
+  while (untracked(() => !appReady.value)) { ... }  // No reactive dependency
+  onEffectsActivate();  // Outside any reactive context
+  addPostFrameCallback(() => setState(() => _phase = running));  // Real frame boundary
+}
+
+Widget build(context) {
+  if (_phase != running) return LoadingScreen();  // No Watch during boot
+  return Watch.builder((context) { ... });  // Reactive UI starts HERE
+}
+```
+
+### Migration
+
+**No migration required.** This is a framework-internal architectural fix that's completely transparent to apps.
+
+Observable behavior is identical:
+1. Loading screen while `settingsStore.isReady == false`
+2. Loading screen while `appConfig.appReady == false` (if provided)
+3. Effects activated via `onEffectsActivate` callback
+4. App renders after effects stabilize
+
+**Breaking Changes**: None - boot sequence logic changed from reactive to imperative, but external behavior unchanged.
+
+### Expected Outcome
+
+**Before (v2.1.2)**:
+- Random SignalEffectException during startup
+- Timing-dependent failures (varies by device speed)
+- "Cycle detected" errors in logs
+- Worse on slower devices (longer effect activation)
+
+**After (v2.2.0)**:
+- Zero SignalEffectException during boot
+- Deterministic behavior across all devices
+- No timing-dependent failures
+- Effects always stabilized before reactive UI starts
+
+---
+
 ## 2.1.2 - 2026-01-03
 
 ### Dependencies

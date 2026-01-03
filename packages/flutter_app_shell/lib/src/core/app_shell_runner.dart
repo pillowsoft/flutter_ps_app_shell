@@ -430,6 +430,19 @@ void runShellApp(
   );
 }
 
+/// Boot phases for imperative initialization sequence.
+/// Phase transitions happen via setState, not reactive rebuilds.
+///
+/// CRITICAL: Boot logic MUST NOT use Watch to avoid reactive dependencies on
+/// readiness signals. Watch is only introduced AFTER boot completes (running phase).
+enum BootPhase {
+  waitingFramework,   // Waiting for settingsStore.isReady
+  waitingServices,    // Waiting for appConfig.appReady
+  activatingEffects,  // Calling onEffectsActivate()
+  allowFirstRender,   // Scheduled postFrameCallback
+  running,            // Reactive UI active
+}
+
 /// Root widget for the app shell that manages effect activation lifecycle
 class _AppShellRunner extends StatefulWidget {
   final AppConfig appConfig;
@@ -447,92 +460,94 @@ class _AppShellRunner extends StatefulWidget {
 }
 
 class _AppShellRunnerState extends State<_AppShellRunner> {
-  bool _effectsActivated = false;
-  bool _allowRender = false;
+  BootPhase _phase = BootPhase.waitingFramework;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick();  // Start imperative boot sequence
+  }
+
+  /// Imperative boot sequence that progresses through phases via setState.
+  ///
+  /// CRITICAL: This method uses untracked() to poll readiness signals WITHOUT
+  /// creating reactive dependencies. This prevents Watch from rebuilding during
+  /// boot, which would cause SignalEffectException.
+  ///
+  /// Boot flow:
+  /// 1. Poll settingsStore.isReady (untracked)
+  /// 2. Poll appConfig.appReady (untracked, if provided)
+  /// 3. Call onEffectsActivate() to create effects
+  /// 4. Wait for real frame boundary via addPostFrameCallback
+  /// 5. Enter running phase → Watch.builder starts reactive UI
+  Future<void> _tick() async {
+    // Phase 1: Framework initialization
+    // CRITICAL: Use untracked() to avoid creating reactive dependency
+    _logger.fine('Boot Phase 1: Waiting for framework initialization...');
+    while (untracked(() => !widget.settingsStore.isReady.value)) {
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+      if (!mounted) return;
+    }
+    _logger.info('Framework initialization complete');
+    if (!mounted) return;
+    setState(() => _phase = BootPhase.waitingServices);
+
+    // Phase 2: App-level services initialization (if appReady signal provided)
+    // CRITICAL: Use untracked() to avoid creating reactive dependency
+    if (widget.appConfig.appReady != null) {
+      _logger.fine('Boot Phase 2: Waiting for app services initialization...');
+      while (untracked(() => !widget.appConfig.appReady!.value)) {
+        await Future<void>.delayed(const Duration(milliseconds: 16));
+        if (!mounted) return;
+      }
+      _logger.info('App services initialization complete');
+    } else {
+      _logger.fine('Boot Phase 2: Skipped (no appReady signal provided)');
+    }
+    if (!mounted) return;
+    setState(() => _phase = BootPhase.activatingEffects);
+
+    // Phase 3: Activate reactive effects
+    // Effects are created here but not yet evaluated by reactive UI
+    if (widget.appConfig.onEffectsActivate != null) {
+      _logger.fine('Boot Phase 3: Activating reactive effects...');
+      widget.appConfig.onEffectsActivate!();
+      _logger.info('Reactive effects activated');
+    } else {
+      _logger.fine('Boot Phase 3: Skipped (no onEffectsActivate callback)');
+    }
+
+    // Phase 4: Schedule real frame boundary before entering running phase
+    // CRITICAL: Use addPostFrameCallback NOT Future.microtask for real frame boundary
+    // This guarantees effects have stabilized before Watch.builder evaluates
+    _logger.fine('Boot Phase 4: Scheduling frame boundary...');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _logger.info('Boot complete - entering running phase');
+      setState(() => _phase = BootPhase.running);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Watch(
-      (context) {
-        // Phase 1: Wait for framework initialization to complete
-        if (!widget.settingsStore.isReady.value) {
-          return const MaterialApp(
-            debugShowCheckedModeBanner: false,
-            home: Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          );
-        }
+    // CRITICAL: No Watch during boot phases!
+    // Return static loading screen until boot completes
+    if (_phase != BootPhase.running) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
 
-        // Phase 2: Wait for app-level services if appReady signal provided
-        if (widget.appConfig.appReady != null &&
-            !widget.appConfig.appReady!.value) {
-          return const MaterialApp(
-            debugShowCheckedModeBanner: false,
-            home: Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          );
-        }
-
-        // Phase 3: Activate effects ONCE and schedule render for next frame
-        // CRITICAL FIX (v2.1.1): Wait one frame after effect activation before
-        // rendering AppShell. This prevents SignalEffectException by letting
-        // effects stabilize before Watch widgets evaluate.
-        //
-        // Bug: Effects created in onEffectsActivate() run immediately and remain
-        // active when AppShell renders, creating conflicts with Watch widgets.
-        // Fix: Schedule AppShell render for NEXT frame after effects activate.
-        if (!_effectsActivated) {
-          if (widget.appConfig.onEffectsActivate != null) {
-            _logger.fine('Activating reactive effects...');
-            widget.appConfig.onEffectsActivate!();
-            _logger.fine('Effects activated successfully');
-          }
-          _effectsActivated = true;
-
-          // Schedule render for next frame to let effects stabilize
-          _logger.fine('Scheduling AppShell render for next frame...');
-          Future.microtask(() {
-            if (mounted) {
-              setState(() {
-                _allowRender = true;
-                _logger
-                    .fine('AppShell render allowed - effects have stabilized');
-              });
-            }
-          });
-
-          // Show loading screen during effect initialization
-          return const MaterialApp(
-            debugShowCheckedModeBanner: false,
-            home: Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          );
-        }
-
-        // Phase 4: Wait for render flag before showing AppShell
-        // This ensures effects have had one frame to stabilize
-        if (!_allowRender) {
-          return const MaterialApp(
-            debugShowCheckedModeBanner: false,
-            home: Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          );
-        }
-
-        // Phase 5: Build theme and render app
-        // Effects have now had one frame to stabilize, safe to render
+    // Phase 5: Reactive UI starts ONLY after boot is stable
+    // NOW it's safe to use Watch.builder and read signals reactively
+    return Watch.builder(
+      builder: (context) {
+        // Build themes
         ThemeData theme = _buildTheme(Brightness.light);
         ThemeData darkTheme = _buildTheme(Brightness.dark);
 
@@ -543,11 +558,8 @@ class _AppShellRunnerState extends State<_AppShellRunner> {
           darkTheme = widget.appConfig.themeExtensions!(darkTheme);
         }
 
-        // Get the appropriate UI factory and use it to create the app
+        // Get UI system and brightness reactively
         final uiSystem = widget.settingsStore.uiSystem.value;
-
-        // Get current brightness - computed once here to ensure Watch tracks themeMode dependency
-        // and to use as key for forcing CupertinoApp rebuilds
         final currentBrightness =
             widget.settingsStore.getCurrentBrightness(context);
 
