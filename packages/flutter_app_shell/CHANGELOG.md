@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.4 - 2026-01-03
+
+### Changed
+
+- **⬆️ Upgraded InstantDB Flutter dependency from v0.4.0 to v0.5.0**
+  - Enhanced Schema CLI with comprehensive push/pull commands
+  - Database vacuum support for optimized storage management
+  - Improved transaction model with proper error handling
+  - Better schema validation and conflict detection
+  - See [InstantDB v0.5.0 Release Notes](https://github.com/pillowsoft/instantdb_flutter/releases/tag/v0.5.0)
+
 ## 2.0.3 - 2026-01-03
 
 ### Fixed

@@ -1,6 +1,6 @@
 name: flutter_app_shell
 description: A comprehensive Flutter application shell framework for rapid development with adaptive UI, service architecture, and state management.
-version: 2.0.3
+version: 2.0.4
 homepage: https://github.com/yourusername/flutter_app_shell
 repository: https://github.com/yourusername/flutter_app_shell
 publish_to: none
@@ -48,7 +48,7 @@ dependencies:
   instantdb_flutter:
     git:
       url: https://github.com/pillowsoft/instantdb_flutter.git
-      ref: v0.4.0
+      ref: v0.5.0
 
   # Environment configuration
   flutter_dotenv: ^6.0.0
