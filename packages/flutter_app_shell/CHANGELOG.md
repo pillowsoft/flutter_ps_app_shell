@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.0.2 - 2026-01-03
+
+### Changed
+
+- **⬆️ Upgraded InstantDB Flutter dependency from v0.3.4 to v0.4.0**
+  - Added comprehensive schema management CLI tool
+  - New commands: `schema pull`, `schema push`, `schema status`, `schema validate`, `schema help`
+  - Color-coded terminal output for different message types
+  - Interactive confirmations for destructive operations
+  - Custom schema file path support via `--schema-file` flag
+  - App ID override functionality with `--app-id` flag
+  - Verbose logging mode for debugging
+  - See [InstantDB v0.4.0 Release Notes](https://github.com/pillowsoft/instantdb_flutter/releases/tag/v0.4.0)
+
+### Added
+
+- Schema management capabilities integrated from InstantDB package
+- Support for justfile/Make scripts integration
+- npm package.json scripts compatibility
+
 ## 2.0.1 - 2026-01-03
 
 ### Changed
