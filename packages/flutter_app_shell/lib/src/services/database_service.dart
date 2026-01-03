@@ -79,6 +79,8 @@ class DatabaseService {
           syncEnabled:
               enableSync && !isLocalOnly, // Disable sync for local-only mode
           verboseLogging: verboseLogging,
+          sessionStorageType: SessionStorageType
+              .auto, // Auto: SharedPreferences in debug, SecureStorage in release
         ),
       );
 

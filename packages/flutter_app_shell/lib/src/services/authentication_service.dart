@@ -378,7 +378,7 @@ class AuthenticationService {
       // Store user data BEFORE batch to ensure persistence even if batch fails
       await _storeUserData(user);
 
-      // Store the auth state (InstantDB manages tokens internally)
+      // Store the auth state (InstantDB manages tokens and session persistence internally)
       batch(() {
         currentUser.value = user;
         isAuthenticated.value = true;
@@ -520,18 +520,17 @@ class AuthenticationService {
       }
     }
 
-    // Also check for InstantDB session (e.g., after magic link authentication)
-    // Magic link auth only stores user data, not tokens, so we need to check
-    // if InstantDB has an active session and restore from there
+    // Check for InstantDB session
+    // InstantDB v0.2.9+ automatically restores sessions via enableSessionPersistence
     try {
       final dbService = DatabaseService.instance;
-      _logger.fine('Checking InstantDB for existing session...');
 
       if (dbService.isInitialized) {
         final instantUser = dbService.db.auth.currentUser.value;
-        _logger.fine('InstantDB session check - user: ${instantUser?.email}');
-
         if (instantUser != null) {
+          _logger.info(
+              'InstantDB session restored automatically for: ${instantUser.email}');
+
           final user = AuthUser(
             id: instantUser.id,
             email: instantUser.email,
@@ -544,15 +543,16 @@ class AuthenticationService {
             isAuthenticated.value = true;
           });
 
-          // Store user data for future reference
           await _storeUserData(user);
-
-          _logger.info(
-              'Restored InstantDB authentication state for: ${user.email}');
+        } else {
+          _logger.fine('No active InstantDB session found');
         }
+      } else {
+        _logger
+            .fine('Database service not initialized, skipping InstantDB check');
       }
     } catch (e, stackTrace) {
-      _logger.warning('Failed to restore InstantDB auth state', e, stackTrace);
+      _logger.warning('Failed to check InstantDB auth state', e, stackTrace);
     }
   }
 

@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.1.8 - 2026-01-02
+
+### Changed
+
+- **⬆️ Upgraded InstantDB from v0.2.9 to v0.3.3**: Session persistence FINALLY working!
+  - 🎉 **macOS development workflow fixed**: No code signing required for debug builds!
+  - 🐛 **Session persistence NOW WORKS**: v0.3.3 fixes critical API endpoint bug
+  - ✨ Updated to new `SessionStorageType.auto` API (replaces `enableSessionPersistence`)
+  - 🔧 Debug builds use SharedPreferences (no macOS keychain entitlements needed)
+  - 🔐 Release builds use SecureStorage when available, else SharedPreferences
+  - Impact: Sessions now persist automatically across app restarts (hot restart & cold restart)
+  - Files Updated:
+    - `pubspec.yaml`: instantdb_flutter v0.2.9 → v0.3.3
+    - `lib/src/services/database_service.dart`: Changed to sessionStorageType: SessionStorageType.auto
+    - `example/macos/Runner/DebugProfile.entitlements`: Reverted keychain entitlements (no longer needed for debug)
+    - `example/macos/Runner/Release.entitlements`: Reverted keychain entitlements (no longer needed for debug)
+
+### Technical Details
+
+**Root Cause Discovered**: Versions v0.3.0-v0.3.2 had a critical bug where session restoration used the **wrong API endpoint**:
+- **Wrong**: `GET /v1/auth/me` with refresh token as Bearer header (designed for user info, not session restoration)
+- **Correct**: `POST /runtime/auth/verify_refresh_token` with refresh token in request body (matches React SDK)
+
+**Version Journey**:
+- v0.3.0: Introduced build-mode aware storage, but used wrong restoration endpoint
+- v0.3.1: Fixed backward compatibility logic, but still used wrong endpoint
+- v0.3.2: Fixed type cast validation, but still used wrong endpoint
+- **v0.3.3**: Finally uses correct endpoint! Session restoration now works properly
+
+The 36-character refresh token UUID was always correct - it was just being sent to an endpoint that didn't know how to handle it.
+
+## 1.1.7 - 2026-01-02
+
+### Changed
+
+- **⬆️ Upgraded InstantDB from v0.2.8 to v0.2.9**: Built-in session persistence
+  - ✨ Enabled automatic session persistence across app restarts
+  - 🐛 Fixed authentication session not persisting after hot restart
+  - 🐛 Fixed signInWithToken() type cast error
+  - ♻️ Simplified AuthenticationService by removing ~80 lines of manual token management
+  - 🔐 Sessions now persist automatically using encrypted storage (flutter_secure_storage)
+  - Impact: Users no longer need to re-authenticate after app restarts
+  - Files Updated:
+    - `pubspec.yaml`: instantdb_flutter v0.2.8 → v0.2.9, added flutter_secure_storage
+    - `lib/src/services/database_service.dart`: Enabled enableSessionPersistence
+    - `lib/src/services/authentication_service.dart`: Removed manual token save/restore code
+
+### Added
+
+- **flutter_secure_storage ^9.2.2**: Secure encrypted token storage for InstantDB sessions
+
 ## 1.1.6 - 2026-01-02
 
 ### Changed
