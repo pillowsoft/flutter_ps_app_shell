@@ -125,7 +125,7 @@ BackButtonDecision _calculateBackButtonBehavior({
   }
 }
 
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   final Widget child;
   final List<AppRoute> routes;
   final String title;
@@ -148,18 +148,67 @@ class AppShell extends StatelessWidget {
   });
 
   @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  bool _watchSetupComplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // CRITICAL: Defer Watch activation until next frame to let app effects stabilize
+    // This prevents SignalEffectException when AppShell renders immediately after boot
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _watchSetupComplete = true;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final settingsStore = GetIt.I<AppShellSettingsStore>();
 
+    // CRITICAL: During first frame, use untracked() to avoid reactive dependencies
+    // After first frame, use Watch for reactive UI
+    if (!_watchSetupComplete) {
+      // First frame: use untracked() reads to avoid creating reactive dependencies
+      return _buildShellContent(
+        context,
+        settingsStore,
+        useUntracked: true,
+      );
+    }
+
+    // After first frame: use Watch for reactive UI
     return Watch((context) {
+      return _buildShellContent(
+        context,
+        settingsStore,
+        useUntracked: false,
+      );
+    });
+  }
+
+  Widget _buildShellContent(
+    BuildContext context,
+    AppShellSettingsStore settingsStore, {
+    required bool useUntracked,
+  }) {
       final ui = getAdaptiveFactory(context);
       final isWideScreen = MediaQuery.of(context).size.width > 600;
       final isVeryWideScreen = MediaQuery.of(context).size.width > 1200;
-      final sidebarCollapsed = settingsStore.sidebarCollapsed.value;
+      // CRITICAL: Use untracked() during first frame to avoid reactive dependency
+      final sidebarCollapsed = useUntracked
+          ? untracked(() => settingsStore.sidebarCollapsed.value)
+          : settingsStore.sidebarCollapsed.value;
 
       // Determine navigation style based on screen size and visible route count
       final visibleRoutes =
-          routes.where((route) => route.showInNavigation).toList();
+          widget.routes.where((route) => route.showInNavigation).toList();
       final useBottomNav = !isWideScreen && visibleRoutes.length <= 5;
       final useMobileDrawer = !isWideScreen && visibleRoutes.length > 5;
       final useRail = isWideScreen && !isVeryWideScreen;
@@ -181,13 +230,13 @@ class AppShell extends StatelessWidget {
       final needsDesktopPadding = isDesktop && ui.needsDesktopPadding();
 
       // Build the drawer for mobile navigation when needed
-      final drawer = useMobileDrawer && !hideNavigation
+      final drawer = useMobileDrawer && !widget.hideNavigation
           ? Drawer(
               child: Builder(
                 builder: (drawerContext) => DrawerContent(
-                  routes: routes,
+                  routes: widget.routes,
                   actions:
-                      actions.where((action) => action.showInDrawer).toList(),
+                      widget.actions.where((action) => action.showInDrawer).toList(),
                   collapsed: false,
                   onItemTap: () {
                     // Close the drawer after navigation
@@ -200,7 +249,7 @@ class AppShell extends StatelessWidget {
 
       // Create bottom navigation if needed
       final bottomNavBar =
-          useBottomNav && !hideNavigation && visibleRoutes.isNotEmpty
+          useBottomNav && !widget.hideNavigation && visibleRoutes.isNotEmpty
               ? _buildBottomNavigation(context, ui, visibleRoutes)
               : null;
 
@@ -217,7 +266,7 @@ class AppShell extends StatelessWidget {
         bottomNavBar: bottomNavBar,
         body: Row(
           children: [
-            if (useSidebar && !hideNavigation && visibleRoutes.isNotEmpty) ...[
+            if (useSidebar && !widget.hideNavigation && visibleRoutes.isNotEmpty) ...[
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: sidebarCollapsed ? 72 : 250,
@@ -228,7 +277,7 @@ class AppShell extends StatelessWidget {
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
               ),
             ] else if (useRail &&
-                !hideNavigation &&
+                !widget.hideNavigation &&
                 visibleRoutes.isNotEmpty) ...[
               _buildNavigationRail(context, ui),
               const VerticalDivider(thickness: 1, width: 1),
@@ -239,9 +288,9 @@ class AppShell extends StatelessWidget {
                       padding: EdgeInsets.only(
                         top: MediaQuery.of(context).padding.top,
                       ),
-                      child: child,
+                      child: widget.child,
                     )
-                  : child,
+                  : widget.child,
             ),
           ],
         ),
@@ -261,7 +310,6 @@ class AppShell extends StatelessWidget {
           return SafeArea(child: scaffoldContent);
         }
       }
-    });
   }
 
   Widget _buildAppBar(
@@ -270,20 +318,20 @@ class AppShell extends StatelessWidget {
     final settingsStore = GetIt.I<AppShellSettingsStore>();
     final ui = getAdaptiveFactory(context);
     final actions = <Widget>[
-      ...this.actions.map((action) => ActionButton(action: action)),
-      if (showThemeToggle) const DarkModeToggleButton(),
+      ...widget.actions.map((action) => ActionButton(action: action)),
+      if (widget.showThemeToggle) const DarkModeToggleButton(),
     ];
 
     final screenWidth = MediaQuery.of(context).size.width;
     AppShellLogger.i(
-        'AppShell._buildAppBar: screenWidth=$screenWidth, isWideScreen=$isWideScreen, useMobileDrawer=$useMobileDrawer, useBottomNav=$useBottomNav, hideNavigation=$hideNavigation');
+        'AppShell._buildAppBar: screenWidth=$screenWidth, isWideScreen=$isWideScreen, useMobileDrawer=$useMobileDrawer, useBottomNav=$useBottomNav, hideNavigation=${widget.hideNavigation}');
 
     // Calculate back button behavior using pure function
     final router = GoRouter.of(context);
     final canPop = router.canPop();
     final routerState = GoRouterState.of(context);
     final currentPath = routerState.uri.path;
-    final configuredHomePath = homeRoute ?? '/';
+    final configuredHomePath = widget.homeRoute ?? '/';
 
     final backButtonDecision = _calculateBackButtonBehavior(
       canPop: canPop,
@@ -349,20 +397,20 @@ class AppShell extends StatelessWidget {
             'AppShell._buildAppBar: Using automatic ${ui.runtimeType} back button');
       }
     } else if (useMobileDrawer &&
-        !hideNavigation &&
+        !widget.hideNavigation &&
         ui.shouldAddDrawerButton()) {
       // Mobile drawer mode without back navigation - show drawer button
       AppShellLogger.i(
           'AppShell._buildAppBar: Mobile drawer mode - using custom drawer button (${ui.runtimeType})');
       leading = ui.drawerButton(context);
       automaticallyImplyLeading = false;
-    } else if (useMobileDrawer && !hideNavigation) {
+    } else if (useMobileDrawer && !widget.hideNavigation) {
       // Mobile drawer mode - Material/ForUI handle drawer automatically
       AppShellLogger.i(
           'AppShell._buildAppBar: Mobile drawer mode - using framework drawer button (${ui.runtimeType})');
       leading = null;
       automaticallyImplyLeading = true;
-    } else if (screenWidth > 1200 && !hideNavigation) {
+    } else if (screenWidth > 1200 && !widget.hideNavigation) {
       // Desktop sidebar toggle remains unchanged
       AppShellLogger.i('AppShell._buildAppBar: Desktop sidebar toggle mode');
       leading = ui.iconButton(
@@ -382,9 +430,9 @@ class AppShell extends StatelessWidget {
 
     // Determine title - use currentRouteTitle, or try to get from current route, or fallback to app title
     final dynamicTitle = _getCurrentRouteTitle(context);
-    final displayTitle = currentRouteTitle ?? dynamicTitle ?? title;
+    final displayTitle = widget.currentRouteTitle ?? dynamicTitle ?? widget.title;
     AppShellLogger.i(
-        'AppShell._buildAppBar: currentRouteTitle="$currentRouteTitle", dynamicTitle="$dynamicTitle", displayTitle="$displayTitle"');
+        'AppShell._buildAppBar: currentRouteTitle="${widget.currentRouteTitle}", dynamicTitle="$dynamicTitle", displayTitle="$displayTitle"');
 
     // Use the factory's appBar method with proper settings
     return ui.appBar(
@@ -469,7 +517,7 @@ class AppShell extends StatelessWidget {
         return null;
       }
 
-      return findRouteTitle(routes, currentPath, '');
+      return findRouteTitle(widget.routes, currentPath, '');
     } catch (e) {
       AppShellLogger.e('AppShell._getCurrentRouteTitle: error=$e');
       return null;
@@ -497,8 +545,8 @@ class AppShell extends StatelessWidget {
     final sidebar = Container(
       color: Theme.of(context).colorScheme.surface,
       child: DrawerContent(
-        routes: routes,
-        actions: actions.where((action) => action.showInDrawer).toList(),
+        routes: widget.routes,
+        actions: widget.actions.where((action) => action.showInDrawer).toList(),
         collapsed: collapsed,
       ),
     );
@@ -515,17 +563,33 @@ class AppShell extends StatelessWidget {
 
     // Only use visible routes for index calculation to match NavigationRail filtering
     final visibleRoutes =
-        routes.where((route) => route.showInNavigation).toList();
+        widget.routes.where((route) => route.showInNavigation).toList();
     final currentIndex =
         visibleRoutes.indexWhere((route) => route.path == currentPath);
 
+    // CRITICAL: During first frame, use untracked() to avoid reactive dependency
+    // After first frame, use Watch for reactive UI
+    if (!_watchSetupComplete) {
+      // First frame: use untracked() read
+      final showLabels = untracked(() => settingsStore.showNavigationLabels.value);
+
+      return ui.navigationRail(
+        currentIndex: currentIndex,
+        routes: widget.routes,
+        onDestinationSelected: (index) {
+          context.go(visibleRoutes[index].path);
+        },
+        showLabels: showLabels,
+      );
+    }
+
+    // After first frame: use Watch for reactive UI
     return Watch((context) {
       final showLabels = settingsStore.showNavigationLabels.value;
 
-      // Use factory method to create platform-specific navigation rail
       return ui.navigationRail(
-        currentIndex: currentIndex, // Pass actual index, let factory handle -1
-        routes: routes, // Pass all routes, filtering happens in factory
+        currentIndex: currentIndex,
+        routes: widget.routes,
         onDestinationSelected: (index) {
           context.go(visibleRoutes[index].path);
         },
