@@ -332,11 +332,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.5.1"
-      resolved-ref: bb7170793d1b3d08d0f4442aadc4efc44b9f6e83
+      ref: "v0.5.2"
+      resolved-ref: "3e2b4773038f16831f3a341ccd2a04e8e1ac50c1"
       url: "https://github.com/pillowsoft/instantdb_flutter.git"
     source: git
-    version: "0.5.1"
+    version: "0.5.2"
   intl:
     dependency: "direct main"
     description:

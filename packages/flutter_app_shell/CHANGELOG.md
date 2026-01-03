@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.1.2 - 2026-01-03
+
+### Dependencies
+
+- **⬆️ Upgraded InstantDB Flutter to v0.5.2**
+  - **Memory leak fix**: PresenceManager now uses LRU cache (max 50 rooms, 200 signals)
+  - **Performance**: 10-50x reduction in timer count via consolidated cleanup
+  - **Documentation**: Added signal best practices to CONTRIBUTING.md
+  - **Impact**: Prevents unbounded memory growth in apps with many collaboration rooms
+  - No breaking changes or migration required
+
+### Migration
+
+**No migration required.** This is a dependency update with no API changes.
+
+---
+
 ## 2.1.1 - 2026-01-03
 
 ### Bug Fixes
