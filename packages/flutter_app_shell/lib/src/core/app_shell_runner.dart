@@ -448,6 +448,7 @@ class _AppShellRunner extends StatefulWidget {
 
 class _AppShellRunnerState extends State<_AppShellRunner> {
   bool _effectsActivated = false;
+  bool _allowRender = false;
 
   @override
   Widget build(BuildContext context) {
@@ -478,7 +479,14 @@ class _AppShellRunnerState extends State<_AppShellRunner> {
           );
         }
 
-        // Phase 3: Activate effects ONCE before first UI render
+        // Phase 3: Activate effects ONCE and schedule render for next frame
+        // CRITICAL FIX (v2.1.1): Wait one frame after effect activation before
+        // rendering AppShell. This prevents SignalEffectException by letting
+        // effects stabilize before Watch widgets evaluate.
+        //
+        // Bug: Effects created in onEffectsActivate() run immediately and remain
+        // active when AppShell renders, creating conflicts with Watch widgets.
+        // Fix: Schedule AppShell render for NEXT frame after effects activate.
         if (!_effectsActivated) {
           if (widget.appConfig.onEffectsActivate != null) {
             _logger.fine('Activating reactive effects...');
@@ -486,9 +494,45 @@ class _AppShellRunnerState extends State<_AppShellRunner> {
             _logger.fine('Effects activated successfully');
           }
           _effectsActivated = true;
+
+          // Schedule render for next frame to let effects stabilize
+          _logger.fine('Scheduling AppShell render for next frame...');
+          Future.microtask(() {
+            if (mounted) {
+              setState(() {
+                _allowRender = true;
+                _logger
+                    .fine('AppShell render allowed - effects have stabilized');
+              });
+            }
+          });
+
+          // Show loading screen during effect initialization
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
         }
 
-        // Phase 4: Build theme and render app
+        // Phase 4: Wait for render flag before showing AppShell
+        // This ensures effects have had one frame to stabilize
+        if (!_allowRender) {
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
+        }
+
+        // Phase 5: Build theme and render app
+        // Effects have now had one frame to stabilize, safe to render
         ThemeData theme = _buildTheme(Brightness.light);
         ThemeData darkTheme = _buildTheme(Brightness.dark);
 

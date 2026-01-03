@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.1.1 - 2026-01-03
+
+### Bug Fixes
+
+- **🐛 CRITICAL FIX: Added frame delay after `onEffectsActivate()` to prevent SignalEffectException**
+  - **Issue**: Effects created in `activateEffects()` run immediately and remain active when AppShell renders, creating conflicts with Watch widgets
+  - **Root cause**: v2.1.0 two-phase pattern prevented dynamic signal creation but didn't solve concurrent effect/Watch execution
+  - **Solution**: Framework now waits ONE frame after calling `onEffectsActivate()` before rendering AppShell
+  - **Timeline**:
+    - T=0ms: `onEffectsActivate()` called → effects created and run immediately
+    - T=1ms: Frame delay scheduled via `Future.microtask()`
+    - T=10ms: Next frame → AppShell renders → effects have stabilized ✓
+  - **Impact**: Fully resolves SignalEffectException for apps using two-phase pattern with database watchers
+  - **Reference**: Bug report from production app implementing v2.1.0 pattern correctly
+
+### Changes
+
+- **✨ Added `_allowRender` state flag** to `AppShellRunner`
+  - Prevents AppShell from rendering immediately after effect activation
+  - Ensures effects have one frame to stabilize before Watch widgets evaluate
+- **📝 Added detailed inline documentation** explaining the timing fix
+- **🔧 Improved logging** for effect activation lifecycle tracking
+
+### Migration
+
+**No migration required.** This is a transparent framework fix that automatically resolves the SignalEffectException timing issue. Apps using v2.1.0 two-phase pattern will now work correctly without any code changes.
+
+---
+
 ## 2.1.0 - 2026-01-03
 
 ### Features
