@@ -9,10 +9,10 @@ import 'features/services_demo/services_demo_screen.dart';
 import 'features/service_inspector/service_inspector_screen.dart';
 import 'features/wizard_demo/wizard_demo_screen.dart';
 import 'features/cloud_sync/cloud_sync_demo_screen.dart';
-// import 'features/tasks/task_management_screen.dart';
+import 'features/tasks/task_management_screen.dart';
 import 'features/performance/performance_demo_screen.dart';
 import 'features/accessibility/accessibility_demo_screen.dart';
-// import 'features/error_handling/error_demo_screen.dart';
+import 'features/error_handling/error_demo_screen.dart';
 import 'features/adaptive_components/adaptive_components_demo_screen.dart';
 import 'features/plugin_demo/plugin_demo_screen.dart';
 import 'features/button_demo/button_demo_screen.dart';
@@ -271,13 +271,12 @@ void main() {
             icon: Icons.cloud_sync,
             builder: (context, state) => const CloudSyncDemoScreen(),
           ),
-          // Temporarily disabled due to ButtonVariant issues
-          // AppRoute(
-          //   title: 'Task Manager',
-          //   path: '/tasks',
-          //   icon: Icons.task_alt,
-          //   builder: (context, state) => const TaskManagementScreen(),
-          // ),
+          AppRoute(
+            title: 'Task Manager',
+            path: '/tasks',
+            icon: Icons.task_alt,
+            builder: (context, state) => const TaskManagementScreen(),
+          ),
           AppRoute(
             title: 'Performance',
             path: '/performance',
@@ -290,13 +289,12 @@ void main() {
             icon: Icons.accessibility,
             builder: (context, state) => const AccessibilityDemoScreen(),
           ),
-          // Temporarily disabled due to compilation issues
-          // AppRoute(
-          //   title: 'Error Handling',
-          //   path: '/error-demo',
-          //   icon: Icons.error_outline,
-          //   builder: (context, state) => const ErrorHandlingDemoScreen(),
-          // ),
+          AppRoute(
+            title: 'Error Handling',
+            path: '/error-demo',
+            icon: Icons.error_outline,
+            builder: (context, state) => const ErrorHandlingDemoScreen(),
+          ),
           AppRoute(
             title: 'Components',
             path: '/components',

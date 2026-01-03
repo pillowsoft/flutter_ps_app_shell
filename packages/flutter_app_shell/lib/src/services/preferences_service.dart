@@ -6,6 +6,48 @@ import '../utils/logger.dart';
 import 'package:logging/logging.dart';
 
 /// Enhanced preferences service with reactive signals and type safety
+///
+/// ## Signal Memory Management
+///
+/// **IMPORTANT**: The internal `_signals` map grows indefinitely with each
+/// unique key accessed through getString(), getInt(), etc. methods.
+///
+/// This is intentional behavior to provide reactive signals, but can cause
+/// memory growth if you're using dynamic/generated keys extensively.
+///
+/// ### When This Is a Problem
+///
+/// - Using user-generated keys (e.g., `pref_user_${userId}_setting`)
+/// - Generating temporary keys
+/// - Accessing thousands of unique preference keys
+///
+/// ### Solutions
+///
+/// 1. **Use static keys**: Prefer a fixed set of preference keys defined as
+///    constants. This is the recommended approach for most applications.
+///
+/// 2. **Manual cleanup**: Use `disposeSignal(key)` to remove signals you no
+///    longer need, or `disposeAllSignalsExcept(keepKeys)` to bulk cleanup.
+///
+/// 3. **Avoid dynamic keys**: Instead of `pref_${id}_value`, consider using
+///    JSON objects: `{"id": value}` stored under a single key.
+///
+/// ### Example of Proper Cleanup
+///
+/// ```dart
+/// // Create signals for temporary user data
+/// final userPrefs = prefs.getString('temp_user_1234');
+///
+/// // When user logs out, dispose the signal
+/// await prefs.disposeSignal('temp_user_1234');
+///
+/// // Or keep only essential signals
+/// await prefs.disposeAllSignalsExcept({
+///   'app_theme',
+///   'language',
+///   'notifications_enabled',
+/// });
+/// ```
 class PreferencesService {
   // Service-specific logger
   static final Logger _logger = createServiceLogger('PreferencesService');
@@ -365,6 +407,65 @@ class PreferencesService {
       listKeys: listCount,
       reactiveSignals: _signals.length,
     );
+  }
+
+  // Signal lifecycle management
+
+  /// Dispose a specific signal to free memory
+  ///
+  /// This removes the reactive signal from the internal cache. The preference
+  /// value remains in SharedPreferences.
+  ///
+  /// **Use this when**:
+  /// - You no longer need reactive updates for a specific key
+  /// - You're cleaning up temporary/user-specific preferences
+  /// - You want to reduce memory usage from dynamic keys
+  ///
+  /// **Example**:
+  /// ```dart
+  /// // After user logs out
+  /// await prefs.disposeSignal('user_${userId}_settings');
+  /// ```
+  void disposeSignal(String key) {
+    if (_signals.containsKey(key)) {
+      _signals.remove(key);
+      _logger.fine('Disposed signal for key: $key');
+    }
+  }
+
+  /// Dispose all signals except those in the keepKeys set
+  ///
+  /// This is useful for bulk cleanup of signals while preserving essential
+  /// ones that your app always needs.
+  ///
+  /// The preference values remain in SharedPreferences - only the reactive
+  /// signals are removed.
+  ///
+  /// **Use this when**:
+  /// - Cleaning up after bulk operations with many dynamic keys
+  /// - Resetting signal cache to essential keys only
+  /// - Performing memory optimization
+  ///
+  /// **Example**:
+  /// ```dart
+  /// // Keep only core app preferences
+  /// prefs.disposeAllSignalsExcept({
+  ///   'app_theme',
+  ///   'language',
+  ///   'notifications_enabled',
+  ///   'user_id',
+  /// });
+  /// ```
+  void disposeAllSignalsExcept(Set<String> keepKeys) {
+    final keysToRemove =
+        _signals.keys.where((key) => !keepKeys.contains(key)).toList();
+
+    for (final key in keysToRemove) {
+      _signals.remove(key);
+    }
+
+    _logger.info(
+        'Disposed ${keysToRemove.length} signals, kept ${keepKeys.length} signals');
   }
 
   void _ensureInitialized() {

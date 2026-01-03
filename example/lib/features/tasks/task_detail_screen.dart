@@ -958,10 +958,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
           child: Row(
             children: [
               Expanded(
-                child: ui.button(
+                child: ui.outlinedButton(
                   label: 'Mark as To Do',
                   onPressed: () => _updateTaskStatus(TaskStatus.todo),
-                  variant: ButtonVariant.secondary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -986,15 +985,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
               child: ui.button(
                 label: 'Mark as Done',
                 onPressed: () => _updateTaskStatus(TaskStatus.done),
-                variant: ButtonVariant.primary,
               ),
             ),
             if (_currentTask.status != TaskStatus.inProgress) ...[
               const SizedBox(width: 8),
-              ui.button(
+              ui.outlinedButton(
                 label: 'Start',
                 onPressed: () => _updateTaskStatus(TaskStatus.inProgress),
-                variant: ButtonVariant.secondary,
               ),
             ],
           ],

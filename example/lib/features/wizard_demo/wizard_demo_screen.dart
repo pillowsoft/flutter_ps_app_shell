@@ -14,50 +14,45 @@ class WizardDemoScreen extends StatelessWidget {
       final ui = getAdaptiveFactory(context);
       final styles = context.adaptiveStyle;
 
-      return ui.scaffold(
-        key: ValueKey('wizard_demo_scaffold_$uiSystem'),
-        body: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Icon(
-                    Icons.auto_stories,
-                    size: 32,
-                    color: styles.primary,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Wizard Navigation System',
-                          style: styles.headlineLarge,
+      return Padding(
+        key: ValueKey('wizard_demo_padding_$uiSystem'),
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Icon(
+                  Icons.auto_stories,
+                  size: 32,
+                  color: styles.primary,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ui.pageTitle('Wizard Navigation System'),
+                      Text(
+                        'Step-by-step flows for onboarding, forms, and configuration',
+                        style: styles.bodyMedium.copyWith(
+                          color: styles.onSurfaceVariant,
                         ),
-                        Text(
-                          'Step-by-step flows for onboarding, forms, and configuration',
-                          style: styles.bodyMedium.copyWith(
-                            color: styles.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
 
-              const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-              // Wizard Examples Grid
-              Expanded(
-                child: _buildWizardGrid(context, ui, styles),
-              ),
-            ],
-          ),
+            // Wizard Examples Grid
+            Expanded(
+              child: _buildWizardGrid(context, ui, styles),
+            ),
+          ],
         ),
       );
     });

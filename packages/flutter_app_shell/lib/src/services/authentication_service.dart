@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:bcrypt/bcrypt.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:instantdb_flutter/instantdb_flutter.dart';
 import 'package:logging/logging.dart';
@@ -11,6 +12,26 @@ import 'database_service.dart';
 
 /// Authentication service with token management and biometric support
 /// Provides local authentication with JWT-style tokens
+///
+/// ## BREAKING CHANGE in v2.0.0
+///
+/// **Password hashing has been upgraded from SHA-256 to bcrypt** for improved
+/// security. This is a **CRITICAL SECURITY FIX** that addresses vulnerability
+/// to rainbow table attacks.
+///
+/// ### Migration Required
+///
+/// Existing password-based authentication will NOT work after upgrading to v2.0.0.
+/// Users must either:
+///
+/// 1. **Reset passwords** via "forgot password" flow
+/// 2. **Migrate hashes** using the `migratePasswordHash()` method during first sign-in
+/// 3. **Re-authenticate** (if app clears local auth data on upgrade)
+///
+/// **Note**: This only affects password-based authentication. InstantDB magic link
+/// authentication is unaffected.
+///
+/// See `docs/migration-v2.md` for detailed migration guide.
 class AuthenticationService {
   static AuthenticationService? _instance;
   static AuthenticationService get instance =>
@@ -492,67 +513,94 @@ class AuthenticationService {
     return AuthResult.success(user);
   }
 
+  /// Restore authentication state from local storage or InstantDB session
+  ///
+  /// **Error Safety**: Uses local variables throughout and only updates signals
+  /// at the end in a single batch() to ensure atomic state updates and prevent
+  /// inconsistent state if exceptions occur.
   Future<void> _restoreAuthState() async {
     _logger.info('Attempting to restore authentication state...');
 
+    // Local variables to accumulate results
+    AuthUser? restoredUser;
+    bool authenticated = false;
+
     // Try to restore from local token-based auth first
-    final token = _prefs.getString(_keyAuthToken).value;
-    final userDataString = _prefs.getString(_keyUserData).value;
+    try {
+      final token = _prefs.getString(_keyAuthToken).value;
+      final userDataString = _prefs.getString(_keyUserData).value;
 
-    _logger.fine(
-        'Local auth check - token: ${token != null}, userData: ${userDataString != null}');
+      _logger.fine(
+          'Local auth check - token: ${token != null}, userData: ${userDataString != null}');
 
-    if (token != null && userDataString != null && isTokenValid()) {
-      try {
+      if (token != null && userDataString != null && isTokenValid()) {
         final userData = jsonDecode(userDataString) as Map<String, dynamic>;
         final user = AuthUser.fromJson(userData);
 
-        batch(() {
-          currentUser.value = user;
-          isAuthenticated.value = true;
-        });
+        // Store in local variables, don't update signals yet
+        restoredUser = user;
+        authenticated = true;
 
         _logger.info('Restored local authentication state for: ${user.email}');
-        return; // Successfully restored
+      }
+    } catch (e, stackTrace) {
+      _logger.severe('Failed to restore local auth state', e, stackTrace);
+      // Clear corrupted auth data
+      await _clearAuthData();
+      // Keep restoredUser = null, authenticated = false
+    }
+
+    // If local auth failed, check for InstantDB session
+    // InstantDB v0.2.9+ automatically restores sessions via enableSessionPersistence
+    if (!authenticated) {
+      try {
+        final dbService = DatabaseService.instance;
+
+        if (dbService.isInitialized) {
+          final instantUser = dbService.db.auth.currentUser.value;
+          if (instantUser != null) {
+            _logger.info(
+                'InstantDB session restored automatically for: ${instantUser.email}');
+
+            final user = AuthUser(
+              id: instantUser.id,
+              email: instantUser.email,
+              name: _extractNameFromEmail(instantUser.email),
+              avatarUrl: null,
+            );
+
+            // Store in local variables
+            restoredUser = user;
+            authenticated = true;
+
+            // Store user data for future local restoration
+            await _storeUserData(user);
+          } else {
+            _logger.fine('No active InstantDB session found');
+          }
+        } else {
+          _logger.fine(
+              'Database service not initialized, skipping InstantDB check');
+        }
       } catch (e, stackTrace) {
-        _logger.severe('Failed to restore auth state', e, stackTrace);
-        await _clearAuthData();
+        // InstantDB check failure is not critical - service can still function
+        _logger.warning('Failed to check InstantDB auth state (non-critical)',
+            e, stackTrace);
+        // Keep current restoredUser and authenticated values
       }
     }
 
-    // Check for InstantDB session
-    // InstantDB v0.2.9+ automatically restores sessions via enableSessionPersistence
-    try {
-      final dbService = DatabaseService.instance;
+    // ALWAYS update signals with safe values in a single atomic batch
+    // This ensures consistent state even if exceptions occurred above
+    batch(() {
+      currentUser.value = restoredUser;
+      isAuthenticated.value = authenticated;
+    });
 
-      if (dbService.isInitialized) {
-        final instantUser = dbService.db.auth.currentUser.value;
-        if (instantUser != null) {
-          _logger.info(
-              'InstantDB session restored automatically for: ${instantUser.email}');
-
-          final user = AuthUser(
-            id: instantUser.id,
-            email: instantUser.email,
-            name: _extractNameFromEmail(instantUser.email),
-            avatarUrl: null,
-          );
-
-          batch(() {
-            currentUser.value = user;
-            isAuthenticated.value = true;
-          });
-
-          await _storeUserData(user);
-        } else {
-          _logger.fine('No active InstantDB session found');
-        }
-      } else {
-        _logger
-            .fine('Database service not initialized, skipping InstantDB check');
-      }
-    } catch (e, stackTrace) {
-      _logger.warning('Failed to check InstantDB auth state', e, stackTrace);
+    if (authenticated && restoredUser != null) {
+      _logger.info('Authentication state restored for: ${restoredUser.email}');
+    } else {
+      _logger.fine('No authentication state to restore');
     }
   }
 
@@ -591,10 +639,101 @@ class AuthenticationService {
     return null;
   }
 
+  /// Hash password using bcrypt with cost factor 12
+  ///
+  /// ## BREAKING CHANGE in v2.0.0
+  ///
+  /// This method now uses **bcrypt** instead of SHA-256 for secure password hashing.
+  /// Bcrypt provides:
+  /// - Built-in salt generation (prevents rainbow table attacks)
+  /// - Adaptive cost factor (resistant to brute-force attacks)
+  /// - Industry-standard security (200-400ms hashing time acceptable for auth)
+  ///
+  /// **Cost factor 12** provides good security/performance balance:
+  /// - ~300ms on modern devices (acceptable for login/signup)
+  /// - 2^12 = 4096 iterations
+  /// - Increases difficulty for attackers exponentially
+  ///
+  /// **Migration**: Old SHA-256 hashes will NOT verify. Use `migratePasswordHash()`
+  /// or require password resets.
   String _hashPassword(String password) {
-    final bytes = utf8.encode(password);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
+    return BCrypt.hashpw(password, BCrypt.gensalt(logRounds: 12));
+  }
+
+  /// Verify password against bcrypt hash
+  ///
+  /// ## BREAKING CHANGE in v2.0.0
+  ///
+  /// This method now verifies **bcrypt** hashes instead of SHA-256.
+  /// Will return false for old SHA-256 hashes.
+  bool _verifyPassword(String password, String hashedPassword) {
+    try {
+      return BCrypt.checkpw(password, hashedPassword);
+    } catch (e) {
+      _logger.warning(
+          'Password verification failed (possibly old SHA-256 hash): $e');
+      return false;
+    }
+  }
+
+  /// Migrate password hash from SHA-256 to bcrypt
+  ///
+  /// ## Migration Helper for v2.0.0 Upgrade
+  ///
+  /// Use this method to migrate user passwords from old SHA-256 hashes to
+  /// new bcrypt hashes during first sign-in after upgrading to v2.0.0.
+  ///
+  /// **Migration Strategy**:
+  /// 1. Verify the password against the old SHA-256 hash
+  /// 2. If valid, rehash with bcrypt and update storage
+  /// 3. User can continue without password reset
+  ///
+  /// **Example Usage**:
+  /// ```dart
+  /// // During sign-in, detect old hash format and migrate
+  /// final oldHash = await getUserPasswordHash(email);
+  /// if (oldHash.length == 64) { // SHA-256 produces 64-char hex string
+  ///   final migrated = await auth.migratePasswordHash(
+  ///     email: email,
+  ///     plainPassword: password,
+  ///     oldSha256Hash: oldHash,
+  ///   );
+  ///   if (migrated != null) {
+  ///     await updateUserPasswordHash(email, migrated);
+  ///     // Proceed with sign-in
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// **Returns**: New bcrypt hash if migration successful, null if old hash invalid
+  Future<String?> migratePasswordHash({
+    required String email,
+    required String plainPassword,
+    required String oldSha256Hash,
+  }) async {
+    try {
+      _logger.info('Attempting password hash migration for: $email');
+
+      // Verify against old SHA-256 hash
+      final bytes = utf8.encode(plainPassword);
+      final digest = sha256.convert(bytes);
+      final computedOldHash = digest.toString();
+
+      if (computedOldHash != oldSha256Hash) {
+        _logger.warning(
+            'Password hash migration failed: password does not match old hash');
+        return null;
+      }
+
+      // Generate new bcrypt hash
+      final newHash = _hashPassword(plainPassword);
+      _logger.info('Password hash successfully migrated to bcrypt for: $email');
+
+      return newHash;
+    } catch (e, stackTrace) {
+      _logger.severe('Password hash migration error for $email', e, stackTrace);
+      return null;
+    }
   }
 
   String _generateUserId(String email) {

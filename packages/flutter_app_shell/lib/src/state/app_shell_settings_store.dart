@@ -27,6 +27,10 @@ class AppShellSettingsStore {
   late final Signal<String> uiSystem; // 'material', 'cupertino', 'forui'
   late final Signal<double> textScaleFactor;
 
+  // Persistence error tracking
+  late final Signal<String?> lastPersistenceError;
+  late final Signal<int> persistenceFailureCount;
+
   AppShellSettingsStore(this._prefs) {
     _initializeSignals();
     _loadSettings();
@@ -51,6 +55,10 @@ class AppShellSettingsStore {
     // UI preferences
     uiSystem = signal('material');
     textScaleFactor = signal(1.0);
+
+    // Persistence error tracking
+    lastPersistenceError = signal<String?>(null);
+    persistenceFailureCount = signal<int>(0);
   }
 
   void _setupEffects() {
@@ -62,55 +70,94 @@ class AppShellSettingsStore {
     effect(() {
       final value = brightness.value.index;
       _logger.fine('Saving brightness: $value');
-      _prefs.setInt('brightness', value).catchError((e) {
-        _logger.severe('Failed to save brightness: $e');
-        return false;
-      });
+      _prefs.setInt('brightness', value).then(
+        (success) {
+          if (success) {
+            // Clear error on successful save
+            if (lastPersistenceError.value?.contains('brightness') ?? false) {
+              lastPersistenceError.value = null;
+            }
+          }
+        },
+        onError: (e) => _handlePersistenceFailure('brightness', e),
+      );
     });
 
     effect(() {
       final value = themeMode.value.index;
       _logger.fine('Saving themeMode: $value');
-      _prefs.setInt('themeMode', value).catchError((e) {
-        _logger.severe('Failed to save themeMode: $e');
-        return false;
-      });
+      _prefs.setInt('themeMode', value).then(
+        (success) {
+          if (success) {
+            if (lastPersistenceError.value?.contains('themeMode') ?? false) {
+              lastPersistenceError.value = null;
+            }
+          }
+        },
+        onError: (e) => _handlePersistenceFailure('themeMode', e),
+      );
     });
 
     effect(() {
       final value = sidebarCollapsed.value;
       _logger.fine('Saving sidebarCollapsed: $value');
-      _prefs.setBool('sidebarCollapsed', value).catchError((e) {
-        _logger.severe('Failed to save sidebarCollapsed: $e');
-        return false;
-      });
+      _prefs.setBool('sidebarCollapsed', value).then(
+        (success) {
+          if (success) {
+            if (lastPersistenceError.value?.contains('sidebarCollapsed') ??
+                false) {
+              lastPersistenceError.value = null;
+            }
+          }
+        },
+        onError: (e) => _handlePersistenceFailure('sidebarCollapsed', e),
+      );
     });
 
     effect(() {
       final value = showNavigationLabels.value;
       _logger.fine('Saving showNavigationLabels: $value');
-      _prefs.setBool('showNavigationLabels', value).catchError((e) {
-        _logger.severe('Failed to save showNavigationLabels: $e');
-        return false;
-      });
+      _prefs.setBool('showNavigationLabels', value).then(
+        (success) {
+          if (success) {
+            if (lastPersistenceError.value?.contains('showNavigationLabels') ??
+                false) {
+              lastPersistenceError.value = null;
+            }
+          }
+        },
+        onError: (e) => _handlePersistenceFailure('showNavigationLabels', e),
+      );
     });
 
     effect(() {
       final value = debugMode.value;
       _logger.fine('Saving debugMode: $value');
-      _prefs.setBool('debugMode', value).catchError((e) {
-        _logger.severe('Failed to save debugMode: $e');
-        return false;
-      });
+      _prefs.setBool('debugMode', value).then(
+        (success) {
+          if (success) {
+            if (lastPersistenceError.value?.contains('debugMode') ?? false) {
+              lastPersistenceError.value = null;
+            }
+          }
+        },
+        onError: (e) => _handlePersistenceFailure('debugMode', e),
+      );
     });
 
     effect(() {
       final value = logLevel.value;
       _logger.fine('Saving logLevel: $value');
-      _prefs.setString('logLevel', value).catchError((e) {
-        _logger.severe('Failed to save logLevel: $e');
-        return false;
-      });
+      _prefs.setString('logLevel', value).then(
+        (success) {
+          if (success) {
+            if (lastPersistenceError.value?.contains('logLevel') ?? false) {
+              lastPersistenceError.value = null;
+            }
+          }
+        },
+        onError: (e) => _handlePersistenceFailure('logLevel', e),
+      );
     });
 
     // Connect logLevel signal to LoggingService
@@ -127,20 +174,40 @@ class AppShellSettingsStore {
     effect(() {
       final value = uiSystem.value;
       _logger.fine('Saving uiSystem: $value');
-      _prefs.setString('uiSystem', value).catchError((e) {
-        _logger.severe('Failed to save uiSystem: $e');
-        return false;
-      });
+      _prefs.setString('uiSystem', value).then(
+        (success) {
+          if (success) {
+            if (lastPersistenceError.value?.contains('uiSystem') ?? false) {
+              lastPersistenceError.value = null;
+            }
+          }
+        },
+        onError: (e) => _handlePersistenceFailure('uiSystem', e),
+      );
     });
 
     effect(() {
       final value = textScaleFactor.value;
       _logger.fine('Saving textScaleFactor: $value');
-      _prefs.setDouble('textScaleFactor', value).catchError((e) {
-        _logger.severe('Failed to save textScaleFactor: $e');
-        return false;
-      });
+      _prefs.setDouble('textScaleFactor', value).then(
+        (success) {
+          if (success) {
+            if (lastPersistenceError.value?.contains('textScaleFactor') ??
+                false) {
+              lastPersistenceError.value = null;
+            }
+          }
+        },
+        onError: (e) => _handlePersistenceFailure('textScaleFactor', e),
+      );
     });
+  }
+
+  void _handlePersistenceFailure(String key, dynamic error) {
+    final errorMessage = 'Failed to persist $key: $error';
+    _logger.severe(errorMessage);
+    lastPersistenceError.value = errorMessage;
+    persistenceFailureCount.value += 1;
   }
 
   void _loadSettings() {

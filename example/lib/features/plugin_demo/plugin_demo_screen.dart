@@ -48,77 +48,72 @@ class _PluginDemoScreenState extends State<PluginDemoScreen> {
       final uiSystem = settingsStore.uiSystem.value;
       final ui = getAdaptiveFactory(context);
 
-      return ui.scaffold(
-        key: ValueKey('plugin_demo_scaffold_$uiSystem'),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Icon(
-                    Icons.extension,
-                    size: 32,
-                    color: styles.primary,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Plugin Demo',
-                          style: styles.headlineLarge,
-                        ),
-                        Text(
-                          'Demonstrating plugin capabilities',
-                          style: styles.bodyMedium.copyWith(
-                            color: styles.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // Content
-              Expanded(
-                child: DefaultTabController(
-                  length: 2,
+      return Padding(
+        key: ValueKey('plugin_demo_padding_$uiSystem'),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Icon(
+                  Icons.extension,
+                  size: 32,
+                  color: styles.primary,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Material(
-                        color: Colors.transparent,
-                        child: TabBar(
-                          labelColor: styles.primary,
-                          unselectedLabelColor: styles.onSurfaceVariant,
-                          indicatorColor: styles.primary,
-                          tabs: const [
-                            Tab(text: 'Analytics Plugin'),
-                            Tab(text: 'Chart Widgets'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: TabBarView(
-                          children: [
-                            _buildAnalyticsDemo(ui, styles),
-                            _buildChartDemo(ui, styles),
-                          ],
+                      ui.pageTitle('Plugin Demo'),
+                      Text(
+                        'Demonstrating plugin capabilities',
+                        style: styles.bodyMedium.copyWith(
+                          color: styles.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                 ),
+              ],
+            ),
+
+            const SizedBox(height: 32),
+
+            // Content
+            Expanded(
+              child: DefaultTabController(
+                length: 2,
+                child: Column(
+                  children: [
+                    Material(
+                      color: Colors.transparent,
+                      child: TabBar(
+                        labelColor: styles.primary,
+                        unselectedLabelColor: styles.onSurfaceVariant,
+                        indicatorColor: styles.primary,
+                        tabs: const [
+                          Tab(text: 'Analytics Plugin'),
+                          Tab(text: 'Chart Widgets'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          _buildAnalyticsDemo(ui, styles),
+                          _buildChartDemo(ui, styles),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     });

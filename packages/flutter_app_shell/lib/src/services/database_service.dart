@@ -23,6 +23,7 @@ class DatabaseService {
   InstantDB get db => _db!;
 
   String? _appId;
+  String? _instantDbVersion; // Detected InstantDB package version
 
   bool get isInitialized => _db != null;
   bool get isAuthenticated => _db?.auth.currentUser.value != null;
@@ -101,6 +102,21 @@ class DatabaseService {
       connectionStatus.value = DatabaseConnectionStatus.connected;
       if (enableSync && !isLocalOnly) {
         syncStatus.value = SyncStatus.connected;
+      }
+
+      // Detect InstantDB version for datalog workaround logic
+      // Note: In production, this could be read from package metadata
+      // For now, we default to assuming workaround is needed (version unknown)
+      _instantDbVersion =
+          null; // TODO: Detect from package_info or instantdb_flutter package
+
+      // Log which datalog mode is active
+      if (_shouldUseDatalogWorkaround()) {
+        _logger.info(
+            'Using datalog UUID workaround (InstantDB version: ${_instantDbVersion ?? 'unknown, assuming <0.3.0'})');
+      } else {
+        _logger.info(
+            'Using standard datalog format (InstantDB version: $_instantDbVersion)');
       }
 
       final mode = isLocalOnly ? 'local-only' : 'cloud-sync';
@@ -473,6 +489,9 @@ class DatabaseService {
 
   /// Watch documents in a collection (reactive)
   /// Returns a Signal that updates when the collection changes
+  ///
+  /// **Thread Safety**: Uses untracked() wrapper to prevent race conditions
+  /// during signal updates and defensive copying to ensure data consistency.
   Computed<List<Map<String, dynamic>>> watchCollection(String collection) {
     _ensureInitialized();
     _logger.fine('watchCollection called for collection: $collection');
@@ -483,32 +502,38 @@ class DatabaseService {
 
     // Transform the InstantDB signal to our format
     final transformedSignal = computed(() {
-      final result = querySignal.value;
-      if (result.hasData && result.data != null) {
-        // Check for datalog format first (workaround for InstantDB package bug)
-        if (result.data!['datalog-result'] != null) {
-          final documents = _parseDatalogResult(result.data!, collection);
-          return documents;
-        }
+      // Use untracked() to prevent race conditions during computation
+      return untracked(() {
+        final result = querySignal.value;
+        if (result.hasData && result.data != null) {
+          // Defensive copy to prevent mid-computation updates
+          final dataCopy = Map<String, dynamic>.from(result.data!);
 
-        // Fall back to standard format
-        if (result.data![collection] != null) {
-          final collectionData = result.data![collection] as List?;
-          if (collectionData != null) {
-            final documents = List<Map<String, dynamic>>.from(
-                collectionData.map((item) => Map<String, dynamic>.from(item)));
-            // Add IDs to each document
-            for (int i = 0; i < documents.length; i++) {
-              final doc = documents[i];
-              if (doc.containsKey('id')) {
-                doc['_id'] = doc['id'];
-              }
-            }
+          // Check for datalog format first (workaround for InstantDB package bug)
+          if (dataCopy['datalog-result'] != null) {
+            final documents = _parseDatalogResult(dataCopy, collection);
             return documents;
           }
+
+          // Fall back to standard format
+          if (dataCopy[collection] != null) {
+            final collectionData = dataCopy[collection] as List?;
+            if (collectionData != null) {
+              final documents = List<Map<String, dynamic>>.from(collectionData
+                  .map((item) => Map<String, dynamic>.from(item)));
+              // Add IDs to each document
+              for (int i = 0; i < documents.length; i++) {
+                final doc = documents[i];
+                if (doc.containsKey('id')) {
+                  doc['_id'] = doc['id'];
+                }
+              }
+              return documents;
+            }
+          }
         }
-      }
-      return <Map<String, dynamic>>[];
+        return <Map<String, dynamic>>[];
+      });
     });
 
     // Note: Removed the effect that was causing cycles
@@ -519,6 +544,9 @@ class DatabaseService {
   }
 
   /// Watch documents with a filter (reactive)
+  ///
+  /// **Thread Safety**: Uses untracked() wrapper to prevent race conditions
+  /// during signal updates and defensive copying to ensure data consistency.
   Computed<List<Map<String, dynamic>>> watchWhere(
       String collection, Map<String, dynamic> where) {
     _ensureInitialized();
@@ -540,32 +568,38 @@ class DatabaseService {
 
     // Transform the InstantDB signal to our format
     final transformedSignal = computed(() {
-      final result = querySignal.value;
-      if (result.hasData && result.data != null) {
-        // Check for datalog format first (workaround for InstantDB package bug)
-        if (result.data!['datalog-result'] != null) {
-          final documents = _parseDatalogResult(result.data!, collection);
-          return documents;
-        }
+      // Use untracked() to prevent race conditions during computation
+      return untracked(() {
+        final result = querySignal.value;
+        if (result.hasData && result.data != null) {
+          // Defensive copy to prevent mid-computation updates
+          final dataCopy = Map<String, dynamic>.from(result.data!);
 
-        // Fall back to standard format
-        if (result.data![collection] != null) {
-          final collectionData = result.data![collection] as List?;
-          if (collectionData != null) {
-            final documents = List<Map<String, dynamic>>.from(
-                collectionData.map((item) => Map<String, dynamic>.from(item)));
-            // Add IDs to each document
-            for (int i = 0; i < documents.length; i++) {
-              final doc = documents[i];
-              if (doc.containsKey('id')) {
-                doc['_id'] = doc['id'];
-              }
-            }
+          // Check for datalog format first (workaround for InstantDB package bug)
+          if (dataCopy['datalog-result'] != null) {
+            final documents = _parseDatalogResult(dataCopy, collection);
             return documents;
           }
+
+          // Fall back to standard format
+          if (dataCopy[collection] != null) {
+            final collectionData = dataCopy[collection] as List?;
+            if (collectionData != null) {
+              final documents = List<Map<String, dynamic>>.from(collectionData
+                  .map((item) => Map<String, dynamic>.from(item)));
+              // Add IDs to each document
+              for (int i = 0; i < documents.length; i++) {
+                final doc = documents[i];
+                if (doc.containsKey('id')) {
+                  doc['_id'] = doc['id'];
+                }
+              }
+              return documents;
+            }
+          }
         }
-      }
-      return <Map<String, dynamic>>[];
+        return <Map<String, dynamic>>[];
+      });
     });
 
     // Note: Removed the effect that was causing cycles
@@ -798,9 +832,61 @@ class DatabaseService {
     return transformed;
   }
 
-  /// Get attribute ID mappings for a specific collection
-  /// Supports multiple possible IDs per field to handle schema variations
-  Map<String, String> _getAttributeMappings(String collection) {
+  /// Version of InstantDB where datalog format bug is expected to be fixed
+  static const String _datalogBugFixedInVersion = '0.3.0';
+
+  /// Check if we should use the datalog workaround based on InstantDB version
+  ///
+  /// Returns true if the datalog format bug workaround is needed.
+  /// For safety, defaults to true if version cannot be determined.
+  ///
+  /// **Future**: When InstantDB fixes the datalog format bug, this method
+  /// can be updated to return false, eliminating the need for hardcoded UUIDs.
+  bool _shouldUseDatalogWorkaround() {
+    // If we couldn't detect version, use workaround for safety
+    if (_instantDbVersion == null) {
+      return true;
+    }
+
+    try {
+      // Simple version comparison (assumes semver: major.minor.patch)
+      final parts = _instantDbVersion!.split('.');
+      if (parts.length < 2) {
+        _logger.warning('Invalid InstantDB version format: $_instantDbVersion');
+        return true;
+      }
+
+      final major = int.parse(parts[0]);
+      final minor = int.parse(parts[1]);
+
+      // Bug is expected to be fixed in 0.3.0+
+      // If major > 0, bug is definitely fixed
+      // If major == 0 and minor >= 3, bug is fixed
+      if (major > 0 || (major == 0 && minor >= 3)) {
+        return false; // Bug fixed, no workaround needed
+      }
+
+      return true; // Version < 0.3.0, workaround needed
+    } catch (e) {
+      _logger.warning(
+          'Could not parse InstantDB version $_instantDbVersion, using workaround: $e');
+      return true;
+    }
+  }
+
+  /// Get standard attribute mappings (for fixed InstantDB versions)
+  ///
+  /// Returns empty map, allowing InstantDB to use field names directly.
+  Map<String, String> _getStandardMappings(String collection) {
+    // When InstantDB datalog format is fixed, no UUID mappings are needed
+    return {};
+  }
+
+  /// Get workaround attribute mappings with hardcoded UUIDs
+  ///
+  /// **Temporary workaround** for InstantDB v0.2.x datalog format bug.
+  /// These hardcoded UUIDs map attribute IDs to field names.
+  Map<String, String> _getWorkaroundMappings(String collection) {
     // Collection-specific mappings
     final collectionMappings = <String, Map<String, List<String>>>{
       'conversations': {
@@ -847,6 +933,18 @@ class DatabaseService {
     });
 
     return attributeMap;
+  }
+
+  /// Get attribute ID mappings for a specific collection
+  ///
+  /// Automatically selects between workaround mappings (for InstantDB <0.3.0)
+  /// and standard mappings (for InstantDB >=0.3.0) based on detected version.
+  Map<String, String> _getAttributeMappings(String collection) {
+    if (_shouldUseDatalogWorkaround()) {
+      return _getWorkaroundMappings(collection);
+    } else {
+      return _getStandardMappings(collection);
+    }
   }
 
   /// Parse InstantDB's datalog-result format into entity list

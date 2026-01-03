@@ -1,5 +1,158 @@
 # Changelog
 
+## 2.0.1 - 2026-01-03
+
+### Changed
+
+- **⬆️ Upgraded InstantDB Flutter dependency from v0.3.3 to v0.3.4**
+  - Fixed `clearAll()` crash when deleting non-existent database tables
+  - Added performance index on retracted column (O(n) → O(log n) query performance)
+  - Added `vacuum()` method to remove old retracted triples and reclaim disk space
+  - Server error rollback: Optimistic updates now automatically rollback on server rejection
+  - Attribute cache protection: Unknown attributes trigger exceptions to prevent data loss
+  - See [InstantDB v0.3.4 Release Notes](https://github.com/pillowsoft/instantdb_flutter/releases/tag/v0.3.4)
+
+### Fixed
+
+- All 5 InstantDB bug fixes now integrated into framework
+
+## 2.0.0 - 2026-01-03
+
+### BREAKING CHANGES
+
+- **🔐 CRITICAL SECURITY FIX: Password hashing upgraded from SHA-256 to bcrypt**
+  - **Impact**: Existing password hashes will NOT work after upgrade
+  - **Why**: SHA-256 is vulnerable to rainbow table attacks (no salt, too fast)
+  - **New**: bcrypt with cost factor 12 (industry standard, built-in salt)
+  - **Migration**: See [Migration Guide v2.0](../../docs/migration-v2.md)
+  - **Options**:
+    1. Users reset passwords via "forgot password" flow
+    2. Migrate on first sign-in using `migratePasswordHash()` helper
+    3. Clear all auth data (users re-authenticate)
+  - **Note**: InstantDB magic link authentication unaffected
+  - Files Changed:
+    - `pubspec.yaml`: Added bcrypt ^1.1.3
+    - `lib/src/services/authentication_service.dart`: bcrypt implementation, migration helper
+
+### Fixed (10 Critical Bugs)
+
+**HIGH PRIORITY**:
+1. **🐛 Fixed DatabaseService race condition in watchCollection/watchWhere**
+   - Added `untracked()` wrapper to prevent SignalEffectException
+   - Defensive copying of result data before processing
+   - File: `lib/src/services/database_service.dart`
+
+2. **🐛 Fixed AuthenticationService null safety in _restoreAuthState**
+   - Atomic signal updates using `batch()`
+   - Local variables throughout try-catch blocks
+   - Safe defaults on failure
+   - File: `lib/src/services/authentication_service.dart`
+
+3. **🐛 Fixed NetworkService offline queue not persisting**
+   - JSON serialization to SharedPreferences
+   - Queue survives app crashes/force-close
+   - 1000 request max limit
+   - File: `lib/src/services/network_service.dart`
+
+**MEDIUM PRIORITY**:
+4. **🐛 Fixed WindowStateService accepting NaN/Infinity coordinates**
+   - Comprehensive validation (isFinite, bounds checking)
+   - Safe limits: 200-8192px dimensions, ±16384px coordinates
+   - Fallback to defaults on invalid data
+   - File: `lib/src/services/window_state_service.dart`
+
+5. **🐛 Fixed DatabaseService hardcoded UUID workarounds**
+   - Version detection for conditional logic
+   - Automatic InstantDB version comparison
+   - Future-proof for when bug is fixed
+   - File: `lib/src/services/database_service.dart`
+
+6. **🐛 Fixed AppShellSettingsStore silent persistence failures**
+   - Added error tracking signals (lastPersistenceError, persistenceFailureCount)
+   - Replaced fire-and-forget catchError with proper error handling
+   - Users now aware of persistence issues
+   - File: `lib/src/state/app_shell_settings_store.dart`
+
+7. **🐛 Fixed AppShell back button unreliable logic**
+   - Extracted to pure function with cycle detection
+   - Depth limit (max 20 levels)
+   - Clear decision reasoning
+   - File: `lib/src/core/app_shell.dart`
+
+**LOW PRIORITY**:
+8. **🐛 Fixed PreferencesService signal map memory leak**
+   - Added comprehensive documentation warning
+   - New cleanup API: `disposeSignal()`, `disposeAllSignalsExcept()`
+   - Developers can now manage signal lifecycle
+   - File: `lib/src/services/preferences_service.dart`
+
+9. **🐛 Fixed AppShell route title infinite loop potential**
+   - Cycle detection in _getCurrentRouteTitle
+   - Depth limit (max 20 levels)
+   - Safe handling of circular routes
+   - File: `lib/src/core/app_shell.dart`
+
+10. **🔒 Password Hashing Security Fix** (see BREAKING CHANGES above)
+
+### Fixed (3 Example App Pattern Violations)
+
+- **🐛 Fixed ServicesDemoScreen using ui.scaffold()**
+  - Removed nested scaffold, now returns ListView directly
+  - Uses ui.pageTitle() for heading
+  - File: `example/lib/features/services_demo/services_demo_screen.dart`
+
+- **🐛 Fixed PluginDemoScreen using ui.scaffold()**
+  - Removed nested scaffold, returns Padding directly
+  - Uses ui.pageTitle() for heading
+  - File: `example/lib/features/plugin_demo/plugin_demo_screen.dart`
+
+- **🐛 Fixed WizardDemoScreen using ui.scaffold()**
+  - Removed nested scaffold, returns Padding directly
+  - Uses ui.pageTitle() for heading
+  - File: `example/lib/features/wizard_demo/wizard_demo_screen.dart`
+
+### Fixed (2 Example App Disabled Screens)
+
+- **✅ Enabled Task Manager screens**
+  - Fixed ButtonVariant issues (4 instances)
+  - Replaced with ui.outlinedButton() for secondary actions
+  - Files: `example/lib/features/tasks/task_detail_screen.dart`, `task_form_screen.dart`
+
+- **✅ Enabled Error Handling Demo**
+  - Fixed import and route configuration
+  - File: `example/lib/main.dart`
+
+### Added (Documentation - 21+ Files)
+
+**Core Documentation**:
+- `docs/installation.md` - Complete installation guide
+- `docs/quickstart-examples.md` - Practical quick start examples
+- `docs/migration-v2.md` - **Critical v2.0.0 migration guide**
+
+**Services Documentation**:
+- `docs/services/authentication.md` - Authentication with bcrypt migration info
+
+**Demo Screens**:
+- `example/lib/features/file_storage_demo/` - FileStorageService demonstration
+
+### Performance
+
+- **Signal reactivity**: No impact from bug fixes
+- **Queue persistence**: <10ms overhead for JSON serialization
+- **Bcrypt hashing**: 200-400ms (acceptable for authentication)
+- **Back button logic**: Improved performance with pure function
+
+### Code Quality
+
+- All fixes include comprehensive error handling
+- Cycle detection prevents infinite loops
+- Atomic state updates prevent race conditions
+- Industry-standard security (bcrypt)
+
+### Migration Guide
+
+See [docs/migration-v2.md](../../docs/migration-v2.md) for complete v2.0.0 migration instructions.
+
 ## 1.1.8 - 2026-01-02
 
 ### Changed

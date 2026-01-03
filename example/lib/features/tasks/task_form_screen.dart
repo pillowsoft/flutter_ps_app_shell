@@ -144,7 +144,6 @@ class _TaskFormScreenState extends State<TaskFormScreen>
       confirmText: 'Discard',
       cancelText: 'Cancel',
       isDestructive: true,
-      ),
     );
 
     return result ?? false;
@@ -854,10 +853,9 @@ class _TaskFormScreenState extends State<TaskFormScreen>
                   Row(
                     children: [
                       Expanded(
-                        child: ui.button(
+                        child: ui.outlinedButton(
                           label: 'Cancel',
                           onPressed: () => Navigator.pop(context),
-                          variant: ButtonVariant.secondary,
                         ),
                       ),
                       const SizedBox(width: 12),

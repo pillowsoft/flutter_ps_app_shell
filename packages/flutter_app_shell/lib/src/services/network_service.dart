@@ -1,12 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:signals/signals.dart';
 import 'package:logging/logging.dart';
 import '../utils/logger.dart';
+import 'preferences_service.dart';
 
 /// Network service with offline handling and request queue
+///
+/// **Queue Persistence**: Offline request queue is automatically persisted to
+/// SharedPreferences and restored on service initialization. This ensures
+/// queued requests survive app restarts and crashes.
 class NetworkService {
   static NetworkService? _instance;
   static NetworkService get instance => _instance ??= NetworkService._();
@@ -16,11 +22,18 @@ class NetworkService {
   // Service-specific logger
   static final Logger _logger = createServiceLogger('NetworkService');
 
+  // Storage constants
+  static const String _queueStorageKey = 'network_service_offline_queue';
+  static const int _maxQueueSize = 1000; // Prevent unbounded growth
+
   late Dio _dio;
   Dio get dio => _dio;
 
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
+
+  // Preferences service for queue persistence
+  final PreferencesService _prefs = PreferencesService.instance;
 
   /// Signal for network connectivity status
   final connectionStatus =
@@ -47,6 +60,9 @@ class NetworkService {
 
     try {
       _logger.info('Initializing network service...');
+
+      // Load persisted queue from storage
+      await _loadQueueFromStorage();
 
       // Initialize Dio
       _dio = Dio(BaseOptions(
@@ -286,6 +302,9 @@ class NetworkService {
           queueSize.value = _requestQueue.length;
           _logger.fine('Queued offline request: ${type.name} $path');
 
+          // Persist queue to storage
+          await _saveQueueToStorage();
+
           return NetworkResponse<T>(
             success: false,
             isOffline: true,
@@ -345,6 +364,9 @@ class NetworkService {
     _requestQueue.clear();
     queueSize.value = 0;
 
+    // Persist cleared queue
+    await _saveQueueToStorage();
+
     for (final request in requestsCopy) {
       try {
         switch (request.type) {
@@ -398,6 +420,11 @@ class NetworkService {
         queueSize.value = _requestQueue.length;
       }
     }
+
+    // Persist final queue state (includes any re-queued failed requests)
+    if (_requestQueue.isNotEmpty) {
+      await _saveQueueToStorage();
+    }
   }
 
   NetworkErrorType _getErrorType(DioException e) {
@@ -416,6 +443,61 @@ class NetworkService {
         return NetworkErrorType.cancelled;
       default:
         return NetworkErrorType.unknown;
+    }
+  }
+
+  /// Load persisted queue from SharedPreferences
+  ///
+  /// Called during service initialization to restore queued requests that
+  /// survived app restart or crash.
+  Future<void> _loadQueueFromStorage() async {
+    try {
+      final queueJson = _prefs.getString(_queueStorageKey).value;
+      if (queueJson != null && queueJson.isNotEmpty) {
+        final decoded = jsonDecode(queueJson) as List;
+        _requestQueue.clear();
+        _requestQueue.addAll(
+          decoded.map(
+              (json) => QueuedRequest.fromJson(json as Map<String, dynamic>)),
+        );
+        queueSize.value = _requestQueue.length;
+        _logger.info(
+            'Restored ${_requestQueue.length} queued requests from storage');
+      }
+    } catch (e, stackTrace) {
+      _logger.warning(
+          'Failed to restore queue from storage (non-critical)', e, stackTrace);
+      // Clear corrupted data
+      await _prefs.remove(_queueStorageKey);
+      _requestQueue.clear();
+      queueSize.value = 0;
+    }
+  }
+
+  /// Save queue to SharedPreferences
+  ///
+  /// Called after queue modifications to persist state across app restarts.
+  /// Includes queue size limit to prevent unbounded growth.
+  Future<void> _saveQueueToStorage() async {
+    try {
+      // Enforce max queue size (FIFO - remove oldest requests)
+      if (_requestQueue.length > _maxQueueSize) {
+        final overflow = _requestQueue.length - _maxQueueSize;
+        _logger.warning(
+            'Queue size exceeded limit ($_maxQueueSize), removing $overflow oldest requests');
+        _requestQueue.removeRange(0, overflow);
+        queueSize.value = _requestQueue.length;
+      }
+
+      // Serialize and save
+      final queueJson = jsonEncode(
+        _requestQueue.map((req) => req.toJson()).toList(),
+      );
+      await _prefs.setString(_queueStorageKey, queueJson);
+      _logger.fine('Saved ${_requestQueue.length} queued requests to storage');
+    } catch (e, stackTrace) {
+      _logger.warning(
+          'Failed to save queue to storage (non-critical)', e, stackTrace);
     }
   }
 
@@ -553,6 +635,10 @@ enum RequestType {
 }
 
 /// Queued request for offline handling
+///
+/// **Persistence**: Supports JSON serialization for queue persistence across
+/// app restarts. Note: Dio Options cannot be serialized and will use defaults
+/// when restored from storage.
 class QueuedRequest {
   final RequestType type;
   final String path;
@@ -569,6 +655,39 @@ class QueuedRequest {
     this.options,
     required this.timestamp,
   });
+
+  /// Serialize to JSON for persistence
+  ///
+  /// Note: Options are not serialized as they contain non-serializable data.
+  /// Restored requests will use default Options.
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.name,
+      'path': path,
+      'data': data,
+      'queryParameters': queryParameters,
+      'timestamp': timestamp.toIso8601String(),
+    };
+  }
+
+  /// Deserialize from JSON
+  ///
+  /// Note: Options will be null and must be handled by the request executor.
+  factory QueuedRequest.fromJson(Map<String, dynamic> json) {
+    return QueuedRequest(
+      type: RequestType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => RequestType.post,
+      ),
+      path: json['path'] as String,
+      data: json['data'],
+      queryParameters: json['queryParameters'] != null
+          ? Map<String, dynamic>.from(json['queryParameters'] as Map)
+          : null,
+      options: null, // Cannot serialize Dio Options, use defaults
+      timestamp: DateTime.parse(json['timestamp'] as String),
+    );
+  }
 }
 
 /// Network statistics

@@ -14,6 +14,117 @@ import '../ui/adaptive/adaptive_widget_factory.dart';
 import '../ui/adaptive/cupertino_widget_factory.dart';
 import '../utils/logger.dart';
 
+/// Decision result for back button behavior
+class BackButtonDecision {
+  final bool shouldShow;
+  final String? fallbackPath;
+  final String reasoning;
+
+  const BackButtonDecision({
+    required this.shouldShow,
+    this.fallbackPath,
+    required this.reasoning,
+  });
+
+  static const BackButtonDecision hide = BackButtonDecision(
+    shouldShow: false,
+    reasoning: 'On home page, no back button needed',
+  );
+}
+
+/// Pure function to calculate back button behavior
+/// Prevents infinite loops with cycle detection and depth limits
+BackButtonDecision _calculateBackButtonBehavior({
+  required bool canPop,
+  required String currentPath,
+  required String configuredHomePath,
+  required bool hasVisibleRoutes,
+  Set<String>? visitedPaths,
+  int depth = 0,
+}) {
+  // Maximum recursion depth to prevent infinite loops
+  const int maxDepth = 20;
+
+  // Initialize visited paths set for cycle detection
+  final visited = visitedPaths ?? <String>{};
+
+  // Check for cycles
+  if (visited.contains(currentPath)) {
+    AppShellLogger.w(
+        'Back button calculation: Cycle detected at path "$currentPath"');
+    return BackButtonDecision(
+      shouldShow: true,
+      fallbackPath: configuredHomePath,
+      reasoning:
+          'Cycle detected in route hierarchy, fallback to home configured',
+    );
+  }
+
+  // Check depth limit
+  if (depth >= maxDepth) {
+    AppShellLogger.w(
+        'Back button calculation: Max depth ($maxDepth) exceeded at path "$currentPath"');
+    return BackButtonDecision(
+      shouldShow: true,
+      fallbackPath: configuredHomePath,
+      reasoning: 'Max depth exceeded, fallback to home configured for safety',
+    );
+  }
+
+  // Parse path segments
+  final pathSegments =
+      currentPath.split('/').where((s) => s.isNotEmpty).toList();
+  final isNestedRoute = pathSegments.length > 1;
+
+  // Determine if this is the home page
+  final isHomePage = currentPath == configuredHomePath ||
+      currentPath == '/' ||
+      currentPath.isEmpty;
+
+  // Never show back button on home page
+  if (isHomePage) {
+    return BackButtonDecision.hide;
+  }
+
+  // Calculate fallback path (parent route)
+  String? fallbackPath;
+  if (pathSegments.length > 1) {
+    final parentPathSegments = List<String>.from(pathSegments);
+    parentPathSegments.removeLast();
+    fallbackPath = '/${parentPathSegments.join('/')}';
+  } else if (!hasVisibleRoutes) {
+    // Hidden navigation mode: fallback to home
+    fallbackPath = configuredHomePath;
+  }
+
+  // Decision logic
+  if (canPop) {
+    return BackButtonDecision(
+      shouldShow: true,
+      fallbackPath: fallbackPath,
+      reasoning: 'GoRouter canPop() returned true',
+    );
+  } else if (isNestedRoute) {
+    return BackButtonDecision(
+      shouldShow: true,
+      fallbackPath: fallbackPath,
+      reasoning: 'Nested route detected (${pathSegments.length} segments)',
+    );
+  } else if (!hasVisibleRoutes) {
+    return BackButtonDecision(
+      shouldShow: true,
+      fallbackPath: fallbackPath,
+      reasoning:
+          'Hidden navigation mode, show back button on all non-home routes',
+    );
+  } else {
+    return BackButtonDecision(
+      shouldShow: false,
+      reasoning: 'Not nested, router cannot pop, visible navigation present',
+    );
+  }
+}
+
 class AppShell extends StatelessWidget {
   final Widget child;
   final List<AppRoute> routes;
@@ -167,31 +278,27 @@ class AppShell extends StatelessWidget {
     AppShellLogger.i(
         'AppShell._buildAppBar: screenWidth=$screenWidth, isWideScreen=$isWideScreen, useMobileDrawer=$useMobileDrawer, useBottomNav=$useBottomNav, hideNavigation=$hideNavigation');
 
-    // EXTRACT BACK NAVIGATION LOGIC - Independent of navigation mode
+    // Calculate back button behavior using pure function
     final router = GoRouter.of(context);
     final canPop = router.canPop();
     final routerState = GoRouterState.of(context);
     final currentPath = routerState.uri.path;
-    final pathSegments =
-        currentPath.split('/').where((s) => s.isNotEmpty).toList();
-    final isNestedRoute = pathSegments.length > 1;
-
-    // Special case: When navigation is hidden (programmatic navigation mode),
-    // show back button on all non-home routes to prevent users getting stuck
-    // Note: On initial app launch, currentPath may be empty string before GoRouter initializes
-    // Home page can be configured via AppConfig.homeRoute, defaults to '/'
     final configuredHomePath = homeRoute ?? '/';
-    final isHomePage = currentPath == configuredHomePath ||
-                       currentPath == '/' ||
-                       currentPath.isEmpty;
-    final needsBackForHiddenNav = visibleRoutes.isEmpty && !isHomePage;
 
-    // Never show back button on home page, even if canPop is true
-    final shouldShowBackButton =
-        !isHomePage && (canPop || isNestedRoute || needsBackForHiddenNav);
+    final backButtonDecision = _calculateBackButtonBehavior(
+      canPop: canPop,
+      currentPath: currentPath,
+      configuredHomePath: configuredHomePath,
+      hasVisibleRoutes: visibleRoutes.isNotEmpty,
+    );
+
+    final shouldShowBackButton = backButtonDecision.shouldShow;
+    final isHomePage = currentPath == configuredHomePath ||
+        currentPath == '/' ||
+        currentPath.isEmpty;
 
     AppShellLogger.i(
-        'AppShell._buildAppBar: Navigation state - canPop=$canPop, currentPath="$currentPath", pathSegments=$pathSegments, isNestedRoute=$isNestedRoute, shouldShowBackButton=$shouldShowBackButton');
+        'AppShell._buildAppBar: Navigation state - canPop=$canPop, currentPath="$currentPath", shouldShowBackButton=$shouldShowBackButton, reasoning="${backButtonDecision.reasoning}"');
 
     // Determine the leading widget and automaticallyImplyLeading behavior
     final Widget? leading;
@@ -200,27 +307,22 @@ class AppShell extends StatelessWidget {
     // UNIVERSAL BACK NAVIGATION - Works for all navigation modes
     if (shouldShowBackButton) {
       AppShellLogger.i(
-          'AppShell._buildAppBar: Using back button - canPop=$canPop, isNestedRoute=$isNestedRoute');
+          'AppShell._buildAppBar: Using back button - ${backButtonDecision.reasoning}');
 
       // Create explicit back button handler
       void handleBackNavigation() {
         if (GoRouter.of(context).canPop()) {
           GoRouter.of(context).pop();
+        } else if (backButtonDecision.fallbackPath != null) {
+          // Use fallback path from decision
+          AppShellLogger.i(
+              'AppShell._buildAppBar: Fallback navigation to: ${backButtonDecision.fallbackPath}');
+          GoRouter.of(context).go(backButtonDecision.fallbackPath!);
         } else {
-          // Fallback: navigate back to parent route or home
-          if (pathSegments.length > 1) {
-            final parentPathSegments = List<String>.from(pathSegments);
-            parentPathSegments.removeLast();
-            final parentPath = '/${parentPathSegments.join('/')}';
-            AppShellLogger.i(
-                'AppShell._buildAppBar: Fallback navigation to parent: $parentPath');
-            GoRouter.of(context).go(parentPath);
-          } else if (visibleRoutes.isEmpty) {
-            // Hidden navigation mode: navigate to home page
-            AppShellLogger.i(
-                'AppShell._buildAppBar: Hidden navigation mode - navigating to home');
-            GoRouter.of(context).go('/');
-          }
+          // Last resort: navigate to home
+          AppShellLogger.w(
+              'AppShell._buildAppBar: No fallback path available, navigating to home');
+          GoRouter.of(context).go(configuredHomePath);
         }
       }
 
@@ -301,14 +403,39 @@ class AppShell extends StatelessWidget {
       AppShellLogger.i(
           'AppShell._getCurrentRouteTitle: analyzing path="$currentPath"');
 
-      // Recursive helper to search route tree
+      // Recursive helper to search route tree with cycle detection
       String? findRouteTitle(
-          List<AppRoute> routeList, String targetPath, String parentPath) {
+        List<AppRoute> routeList,
+        String targetPath,
+        String parentPath, {
+        Set<String>? visitedPaths,
+        int depth = 0,
+      }) {
+        // Maximum recursion depth to prevent infinite loops
+        const int maxDepth = 20;
+
+        // Initialize visited paths set for cycle detection
+        final visited = visitedPaths ?? <String>{};
+
+        // Check depth limit
+        if (depth >= maxDepth) {
+          AppShellLogger.w(
+              'AppShell._getCurrentRouteTitle: Max depth ($maxDepth) exceeded at path "$parentPath"');
+          return null;
+        }
+
         for (final route in routeList) {
           // Build full path for this route
           final fullPath = route.path.startsWith('/')
               ? route.path
               : '$parentPath/${route.path}';
+
+          // Check for cycles
+          if (visited.contains(fullPath)) {
+            AppShellLogger.w(
+                'AppShell._getCurrentRouteTitle: Cycle detected at path "$fullPath"');
+            continue; // Skip this route but continue with others
+          }
 
           // Check for exact match (handling path parameters)
           if (_pathMatches(fullPath, targetPath)) {
@@ -320,8 +447,16 @@ class AppShell extends StatelessWidget {
           // Check sub-routes if path is under this route
           if (route.subRoutes.isNotEmpty &&
               targetPath.startsWith('$fullPath/')) {
-            final subRouteTitle =
-                findRouteTitle(route.subRoutes, targetPath, fullPath);
+            // Add current path to visited set before recursing
+            final newVisited = Set<String>.from(visited)..add(fullPath);
+
+            final subRouteTitle = findRouteTitle(
+              route.subRoutes,
+              targetPath,
+              fullPath,
+              visitedPaths: newVisited,
+              depth: depth + 1,
+            );
             if (subRouteTitle != null) {
               return subRouteTitle;
             }

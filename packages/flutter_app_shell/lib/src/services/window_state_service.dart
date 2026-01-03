@@ -51,6 +51,13 @@ class WindowStateService with WindowListener {
   static const _keyRememberState = 'window.settings.remember';
   static const _keyStartMaximized = 'window.settings.start_maximized';
 
+  // Validation constants for window dimensions and coordinates
+  static const double _minWindowDimension = 200.0; // Minimum usable window size
+  static const double _maxWindowDimension = 8192.0; // Support for 8K displays
+  static const double _minCoordinate =
+      -16384.0; // Multi-monitor negative coords
+  static const double _maxCoordinate = 16384.0; // Maximum reasonable coord
+
   /// Initialize the window state service
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -100,6 +107,39 @@ class WindowStateService with WindowListener {
     _logger.info('Window state service disposed');
   }
 
+  /// Validate a window dimension (width or height)
+  ///
+  /// Checks for finite values within reasonable bounds (200px - 8192px)
+  /// to prevent issues with NaN, Infinity, or extreme values.
+  bool _isValidDimension(double value) {
+    return value.isFinite &&
+        value >= _minWindowDimension &&
+        value <= _maxWindowDimension;
+  }
+
+  /// Validate a window coordinate (x or y position)
+  ///
+  /// Checks for finite values within reasonable bounds (-16384px - 16384px)
+  /// to support multi-monitor setups including negative coordinates.
+  bool _isValidCoordinate(double value) {
+    return value.isFinite && value >= _minCoordinate && value <= _maxCoordinate;
+  }
+
+  /// Apply default window state when saved state is invalid
+  ///
+  /// Centers a reasonable-sized window on the primary display.
+  Future<void> _applyDefaultState() async {
+    _logger.info('Applying default window state');
+    try {
+      const defaultSize = Size(1200, 800);
+      await windowManager.setSize(defaultSize);
+      await windowManager.center();
+      _logger.info('Default state applied successfully');
+    } catch (e, stackTrace) {
+      _logger.warning('Failed to apply default state', e, stackTrace);
+    }
+  }
+
   /// Load window state from storage and apply it
   Future<void> restoreWindowState() async {
     if (!_isInitialized || !rememberWindowState.value) {
@@ -126,12 +166,15 @@ class WindowStateService with WindowListener {
 
       Rect? targetBounds;
 
+      // Validate all saved values before using them
       if (savedX != null &&
           savedY != null &&
           savedW != null &&
           savedH != null &&
-          savedW > 0 &&
-          savedH > 0) {
+          _isValidCoordinate(savedX) &&
+          _isValidCoordinate(savedY) &&
+          _isValidDimension(savedW) &&
+          _isValidDimension(savedH)) {
         final position = Offset(savedX, savedY);
         final size = Size(savedW, savedH);
 
@@ -243,11 +286,17 @@ class WindowStateService with WindowListener {
         _logger
             .info('Restoring window to: $targetBounds on display ${target.id}');
       } else {
-        // No valid saved state, use default size and center
-        _logger.info('No valid saved window state, using defaults');
-        const defaultSize = Size(1200, 800);
-        await windowManager.setSize(defaultSize);
-        await windowManager.center();
+        // Validation failed - could be missing values, NaN, Infinity, or out of bounds
+        if (savedX == null ||
+            savedY == null ||
+            savedW == null ||
+            savedH == null) {
+          _logger.info('No saved window state found, using defaults');
+        } else {
+          _logger.warning(
+              'Invalid saved window state detected (x: $savedX, y: $savedY, w: $savedW, h: $savedH), using defaults');
+        }
+        await _applyDefaultState();
       }
 
       // Apply geometry if we have it

@@ -28,135 +28,130 @@ class _ServicesDemoScreenState extends State<ServicesDemoScreen> {
       final uiSystem = settingsStore.uiSystem.value;
       final ui = getAdaptiveFactory(context);
 
-      return ui.scaffold(
-        key: ValueKey('services_demo_scaffold_$uiSystem'),
-        body: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Text(
-              'Services Demo',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Test the advanced services in the app shell framework',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 32),
-
-            // Database Service Demo
-            _buildServiceSection(
-              ui: ui,
-              title: 'Database Service',
-              description: 'InstantDB with local-only or cloud-sync modes',
-              result: _databaseResult,
-              actions: [
-                ui.button(
-                  label: 'Test Database',
-                  onPressed: _testDatabase,
+      return ListView(
+        key: ValueKey('services_demo_list_$uiSystem'),
+        padding: const EdgeInsets.all(24),
+        children: [
+          ui.pageTitle('Services Demo'),
+          const SizedBox(height: 8),
+          Text(
+            'Test the advanced services in the app shell framework',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-              ],
-            ),
+          ),
+          const SizedBox(height: 32),
 
-            const SizedBox(height: 24),
+          // Database Service Demo
+          _buildServiceSection(
+            ui: ui,
+            title: 'Database Service',
+            description: 'InstantDB with local-only or cloud-sync modes',
+            result: _databaseResult,
+            actions: [
+              ui.button(
+                label: 'Test Database',
+                onPressed: _testDatabase,
+              ),
+            ],
+          ),
 
-            // Network Service Demo
-            _buildServiceSection(
-              ui: ui,
-              title: 'Network Service',
-              description: 'HTTP client with offline queueing and retry logic',
-              result: _networkResult,
-              actions: [
-                ui.button(
-                  label: 'Test Network',
-                  onPressed: _testNetwork,
-                ),
-              ],
-            ),
+          const SizedBox(height: 24),
 
-            const SizedBox(height: 24),
+          // Network Service Demo
+          _buildServiceSection(
+            ui: ui,
+            title: 'Network Service',
+            description: 'HTTP client with offline queueing and retry logic',
+            result: _networkResult,
+            actions: [
+              ui.button(
+                label: 'Test Network',
+                onPressed: _testNetwork,
+              ),
+            ],
+          ),
 
-            // Authentication Service Demo
-            _buildServiceSection(
-              ui: ui,
-              title: 'Authentication Service',
-              description: 'User authentication with token management',
-              result: _authResult,
-              child: Watch((context) {
-                final authService = getIt<AuthenticationService>();
-                final isAuthenticated = authService.isAuthenticated.value;
-                final currentUser = authService.currentUser.value;
+          const SizedBox(height: 24),
 
-                if (isAuthenticated && currentUser != null) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ui.listTile(
-                        leading: const Icon(Icons.person),
-                        title: Text(currentUser.name),
-                        subtitle: Text(currentUser.email),
-                      ),
-                      const SizedBox(height: 16),
-                      ui.button(
-                        label: 'Sign Out',
-                        onPressed: _signOut,
-                      ),
-                    ],
-                  );
-                }
+          // Authentication Service Demo
+          _buildServiceSection(
+            ui: ui,
+            title: 'Authentication Service',
+            description: 'User authentication with token management',
+            result: _authResult,
+            child: Watch((context) {
+              final authService = getIt<AuthenticationService>();
+              final isAuthenticated = authService.isAuthenticated.value;
+              final currentUser = authService.currentUser.value;
 
-                return ui.form(
-                  formKey: GlobalKey<FormState>(),
-                  child: Column(
-                    children: [
-                      ui.textField(
-                        controller: _emailController,
-                        labelText: 'Email',
-                        hintText: 'Enter your email',
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 16),
-                      ui.textField(
-                        controller: _passwordController,
-                        labelText: 'Password',
-                        hintText: 'Enter your password',
-                        obscureText: true,
-                      ),
-                      const SizedBox(height: 16),
-                      ui.textField(
-                        controller: _nameController,
-                        labelText: 'Full Name',
-                        hintText: 'Enter your full name',
-                      ),
-                      const SizedBox(height: 24),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          ui.button(
-                            label: 'Sign Up',
-                            onPressed: _isLoading ? () {} : () => _signUp(),
-                          ),
-                          ui.textButton(
-                            label: 'Sign In',
-                            onPressed: _isLoading ? () {} : () => _signIn(),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+              if (isAuthenticated && currentUser != null) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ui.listTile(
+                      leading: const Icon(Icons.person),
+                      title: Text(currentUser.name),
+                      subtitle: Text(currentUser.email),
+                    ),
+                    const SizedBox(height: 16),
+                    ui.button(
+                      label: 'Sign Out',
+                      onPressed: _signOut,
+                    ),
+                  ],
                 );
-              }),
-            ),
+              }
 
-            const SizedBox(height: 32),
+              return ui.form(
+                formKey: GlobalKey<FormState>(),
+                child: Column(
+                  children: [
+                    ui.textField(
+                      controller: _emailController,
+                      labelText: 'Email',
+                      hintText: 'Enter your email',
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    ui.textField(
+                      controller: _passwordController,
+                      labelText: 'Password',
+                      hintText: 'Enter your password',
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 16),
+                    ui.textField(
+                      controller: _nameController,
+                      labelText: 'Full Name',
+                      hintText: 'Enter your full name',
+                    ),
+                    const SizedBox(height: 24),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        ui.button(
+                          label: 'Sign Up',
+                          onPressed: _isLoading ? () {} : () => _signUp(),
+                        ),
+                        ui.textButton(
+                          label: 'Sign In',
+                          onPressed: _isLoading ? () {} : () => _signIn(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
 
-            // Service Statistics
-            _buildServiceStats(ui),
-          ],
-        ),
+          const SizedBox(height: 32),
+
+          // Service Statistics
+          _buildServiceStats(ui),
+        ],
       );
     });
   }
