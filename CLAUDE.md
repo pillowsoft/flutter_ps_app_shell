@@ -292,10 +292,33 @@ final doubledCounter = computed(() => counter.value * 2);
 Watch((context) => Text('Count: ${counter.value}'))
 
 // Effects for side effects
+// ✅ CORRECT PATTERN - Always wrap signal writes in untracked()
 effect(() {
-  print('Counter changed to: ${counter.value}');
+  final value = trigger.value;  // Read creates dependency
+
+  untracked(() {
+    // ALL signal writes must be inside untracked()
+    result.value = processValue(value);
+    lastUpdated.value = DateTime.now();
+  });
+});
+
+// ❌ WRONG PATTERN - Direct writes cause SignalEffectException
+effect(() {
+  final value = trigger.value;
+  result.value = processValue(value);  // ERROR! Missing untracked()
 });
 ```
+
+**Critical Rule**: Even if writing to a different signal than you're reading,
+wrap ALL signal mutations inside `untracked()` to prevent reactive cycles.
+This applies to:
+- ✅ Synchronous writes (data transformations)
+- ✅ Async callback writes
+- ✅ Conditional writes
+- ✅ Error handler writes
+
+See `docs/signals-best-practices.md` for comprehensive examples.
 
 #### CRITICAL: Preventing SignalEffectException
 

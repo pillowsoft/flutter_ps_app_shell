@@ -1,5 +1,93 @@
 # Changelog
 
+## 2.0.6 - 2026-01-03
+
+### Documentation
+
+- **📚 CRITICAL: Clarified correct pattern for reactive effects**
+  - ALL signal writes inside effect() must use untracked()
+  - Applies to synchronous writes, not just async callbacks
+  - Prevents SignalEffectException when effects and Watch widgets coexist
+  - Added comprehensive examples in `docs/signals-best-practices.md`
+  - Added ReactiveUserService example in `packages/flutter_app_shell/example/lib/examples/reactive_service_example.dart`
+  - Updated `CLAUDE.md` State Management section with correct pattern
+  - Enhanced documentation in `AppShellSettingsStore`
+
+### What Changed from v2.0.5
+
+v2.0.5 added the `appReady` signal to coordinate service initialization timing.
+While useful, it didn't solve the core issue: **improper use of Signals library**.
+
+The real fix is simpler: **wrap ALL signal writes in effects with `untracked()`**.
+
+### Migration
+
+**If you're experiencing SignalEffectException in your app services:**
+
+Your effects likely have signal writes without `untracked()`. Update them:
+
+```dart
+// ❌ BEFORE (causes SignalEffectException)
+effect(() {
+  final data = sourceSignal.value;
+  targetSignal.value = processData(data);  // Direct write
+});
+
+// ✅ AFTER (correct pattern)
+effect(() {
+  final data = sourceSignal.value;
+  untracked(() {
+    targetSignal.value = processData(data);  // Wrapped in untracked
+  });
+});
+```
+
+**Real-world example from bug reports:**
+
+```dart
+// ❌ BEFORE - ChatManager with synchronous write
+effect(() {
+  final chatDocs = chatsWatcher.value;
+  chats.value = chatDocs.map((doc) => Chat.fromJson(doc)).toList();  // Missing untracked!
+});
+
+// ✅ AFTER - Correct pattern
+effect(() {
+  final chatDocs = chatsWatcher.value;
+  untracked(() {
+    chats.value = chatDocs.map((doc) => Chat.fromJson(doc)).toList();
+  });
+});
+```
+
+**Why this works:**
+- Effect subscribes to `sourceSignal` only
+- Write to `targetSignal` doesn't create circular dependencies
+- Watch widgets can safely read `targetSignal`
+- No SignalEffectException!
+
+**Files to check:**
+- Any service with `effect()` calls
+- ChatManager, EventFlowService, custom reactive services
+- Look for signal writes inside effects (both sync and async)
+
+**The `appReady` signal from v2.0.5 is still useful** for coordinating
+service initialization, but it doesn't replace proper effect patterns.
+
+### Key Rule
+
+From Signals documentation:
+> "Critical danger: Mutating a signal inside an effect causes infinite loops since the effect re-triggers. Use `untracked()` to read without subscribing."
+
+This applies to **ALL signal writes**, even when:
+- ✅ Writing to a different signal than you're reading
+- ✅ Writing synchronously (not in an async callback)
+- ✅ The write seems unrelated to the trigger
+
+See `docs/signals-best-practices.md` for comprehensive examples and patterns.
+
+---
+
 ## 2.0.5 - 2026-01-03
 
 ### Added

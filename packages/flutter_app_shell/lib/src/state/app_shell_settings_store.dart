@@ -70,17 +70,27 @@ class AppShellSettingsStore {
   void _setupEffects() {
     _logger.fine('Setting up reactive effects for persistence...');
 
-    // IMPORTANT: Signal mutations in async callbacks MUST be wrapped in untracked()
-    // to prevent SignalEffectException. When an effect mutates a signal inside an
-    // async callback, it can trigger the effect again, creating an infinite reactive cycle.
+    // CRITICAL PATTERN: Signal writes inside effects MUST use untracked()
+    //
+    // Rule: ALL signal mutations inside effect() must be wrapped in untracked(),
+    // even synchronous writes to different signals. This prevents reactive cycles
+    // when Watch widgets and effects are active simultaneously.
     //
     // Pattern:
     //   effect(() {
-    //     asyncOp().then((result) {
-    //       untracked(() => someSignal.value = result);  // ✅ Correct
+    //     final trigger = sourceSignal.value;  // Read (creates dependency)
+    //     asyncOp(trigger).then((result) {
+    //       untracked(() => targetSignal.value = result);  // Write in untracked
     //     });
     //   });
     //
+    // This applies to:
+    //   - ✅ Async callback writes (like these persistence effects)
+    //   - ✅ Synchronous writes (e.g., data transformations)
+    //   - ✅ Error handler writes
+    //   - ✅ Conditional writes
+    //
+    // See docs/signals-best-practices.md for comprehensive examples and patterns.
     // See DatabaseService and AuthenticationService for reference implementations.
 
     // Set up effects to persist changes

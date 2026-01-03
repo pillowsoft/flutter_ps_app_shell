@@ -13,14 +13,70 @@ This guide provides comprehensive best practices for using the Dart Signals libr
 - [Common Pitfalls](#common-pitfalls)
 - [Testing Signal Safety](#testing-signal-safety)
 
+## CRITICAL: Signal Writes Inside Effects (v2.0.6)
+
+**⚠️ BREAKING UNDERSTANDING**: Previous versions of this documentation emphasized `untracked()` for **async** signal writes. This was incomplete.
+
+### The Complete Rule
+
+**ALL signal writes inside `effect()` must be wrapped in `untracked()`, even:**
+- ✅ Synchronous writes to different signals
+- ✅ Conditional writes based on trigger signal
+- ✅ Writes to signals that seem unrelated to the trigger
+- ✅ Async callback writes (already documented in v2.0.3)
+
+### Why This Matters
+
+The Signals library tracks ALL signal accesses during effect evaluation. Writing to any signal without `untracked()` can create cascading dependencies and circular subscription chains when multiple effects and Watch widgets are active simultaneously.
+
+### The Pattern - ALWAYS Follow This
+
+```dart
+effect(() {
+  // 1. Read trigger signal (creates dependency)
+  final data = sourceSignal.value;
+
+  // 2. Process and write in untracked - ALWAYS!
+  untracked(() {
+    targetSignal.value = processData(data);
+  });
+});
+```
+
+### Common Mistake: Synchronous Writes
+
+```dart
+// ❌ WRONG - Causes SignalEffectException when Watch widgets are active
+effect(() {
+  final chatDocs = chatsWatcher.value;  // Read
+  chats.value = chatDocs.map((doc) => Chat.fromJson(doc)).toList();  // Direct write!
+});
+
+// ✅ CORRECT - Wrap ALL writes, even synchronous ones
+effect(() {
+  final chatDocs = chatsWatcher.value;  // Read
+  untracked(() {
+    chats.value = chatDocs.map((doc) => Chat.fromJson(doc)).toList();
+  });
+});
+```
+
+**Why the async-only approach failed:**
+- v2.0.3 fixed async writes in framework services
+- But app-level services had synchronous data transformations
+- These also need `untracked()` to prevent reactive cycles
+- With proper `untracked()`, effects and Watch widgets coexist peacefully
+
 ## Quick Reference
 
 ### When to Use Each Tool
 
 | Scenario | Use | Example |
 |----------|-----|---------|
+| **ANY write inside effect** | `untracked()` | `untracked(() => signal.value = data)` |
 | Async callback mutates signal | `untracked()` | `asyncOp().then((r) => untracked(() => signal.value = r))` |
 | Error handler mutates signal | `untracked()` | `onError: (e) => untracked(() => errorSignal.value = e)` |
+| **Synchronous data transform** | `untracked()` | `untracked(() => target.value = source.map(parse))` |
 | Multiple signals updated together | `batch()` | `batch(() { s1.value = a; s2.value = b; })` |
 | Read signal without dependency | `untracked()` | `final v = untracked(() => signal.value)` |
 | Prevent intermediate reactions | `batch()` | `batch(() { /* multi-step update */ })` |
@@ -638,6 +694,7 @@ Before committing code with signals:
 
 ---
 
-**Last Updated**: 2026-01-03 (v2.0.3)
-**Related Issues**: SignalEffectException fixes
-**See Also**: CHANGELOG.md, CLAUDE.md
+**Last Updated**: 2026-01-03 (v2.0.6)
+**Related Issues**: SignalEffectException fixes - Complete pattern documentation
+**Key Change**: v2.0.6 clarifies ALL signal writes need `untracked()`, not just async writes
+**See Also**: CHANGELOG.md, CLAUDE.md, `packages/flutter_app_shell/example/lib/examples/reactive_service_example.dart`
