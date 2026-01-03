@@ -2,6 +2,13 @@
 
 ## 2.0.6 - 2026-01-03
 
+### Dependencies
+
+- **⬆️ Updated InstantDB Flutter to v0.5.1**
+  - Includes fix for signal write pattern (same issue we documented)
+  - InstantDB now uses `untracked()` for `_isOnline` signal write
+  - Prevents potential SignalEffectException with connection status indicators
+
 ### Documentation
 
 - **📚 CRITICAL: Clarified correct pattern for reactive effects**
