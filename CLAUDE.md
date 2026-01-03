@@ -318,7 +318,15 @@ This applies to:
 - ✅ Conditional writes
 - ✅ Error handler writes
 
-See `docs/signals-best-practices.md` for comprehensive examples.
+**Two-Phase Initialization** (v2.1.0): For reactive services using database watchers,
+NEVER create signals dynamically inside effects. Use the two-phase pattern:
+1. **Phase 1 (`initialize()`)**: Create watchers and load initial data
+2. **Phase 2 (`activateEffects()`)**: Create effects that read from pre-existing watchers
+3. Register `activateEffects()` in `AppConfig.onEffectsActivate`
+
+This prevents SignalEffectException from dynamic signal creation. See `example/lib/examples/two_phase_service_example.dart` for complete pattern.
+
+See `docs/signals-best-practices.md` for comprehensive examples and migration guide.
 
 #### CRITICAL: Preventing SignalEffectException
 

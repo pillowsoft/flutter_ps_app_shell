@@ -422,10 +422,39 @@ void runShellApp(
   setupNavigation(router);
 
   runApp(
-    Watch(
+    _AppShellRunner(
+      appConfig: appConfig,
+      settingsStore: settingsStore,
+      router: router,
+    ),
+  );
+}
+
+/// Root widget for the app shell that manages effect activation lifecycle
+class _AppShellRunner extends StatefulWidget {
+  final AppConfig appConfig;
+  final AppShellSettingsStore settingsStore;
+  final GoRouter router;
+
+  const _AppShellRunner({
+    required this.appConfig,
+    required this.settingsStore,
+    required this.router,
+  });
+
+  @override
+  State<_AppShellRunner> createState() => _AppShellRunnerState();
+}
+
+class _AppShellRunnerState extends State<_AppShellRunner> {
+  bool _effectsActivated = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Watch(
       (context) {
-        // Wait for framework initialization to complete
-        if (!settingsStore.isReady.value) {
+        // Phase 1: Wait for framework initialization to complete
+        if (!widget.settingsStore.isReady.value) {
           return const MaterialApp(
             debugShowCheckedModeBanner: false,
             home: Scaffold(
@@ -436,8 +465,9 @@ void runShellApp(
           );
         }
 
-        // Wait for app-level services if appReady signal provided
-        if (appConfig.appReady != null && !appConfig.appReady!.value) {
+        // Phase 2: Wait for app-level services if appReady signal provided
+        if (widget.appConfig.appReady != null &&
+            !widget.appConfig.appReady!.value) {
           return const MaterialApp(
             debugShowCheckedModeBanner: false,
             home: Scaffold(
@@ -448,28 +478,40 @@ void runShellApp(
           );
         }
 
+        // Phase 3: Activate effects ONCE before first UI render
+        if (!_effectsActivated) {
+          if (widget.appConfig.onEffectsActivate != null) {
+            _logger.fine('Activating reactive effects...');
+            widget.appConfig.onEffectsActivate!();
+            _logger.fine('Effects activated successfully');
+          }
+          _effectsActivated = true;
+        }
+
+        // Phase 4: Build theme and render app
         ThemeData theme = _buildTheme(Brightness.light);
         ThemeData darkTheme = _buildTheme(Brightness.dark);
 
         // Apply any theme extensions from the app
-        if (appConfig.themeExtensions != null) {
+        if (widget.appConfig.themeExtensions != null) {
           _logger.info('Applying theme extensions');
-          theme = appConfig.themeExtensions!(theme);
-          darkTheme = appConfig.themeExtensions!(darkTheme);
+          theme = widget.appConfig.themeExtensions!(theme);
+          darkTheme = widget.appConfig.themeExtensions!(darkTheme);
         }
 
         // Get the appropriate UI factory and use it to create the app
-        final uiSystem = settingsStore.uiSystem.value;
+        final uiSystem = widget.settingsStore.uiSystem.value;
 
         // Get current brightness - computed once here to ensure Watch tracks themeMode dependency
         // and to use as key for forcing CupertinoApp rebuilds
-        final currentBrightness = settingsStore.getCurrentBrightness(context);
+        final currentBrightness =
+            widget.settingsStore.getCurrentBrightness(context);
 
         // Clamp text scale factor to prevent extreme accessibility scaling from breaking UI
         final mediaData = MediaQuery.of(context);
         final currentScale = mediaData.textScaler.scale(1.0);
         final clampedScale =
-            currentScale.clamp(1.0, appConfig.maxTextScaleFactor);
+            currentScale.clamp(1.0, widget.appConfig.maxTextScaleFactor);
 
         // Wrap app in MediaQuery to apply text scale clamping
         return MediaQuery(
@@ -479,9 +521,9 @@ void runShellApp(
           child: uiSystem == 'cupertino'
               ? CupertinoApp.router(
                   key: ValueKey('cupertino_$currentBrightness'),
-                  routerConfig: router,
+                  routerConfig: widget.router,
                   debugShowCheckedModeBanner: false,
-                  title: appConfig.title,
+                  title: widget.appConfig.title,
                   theme: CupertinoThemeData(
                     brightness: currentBrightness,
                   ),
@@ -493,15 +535,15 @@ void runShellApp(
                   ],
                 )
               : MaterialApp.router(
-                  routerConfig: router,
+                  routerConfig: widget.router,
                   debugShowCheckedModeBanner: false,
-                  title: appConfig.title,
+                  title: widget.appConfig.title,
                   theme: theme,
                   darkTheme: darkTheme,
-                  themeMode: settingsStore.themeMode.value,
+                  themeMode: widget.settingsStore.themeMode.value,
                 ),
         );
       },
-    ),
-  );
+    );
+  }
 }

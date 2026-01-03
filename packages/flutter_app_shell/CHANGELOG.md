@@ -1,5 +1,135 @@
 # Changelog
 
+## 2.1.0 - 2026-01-03
+
+### Features
+
+- **✨ Added `onEffectsActivate` callback to AppConfig**
+  - Enables two-phase initialization for reactive services
+  - Called AFTER `appReady` check, BEFORE rendering AppShell
+  - Prevents SignalEffectException from dynamic signal creation inside effects
+  - See `docs/signals-best-practices.md` for comprehensive pattern guide
+
+### Bug Fixes
+
+- **🐛 Fixed SignalEffectException with reactive database services**
+  - Root cause: Dynamic signal creation inside effects (e.g., `watchWhere()` calls)
+  - Solution: Two-phase pattern separates signal creation from effect creation
+  - Services create watchers in `initialize()`, effects in `activateEffects()`
+  - Framework calls `onEffectsActivate()` at correct time in lifecycle
+
+### Documentation
+
+- **📚 Added Two-Phase Initialization section to `docs/signals-best-practices.md`**
+  - Explains dynamic signal creation problem
+  - Shows complete migration path from old to new pattern
+  - Includes framework lifecycle timeline
+- **📚 Updated table of contents in signals best practices guide**
+
+### Breaking Changes
+
+**None** - `onEffectsActivate` is completely optional and backward compatible.
+
+Apps without the callback continue working as before. Only apps with reactive services creating database watchers inside effects need to adopt the two-phase pattern.
+
+### Migration
+
+**If you have reactive services creating database watchers inside effects:**
+
+The problem occurs when services create NEW signals dynamically inside effects:
+
+```dart
+// ❌ OLD PATTERN - Dynamic signal creation inside effect
+class MyService {
+  Future<void> initialize() async {
+    _effectCleanup = effect(() {
+      final id = activeId.value;
+
+      // Problem: Creates NEW signal every time effect runs
+      final watcher = db.watchWhere('items', {'userId': id});
+      final items = watcher.value;  // Reads from dynamic signal → cycle!
+
+      untracked(() => itemsList.value = items);
+    });
+  }
+}
+```
+
+**Migration steps:**
+
+1. **Split signal creation from effect creation:**
+
+```dart
+// ✅ NEW PATTERN - Two-phase initialization
+class MyService {
+  late final ReadonlySignal<List<Map>> _itemsWatcher;
+  final itemsList = signal<List<Item>>([]);
+  EffectCleanup? _effectCleanup;
+
+  // Phase 1: Create watchers during initialization
+  Future<void> initialize() async {
+    // Create watcher ONCE - not inside effect!
+    _itemsWatcher = db.watchWhere('items', {});
+
+    // Load initial data
+    final initial = await db.findWhere('items', {});
+    itemsList.value = initial.map(Item.fromJson).toList();
+
+    // NO effects created yet!
+  }
+
+  // Phase 2: Create effects from pre-existing watchers
+  void activateEffects() {
+    _effectCleanup = effect(() {
+      final items = _itemsWatcher.value;  // Read from pre-existing signal
+      untracked(() {
+        itemsList.value = items.map(Item.fromJson).toList();
+      });
+    });
+  }
+
+  void dispose() {
+    _effectCleanup?.call();
+  }
+}
+```
+
+2. **Register activation callback in AppConfig:**
+
+```dart
+runShellApp(() async {
+  final myService = MyService();
+  await myService.initialize();  // Phase 1: Creates watchers
+
+  return AppConfig(
+    onEffectsActivate: () {
+      myService.activateEffects();  // Phase 2: Creates effects
+    },
+    routes: [/* ... */],
+    title: 'My App',
+  );
+});
+```
+
+### Why This Fix Works
+
+The two-phase pattern solves the dynamic signal creation problem:
+
+- **v2.0.6 solved**: Write-side cycles (wrapping writes in `untracked()`) ✅
+- **v2.0.6 didn't solve**: Read-side cycles from dynamic signal creation ❌
+- **v2.1.0 solves**: Both issues with two-phase initialization ✅
+
+**Key insight**: Creating signals inside effects (even with proper `untracked()`) causes reactive cycles when Watch widgets are active. The solution is to create all signals ONCE during initialization, then create effects that read from those pre-existing signals.
+
+### What About appReady?
+
+The `appReady` signal from v2.0.5 is still useful for coordinating complex initialization timing. However, it alone doesn't prevent SignalEffectException - you need BOTH:
+
+1. `appReady` signal for initialization coordination (optional)
+2. Two-phase pattern for reactive services (required if using database watchers)
+
+See `docs/signals-best-practices.md` for complete details and examples.
+
 ## 2.0.6 - 2026-01-03
 
 ### Dependencies

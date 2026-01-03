@@ -49,6 +49,60 @@ class AppConfig {
   /// ```
   final Signal<bool>? appReady;
 
+  /// Optional callback for activating reactive effects.
+  ///
+  /// Called by the framework AFTER [appReady] check passes and BEFORE
+  /// rendering the AppShell. This is the correct place to create effects
+  /// that read from database watchers or other reactive signals.
+  ///
+  /// **Two-Phase Initialization Pattern**: Services should create watchers
+  /// during `initialize()`, then create effects in `activateEffects()`
+  /// called from this callback.
+  ///
+  /// **Why needed**: Prevents SignalEffectException by ensuring effects
+  /// don't create dynamic signals during evaluation. Creating signals
+  /// inside effects (e.g., calling `watchWhere()` inside an `effect()`)
+  /// causes reactive cycles that `untracked()` cannot prevent.
+  ///
+  /// Example:
+  /// ```dart
+  /// class MyService {
+  ///   late final ReadonlySignal<List<Map>> _itemsWatcher;
+  ///   final items = signal<List<Item>>([]);
+  ///
+  ///   // Phase 1: Create watchers during initialization
+  ///   Future<void> initialize() async {
+  ///     _itemsWatcher = db.watchWhere('items', {});
+  ///     final initial = await db.findWhere('items', {});
+  ///     items.value = initial;
+  ///     // NO effects created yet!
+  ///   }
+  ///
+  ///   // Phase 2: Create effects from pre-existing watchers
+  ///   void activateEffects() {
+  ///     effect(() {
+  ///       final data = _itemsWatcher.value;
+  ///       untracked(() => items.value = data);
+  ///     });
+  ///   }
+  /// }
+  ///
+  /// runShellApp(() async {
+  ///   final service = MyService();
+  ///   await service.initialize();  // Creates watchers, loads data
+  ///
+  ///   return AppConfig(
+  ///     onEffectsActivate: () {
+  ///       service.activateEffects();  // Creates effects from watchers
+  ///     },
+  ///     // ...
+  ///   );
+  /// });
+  /// ```
+  ///
+  /// See `docs/signals-best-practices.md` for comprehensive pattern guide.
+  final void Function()? onEffectsActivate;
+
   AppConfig({
     required this.routes,
     required this.title,
@@ -63,5 +117,6 @@ class AppConfig {
     this.maxTextScaleFactor = 1.3,
     this.homeRoute,
     this.appReady,
+    this.onEffectsActivate,
   });
 }

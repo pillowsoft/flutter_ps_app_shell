@@ -4,6 +4,8 @@ This guide provides comprehensive best practices for using the Dart Signals libr
 
 ## Table of Contents
 
+- [CRITICAL: Signal Writes Inside Effects (v2.0.6)](#critical-signal-writes-inside-effects-v206)
+- [Two-Phase Initialization for Reactive Services (v2.1.0)](#two-phase-initialization-for-reactive-services-v210)
 - [Quick Reference](#quick-reference)
 - [Understanding Reactive Cycles](#understanding-reactive-cycles)
 - [The untracked() Function](#the-untracked-function)
@@ -66,6 +68,160 @@ effect(() {
 - But app-level services had synchronous data transformations
 - These also need `untracked()` to prevent reactive cycles
 - With proper `untracked()`, effects and Watch widgets coexist peacefully
+
+## Two-Phase Initialization for Reactive Services (v2.1.0)
+
+**⚠️ CRITICAL PATTERN**: Even with proper `untracked()` usage, creating signals **dynamically inside effects** still causes `SignalEffectException`.
+
+### The Problem: Dynamic Signal Creation
+
+```dart
+// ❌ WRONG - Creates NEW signal every time effect runs
+effect(() {
+  final id = activeId.value;
+
+  // Problem: Creates NEW signal on each effect evaluation
+  final watcher = db.watchWhere('items', {'userId': id});
+  final items = watcher.value;  // Read from dynamic signal → cycle!
+
+  untracked(() => itemsList.value = items);
+});
+```
+
+**Why this fails:**
+1. Effect triggers when `activeId` changes
+2. Effect creates **NEW** signal via `watchWhere()`
+3. Effect immediately reads from this new signal
+4. If Watch widget is evaluating simultaneously → reactive cycle
+5. `untracked()` wraps the WRITE but not the READ from dynamic signal
+6. SignalEffectException thrown!
+
+### The Solution: Two-Phase Pattern
+
+Separate signal creation from effect creation:
+
+**Phase 1: `initialize()`** - Create all watchers/signals, load initial data
+**Phase 2: `activateEffects()`** - Create effects that read from pre-existing signals
+
+```dart
+class MyService {
+  late final ReadonlySignal<List<Map>> _itemsWatcher;
+  final itemsList = signal<List<Item>>([]);
+  EffectCleanup? _effectCleanup;
+
+  // Phase 1: Create watchers (signals) ONCE during initialization
+  Future<void> initialize() async {
+    // Create watcher that will be read by effects
+    _itemsWatcher = db.watchWhere('items', {});
+
+    // Load initial data using one-time query
+    final initial = await db.findWhere('items', {});
+    itemsList.value = initial.map(Item.fromJson).toList();
+
+    // NO effects created yet!
+  }
+
+  // Phase 2: Create effects from pre-existing signals
+  void activateEffects() {
+    _effectCleanup = effect(() {
+      final items = _itemsWatcher.value;  // Read from pre-existing signal
+
+      untracked(() {
+        itemsList.value = items.map(Item.fromJson).toList();
+      });
+    });
+  }
+
+  void dispose() {
+    _effectCleanup?.call();
+  }
+}
+```
+
+### Usage with AppConfig
+
+```dart
+runShellApp(() async {
+  final myService = MyService();
+  await myService.initialize();  // Phase 1: Create watchers, load data
+
+  return AppConfig(
+    onEffectsActivate: () {
+      myService.activateEffects();  // Phase 2: Create effects
+    },
+    routes: [/* ... */],
+    title: 'My App',
+  );
+});
+```
+
+### Why This Works
+
+- ✅ Watchers (signals) created ONCE during `initialize()`
+- ✅ Effects read from pre-existing signals
+- ✅ No dynamic signal creation during effect evaluation
+- ✅ No SignalEffectException!
+
+### Framework Lifecycle
+
+The framework ensures proper timing:
+
+```
+T=0ms    → runShellApp() callback starts
+T=50ms   → myService.initialize() → creates watchers, loads data
+T=100ms  → appReady.value = true
+T=200ms  → Framework Watch widget renders
+           └─ Checks appReady → true
+           └─ Calls onEffectsActivate() ← BEFORE rendering AppShell
+T=201ms  → myService.activateEffects() → creates effects from watchers
+T=202ms  → Framework renders AppShell
+T=203ms  → AppShell Watch widgets evaluate
+           └─ Reads signals (no dynamic creation!)
+T=204ms  → ✅ No exception! Proper initialization order
+```
+
+### Migration from Old Pattern
+
+```dart
+// ❌ OLD PATTERN - Dynamic signal creation in effect
+class ChatManager {
+  Future<void> initialize() async {
+    _effectCleanup = effect(() {
+      final chat = activeChat.value;
+      final messagesSignal = _db.watchWhere('messages', {'chatId': chat.id});  // BAD!
+      final docs = messagesSignal.value;
+      untracked(() => activeChatMessages.value = docs);
+    });
+  }
+}
+
+// ✅ NEW PATTERN - Two-phase initialization
+class ChatManager {
+  late final ReadonlySignal<List<Map>> _messagesWatcher;
+
+  Future<void> initialize() async {
+    // Phase 1: Create watcher during init
+    _messagesWatcher = _db.watchWhere('messages', {});
+    final initial = await _db.findWhere('messages', {});
+    activeChatMessages.value = initial;
+  }
+
+  void activateEffects() {
+    // Phase 2: Create effect from pre-existing watcher
+    _effectCleanup = effect(() {
+      final docs = _messagesWatcher.value;  // Read from pre-existing signal
+      untracked(() => activeChatMessages.value = docs);
+    });
+  }
+}
+```
+
+### Rule Summary
+
+**NEVER create signals inside effects. Always:**
+1. Create watchers/signals in `initialize()`
+2. Create effects that read from those signals in `activateEffects()`
+3. Register `activateEffects()` in `AppConfig.onEffectsActivate`
 
 ## Quick Reference
 
