@@ -424,6 +424,18 @@ void runShellApp(
   runApp(
     Watch(
       (context) {
+        // Wait for settings store to be ready before building reactive UI
+        if (!settingsStore.isReady.value) {
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
+        }
+
         ThemeData theme = _buildTheme(Brightness.light);
         ThemeData darkTheme = _buildTheme(Brightness.dark);
 
@@ -444,7 +456,8 @@ void runShellApp(
         // Clamp text scale factor to prevent extreme accessibility scaling from breaking UI
         final mediaData = MediaQuery.of(context);
         final currentScale = mediaData.textScaler.scale(1.0);
-        final clampedScale = currentScale.clamp(1.0, appConfig.maxTextScaleFactor);
+        final clampedScale =
+            currentScale.clamp(1.0, appConfig.maxTextScaleFactor);
 
         // Wrap app in MediaQuery to apply text scale clamping
         return MediaQuery(

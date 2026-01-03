@@ -1,5 +1,37 @@
 # Changelog
 
+## 2.0.3 - 2026-01-03
+
+### Fixed
+
+- **🐛 CRITICAL: Fixed SignalEffectException in AppShellSettingsStore**
+  - **Root Cause**: Signal mutations in async callbacks created reactive cycles
+  - **Solution**: Wrapped all async signal mutations in `untracked()` to prevent reactive loops
+  - **Details**:
+    - Added `batch()` wrapper to `_handlePersistenceFailure()` for atomic error updates
+    - Wrapped all 8 persistence effects' async callbacks in `untracked()`
+    - Effects now safely mutate signals without retriggering themselves
+    - Prevents infinite loops during app initialization
+  - **Impact**: Eliminates startup crashes in multi-service applications
+  - **Migration**: None required (backward compatible)
+  - **Files Changed**:
+    - `lib/src/state/app_shell_settings_store.dart`: Signal safety fixes
+    - `lib/src/core/app_shell_runner.dart`: Initialization guard
+
+### Added
+
+- **AppShellSettingsStore initialization lifecycle tracking**
+  - New `isReady` signal indicates when settings store has completed initialization
+  - Prevents Watch widgets from activating before effects stabilize
+  - App shell now shows loading indicator until settings are ready
+  - Eliminates race conditions between effect setup and UI rendering
+
+### Documentation
+
+- Added comprehensive signal best practices documentation to `_setupEffects()`
+- Created signal safety test suite (`test/state/app_shell_settings_store_test.dart`)
+- 14 new tests covering initialization, persistence, and reactive safety
+
 ## 2.0.2 - 2026-01-03
 
 ### Changed

@@ -31,6 +31,9 @@ class AppShellSettingsStore {
   late final Signal<String?> lastPersistenceError;
   late final Signal<int> persistenceFailureCount;
 
+  // Initialization lifecycle
+  late final Signal<bool> isReady;
+
   AppShellSettingsStore(this._prefs) {
     _initializeSignals();
     _loadSettings();
@@ -59,10 +62,26 @@ class AppShellSettingsStore {
     // Persistence error tracking
     lastPersistenceError = signal<String?>(null);
     persistenceFailureCount = signal<int>(0);
+
+    // Initialization lifecycle
+    isReady = signal<bool>(false);
   }
 
   void _setupEffects() {
     _logger.fine('Setting up reactive effects for persistence...');
+
+    // IMPORTANT: Signal mutations in async callbacks MUST be wrapped in untracked()
+    // to prevent SignalEffectException. When an effect mutates a signal inside an
+    // async callback, it can trigger the effect again, creating an infinite reactive cycle.
+    //
+    // Pattern:
+    //   effect(() {
+    //     asyncOp().then((result) {
+    //       untracked(() => someSignal.value = result);  // ✅ Correct
+    //     });
+    //   });
+    //
+    // See DatabaseService and AuthenticationService for reference implementations.
 
     // Set up effects to persist changes
     // Note: SharedPreferences methods return Futures but are fire-and-forget safe
@@ -74,12 +93,15 @@ class AppShellSettingsStore {
         (success) {
           if (success) {
             // Clear error on successful save
-            if (lastPersistenceError.value?.contains('brightness') ?? false) {
-              lastPersistenceError.value = null;
-            }
+            untracked(() {
+              if (lastPersistenceError.value?.contains('brightness') ?? false) {
+                lastPersistenceError.value = null;
+              }
+            });
           }
         },
-        onError: (e) => _handlePersistenceFailure('brightness', e),
+        onError: (e) =>
+            untracked(() => _handlePersistenceFailure('brightness', e)),
       );
     });
 
@@ -89,12 +111,15 @@ class AppShellSettingsStore {
       _prefs.setInt('themeMode', value).then(
         (success) {
           if (success) {
-            if (lastPersistenceError.value?.contains('themeMode') ?? false) {
-              lastPersistenceError.value = null;
-            }
+            untracked(() {
+              if (lastPersistenceError.value?.contains('themeMode') ?? false) {
+                lastPersistenceError.value = null;
+              }
+            });
           }
         },
-        onError: (e) => _handlePersistenceFailure('themeMode', e),
+        onError: (e) =>
+            untracked(() => _handlePersistenceFailure('themeMode', e)),
       );
     });
 
@@ -104,13 +129,16 @@ class AppShellSettingsStore {
       _prefs.setBool('sidebarCollapsed', value).then(
         (success) {
           if (success) {
-            if (lastPersistenceError.value?.contains('sidebarCollapsed') ??
-                false) {
-              lastPersistenceError.value = null;
-            }
+            untracked(() {
+              if (lastPersistenceError.value?.contains('sidebarCollapsed') ??
+                  false) {
+                lastPersistenceError.value = null;
+              }
+            });
           }
         },
-        onError: (e) => _handlePersistenceFailure('sidebarCollapsed', e),
+        onError: (e) =>
+            untracked(() => _handlePersistenceFailure('sidebarCollapsed', e)),
       );
     });
 
@@ -120,13 +148,17 @@ class AppShellSettingsStore {
       _prefs.setBool('showNavigationLabels', value).then(
         (success) {
           if (success) {
-            if (lastPersistenceError.value?.contains('showNavigationLabels') ??
-                false) {
-              lastPersistenceError.value = null;
-            }
+            untracked(() {
+              if (lastPersistenceError.value
+                      ?.contains('showNavigationLabels') ??
+                  false) {
+                lastPersistenceError.value = null;
+              }
+            });
           }
         },
-        onError: (e) => _handlePersistenceFailure('showNavigationLabels', e),
+        onError: (e) => untracked(
+            () => _handlePersistenceFailure('showNavigationLabels', e)),
       );
     });
 
@@ -136,12 +168,15 @@ class AppShellSettingsStore {
       _prefs.setBool('debugMode', value).then(
         (success) {
           if (success) {
-            if (lastPersistenceError.value?.contains('debugMode') ?? false) {
-              lastPersistenceError.value = null;
-            }
+            untracked(() {
+              if (lastPersistenceError.value?.contains('debugMode') ?? false) {
+                lastPersistenceError.value = null;
+              }
+            });
           }
         },
-        onError: (e) => _handlePersistenceFailure('debugMode', e),
+        onError: (e) =>
+            untracked(() => _handlePersistenceFailure('debugMode', e)),
       );
     });
 
@@ -151,12 +186,15 @@ class AppShellSettingsStore {
       _prefs.setString('logLevel', value).then(
         (success) {
           if (success) {
-            if (lastPersistenceError.value?.contains('logLevel') ?? false) {
-              lastPersistenceError.value = null;
-            }
+            untracked(() {
+              if (lastPersistenceError.value?.contains('logLevel') ?? false) {
+                lastPersistenceError.value = null;
+              }
+            });
           }
         },
-        onError: (e) => _handlePersistenceFailure('logLevel', e),
+        onError: (e) =>
+            untracked(() => _handlePersistenceFailure('logLevel', e)),
       );
     });
 
@@ -177,12 +215,15 @@ class AppShellSettingsStore {
       _prefs.setString('uiSystem', value).then(
         (success) {
           if (success) {
-            if (lastPersistenceError.value?.contains('uiSystem') ?? false) {
-              lastPersistenceError.value = null;
-            }
+            untracked(() {
+              if (lastPersistenceError.value?.contains('uiSystem') ?? false) {
+                lastPersistenceError.value = null;
+              }
+            });
           }
         },
-        onError: (e) => _handlePersistenceFailure('uiSystem', e),
+        onError: (e) =>
+            untracked(() => _handlePersistenceFailure('uiSystem', e)),
       );
     });
 
@@ -192,22 +233,34 @@ class AppShellSettingsStore {
       _prefs.setDouble('textScaleFactor', value).then(
         (success) {
           if (success) {
-            if (lastPersistenceError.value?.contains('textScaleFactor') ??
-                false) {
-              lastPersistenceError.value = null;
-            }
+            untracked(() {
+              if (lastPersistenceError.value?.contains('textScaleFactor') ??
+                  false) {
+                lastPersistenceError.value = null;
+              }
+            });
           }
         },
-        onError: (e) => _handlePersistenceFailure('textScaleFactor', e),
+        onError: (e) =>
+            untracked(() => _handlePersistenceFailure('textScaleFactor', e)),
       );
+    });
+
+    // Mark as ready AFTER all effects are set up
+    Future.microtask(() {
+      isReady.value = true;
+      _logger.info('AppShellSettingsStore initialization complete');
     });
   }
 
   void _handlePersistenceFailure(String key, dynamic error) {
     final errorMessage = 'Failed to persist $key: $error';
     _logger.severe(errorMessage);
-    lastPersistenceError.value = errorMessage;
-    persistenceFailureCount.value += 1;
+    // Use batch() for atomic updates and prevent reactive cycles
+    batch(() {
+      lastPersistenceError.value = errorMessage;
+      persistenceFailureCount.value += 1;
+    });
   }
 
   void _loadSettings() {

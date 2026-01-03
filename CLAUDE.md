@@ -297,6 +297,67 @@ effect(() {
 });
 ```
 
+#### CRITICAL: Preventing SignalEffectException
+
+**Signal mutations in async callbacks MUST be wrapped in `untracked()` or `batch()`** to prevent reactive cycles that cause `SignalEffectException`.
+
+**The Problem**: When an effect mutates a signal inside an async callback, it can trigger the effect again, creating an infinite loop:
+
+```dart
+// ❌ WRONG - Creates reactive cycle
+effect(() {
+  asyncOperation().then((result) {
+    someSignal.value = result;  // Triggers effect again!
+  });
+});
+
+void handleError(dynamic error) {
+  errorSignal.value = error;     // Triggers effects!
+  errorCount.value += 1;         // Multiple mutations!
+}
+```
+
+**Result**: `SignalEffectException: Cycle detected`
+
+**The Solution**: Use `untracked()` to break reactive dependencies and `batch()` for atomic multi-signal updates:
+
+```dart
+// ✅ CORRECT - Use untracked() for async mutations
+effect(() {
+  asyncOperation().then(
+    (result) {
+      untracked(() => someSignal.value = result);  // Safe!
+    },
+    onError: (e) => untracked(() => handleError(e)),  // Safe!
+  );
+});
+
+// ✅ CORRECT - Use batch() for atomic updates
+void handleError(dynamic error) {
+  batch(() {
+    errorSignal.value = error;   // Atomic update
+    errorCount.value += 1;       // No intermediate reactions
+  });
+}
+```
+
+**When to use `untracked()`**:
+- Reading signal values without creating dependencies
+- Mutating signals inside async callbacks (`.then()`, `async/await`)
+- Breaking reactive cycles in effects
+
+**When to use `batch()`**:
+- Updating multiple signals atomically
+- Preventing intermediate reactions during multi-step updates
+- Error handling that updates multiple state signals
+
+**Reference Implementations**:
+- `DatabaseService` (lines 505-506, 571-572): Correct `untracked()` usage
+- `AuthenticationService` (lines 175-178, 403, 477): Correct `batch()` usage
+- `AppShellSettingsStore`: All persistence effects use `untracked()` pattern
+
+**Common Pitfall**: Forgetting `untracked()` in error handlers called from async operations.
+
 ### Service Registration
 
 ```dart
